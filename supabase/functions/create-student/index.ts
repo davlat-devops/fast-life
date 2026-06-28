@@ -49,9 +49,14 @@ Deno.serve(async (req: Request) => {
     if (!LEVELS.includes(level)) return json({ error: 'Invalid level' }, 400)
 
     // ── 3. Service-role client for privileged ops ───────────
+    const serviceRoleKey = Deno.env.get('SERVICE_ROLE_KEY')
+    if (!serviceRoleKey) {
+      return json({ error: 'Server misconfiguration: SERVICE_ROLE_KEY secret is not set' }, 500)
+    }
+
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      serviceRoleKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
@@ -99,7 +104,15 @@ Deno.serve(async (req: Request) => {
 
     return json({ student, credentials: { username, password, clan } }, 201)
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Internal server error'
+    // Supabase PostgrestError / AuthError are plain objects, not Error instances
+    let message = 'Internal server error'
+    if (err instanceof Error) {
+      message = err.message
+    } else if (err && typeof err === 'object') {
+      const e = err as Record<string, unknown>
+      message = (e.message ?? e.error_description ?? e.msg ?? JSON.stringify(err)) as string
+    }
+    console.error('[create-student] error:', JSON.stringify(err))
     return json({ error: message }, 500)
   }
 })

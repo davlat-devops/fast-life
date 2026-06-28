@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { adminSupabase } from '@/lib/supabase'
 import { useToast } from '@/contexts/ToastContext'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -52,24 +52,55 @@ export default function CreateStudentModal({ onClose, onCreated }) {
 
     setBusy(true)
 
-    const { data, error } = await supabase.functions.invoke('create-student', {
-      body: {
-        full_name:   form.full_name.trim(),
-        age:         Number(form.age),
-        level:       form.level,
-        phone:       form.phone.trim(),
-        class_group: form.class_group.trim(),
-      },
-    })
+    try {
+      // 1. Generate unique username + temp password via DB function
+      const { data: creds, error: credsErr } = await adminSupabase
+        .rpc('generate_student_credentials', { p_full_name: form.full_name.trim() })
+      if (credsErr) throw new Error(`Credentials: ${credsErr.message}`)
 
-    setBusy(false)
+      const { username, password } = creds
 
-    if (error || data?.error) {
-      toast({ message: data?.error ?? 'Failed to create student. Is the edge function deployed?', type: 'error' })
-      return
+      // 2. Random clan assignment
+      const CLANS = ['VIPERON', 'CRODON', 'AVERON', 'WOLFRIN']
+      const clan = CLANS[Math.floor(Math.random() * CLANS.length)]
+
+      // 3. Create auth user
+      const { data: authData, error: authErr } = await adminSupabase.auth.admin.createUser({
+        email: `${username}@fastlife.internal`,
+        password,
+        email_confirm: true,
+        user_metadata: { role: 'student', username },
+      })
+      if (authErr) throw new Error(`Auth: ${authErr.message}`)
+
+      // 4. Insert students row
+      const { data: student, error: studentErr } = await adminSupabase
+        .from('students')
+        .insert({
+          auth_user_id: authData.user.id,
+          full_name:   form.full_name.trim(),
+          age:         Number(form.age),
+          level:       form.level,
+          phone:       form.phone.trim(),
+          class_group: form.class_group.trim(),
+          clan,
+          username,
+        })
+        .select()
+        .single()
+
+      if (studentErr) {
+        // Rollback: remove orphaned auth user
+        await adminSupabase.auth.admin.deleteUser(authData.user.id)
+        throw new Error(`DB: ${studentErr.message}`)
+      }
+
+      onCreated(student, { username, password, clan })
+    } catch (err) {
+      toast({ message: err.message ?? 'Failed to create student', type: 'error' })
+    } finally {
+      setBusy(false)
     }
-
-    onCreated(data.student, data.credentials)
   }
 
   return (

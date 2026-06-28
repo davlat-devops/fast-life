@@ -491,8 +491,8 @@ begin
     v_username := v_base || v_suffix::text;
   end loop;
 
-  -- 8-char password from base64-encoded random bytes
-  v_password := substring(encode(gen_random_bytes(12), 'base64') from 1 for 8);
+  -- 8-char password from a random UUID (no pgcrypto needed)
+  v_password := substring(replace(gen_random_uuid()::text, '-', ''), 1, 8);
 
   return jsonb_build_object(
     'username', v_username,

@@ -1,12 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ToastProvider } from '@/contexts/ToastContext'
-import { GuestAdminRoute, GuestStudentRoute, StudentRoute } from '@/components/ui/ProtectedRoute'
+import { GuestAdminRoute, GuestStudentRoute } from '@/components/ui/ProtectedRoute'
 
 import AdminLayout        from '@/components/admin/AdminLayout'
 import AdminLogin         from '@/pages/admin/AdminLogin'
 import AdminDashboard     from '@/pages/admin/AdminDashboard'
 import StudentManagement  from '@/pages/admin/StudentManagement'
+
+import StudentLogin       from '@/pages/student/StudentLogin'
+import StudentLayout      from '@/components/student/StudentLayout'
+import StudentDashboard   from '@/pages/student/StudentDashboard'
 
 const Placeholder = ({ label }) => (
   <div className="p-8 opacity-50 font-mono">
@@ -21,25 +25,19 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <Routes>
-            {/* ── Student portal ──────────────────────────── */}
+            {/* ── Student login (standalone — no nav) ─────── */}
             <Route path="/" element={
-              <GuestStudentRoute><Placeholder label="Student Login" /></GuestStudentRoute>
+              <GuestStudentRoute><StudentLogin /></GuestStudentRoute>
             } />
-            <Route path="/dashboard" element={
-              <StudentRoute><Placeholder label="Student Dashboard" /></StudentRoute>
-            } />
-            <Route path="/clan" element={
-              <StudentRoute><Placeholder label="Clan Page" /></StudentRoute>
-            } />
-            <Route path="/events" element={
-              <StudentRoute><Placeholder label="Events" /></StudentRoute>
-            } />
-            <Route path="/leaderboard" element={
-              <StudentRoute><Placeholder label="Leaderboard" /></StudentRoute>
-            } />
-            <Route path="/profile" element={
-              <StudentRoute><Placeholder label="Profile" /></StudentRoute>
-            } />
+
+            {/* ── Student app (bottom-tab layout, auth-guarded in StudentLayout) */}
+            <Route element={<StudentLayout />}>
+              <Route path="/dashboard"   element={<StudentDashboard />} />
+              <Route path="/clan"        element={<Placeholder label="Clan Page" />} />
+              <Route path="/events"      element={<Placeholder label="Events" />} />
+              <Route path="/leaderboard" element={<Placeholder label="Leaderboard" />} />
+              <Route path="/profile"     element={<Placeholder label="Profile" />} />
+            </Route>
 
             {/* ── Admin login (standalone — no sidebar) ───── */}
             <Route path="/admin/login" element={
