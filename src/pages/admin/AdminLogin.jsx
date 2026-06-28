@@ -91,14 +91,33 @@ export default function AdminLogin() {
     setError('')
     setBusy(true)
 
-    const { data, error: authError } = await signIn(email.trim(), password)
+    let data, authError
+    try {
+      ;({ data, error: authError } = await signIn(email.trim(), password))
+    } catch (networkErr) {
+      // signIn itself threw — treat as a network error
+      console.error('[AdminLogin] signIn threw:', networkErr)
+      setError('Network error — could not reach the server. Check your internet connection.')
+      setBusy(false)
+      return
+    }
 
     if (authError) {
-      setError(
-        authError.message === 'Invalid login credentials'
-          ? 'Incorrect email or password.'
-          : authError.message
-      )
+      console.error('[AdminLogin] Auth error:', authError)
+
+      const msg = authError.message ?? ''
+      // Network / DNS failures arrive as "Load failed" (Safari) or "Failed to fetch" (Chrome/Firefox)
+      if (msg === 'Load failed' || msg === 'Failed to fetch' || msg.toLowerCase().includes('network')) {
+        setError(
+          'Cannot reach Supabase. Check your internet connection and confirm ' +
+          'VITE_SUPABASE_URL in .env.local points to your real project.'
+        )
+      } else if (msg === 'Invalid login credentials') {
+        setError('Incorrect email or password.')
+      } else {
+        setError(msg || 'Sign-in failed. Please try again.')
+      }
+
       setBusy(false)
       return
     }
