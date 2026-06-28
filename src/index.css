@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* ── Brand + clan design tokens ──────────────────────────── */
+@theme {
+  /* Brand */
+  --color-brand-red:   #CC0000;
+  --color-brand-dark:  #0D0D0D;
+
+  /* Surfaces */
+  --color-surface:     #111111;
+  --color-surface-2:   #1a1a1a;
+  --color-surface-3:   #242424;
+
+  /* Clan backgrounds */
+  --color-clan-viperon:        #8B7355;
+  --color-clan-viperon-accent: #4A7C3F;
+  --color-clan-crodon:         #0D0D0D;
+  --color-clan-crodon-accent:  #A0A0A0;
+  --color-clan-averon:         #0A1628;
+  --color-clan-averon-accent:  #C9A227;
+  --color-clan-wolfrin:        #8B0000;
+  --color-clan-wolfrin-accent: #C0C0C0;
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #0D0D0D;
+    color: #f3f4f6;
+    font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100svh;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Clan colour tokens */
+  .clan-viperon  { --clan-bg: #8B7355; --clan-accent: #4A7C3F; }
+  .clan-crodon   { --clan-bg: #0D0D0D; --clan-accent: #A0A0A0; }
+  .clan-averon   { --clan-bg: #0A1628; --clan-accent: #C9A227; }
+  .clan-wolfrin  { --clan-bg: #8B0000; --clan-accent: #C0C0C0; }
+}
