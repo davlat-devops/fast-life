@@ -3,10 +3,12 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ToastProvider } from '@/contexts/ToastContext'
 import { GuestAdminRoute, GuestStudentRoute } from '@/components/ui/ProtectedRoute'
 
-import AdminLayout        from '@/components/admin/AdminLayout'
-import AdminLogin         from '@/pages/admin/AdminLogin'
-import AdminDashboard     from '@/pages/admin/AdminDashboard'
-import StudentManagement  from '@/pages/admin/StudentManagement'
+import AdminLayout          from '@/components/admin/AdminLayout'
+import AdminLogin           from '@/pages/admin/AdminLogin'
+import AdminDashboard       from '@/pages/admin/AdminDashboard'
+import StudentManagement    from '@/pages/admin/StudentManagement'
+import EventManagement      from '@/pages/admin/EventManagement'
+import AttendanceRegister   from '@/pages/admin/AttendanceRegister'
 
 import StudentLogin       from '@/pages/student/StudentLogin'
 import StudentLayout      from '@/components/student/StudentLayout'
@@ -53,8 +55,8 @@ export default function App() {
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard"           element={<AdminDashboard />} />
               <Route path="students"            element={<StudentManagement />} />
-              <Route path="events"              element={<Placeholder label="Event Management" />} />
-              <Route path="attendance/:eventId" element={<Placeholder label="Attendance Register" />} />
+              <Route path="events"              element={<EventManagement />} />
+              <Route path="attendance/:eventId" element={<AttendanceRegister />} />
               <Route path="cp"                  element={<Placeholder label="Manual CP Awards" />} />
               <Route path="rankings"            element={<Placeholder label="Rankings" />} />
               <Route path="reset"               element={<Placeholder label="Monthly Reset" />} />
