@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
 import { BADGES, LEVEL_THRESHOLDS } from '@/constants/badges'
 
@@ -54,10 +55,64 @@ function Skeleton({ className }) {
   return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
 }
 
+// ── Password field with eye toggle ────────────────────────────
+
+function PwField({ id, label, value, onChange, error, accent }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div>
+      <label htmlFor={id}
+        className="block text-[11px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={onChange}
+          autoComplete="new-password"
+          className="w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm text-white
+            bg-white/[0.04] border outline-none transition-colors"
+          style={{
+            borderColor: error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)',
+          }}
+          onFocus={e => e.target.style.borderColor = error ? 'rgba(239,68,68,0.6)' : `${accent}66`}
+          onBlur={e => e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}
+        />
+        <button
+          type="button"
+          onClick={() => setShow(v => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+          tabIndex={-1}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {show ? (
+              <>
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </>
+            ) : (
+              <>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </>
+            )}
+          </svg>
+        </button>
+      </div>
+      {error && <p className="mt-1 text-[11px] text-red-400">{error}</p>}
+    </div>
+  )
+}
+
 // ── Page ─────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const { studentRecord, signOut } = useAuth()
+  const { toast } = useToast()
   const clanInfo = CLANS[studentRecord?.clan]
   const accent   = clanInfo?.colorAccent ?? '#CC0000'
   const cp       = studentRecord?.cp ?? 0
@@ -65,6 +120,61 @@ export default function ProfilePage() {
   const [earnedBadges, setEarnedBadges] = useState([])
   const [history,      setHistory]      = useState([])
   const [loading,      setLoading]      = useState(true)
+
+  // ── Change password form ─────────────────────────────────────
+  const [pwForm,   setPwForm]   = useState({ current: '', newPw: '', confirm: '' })
+  const [pwErrors, setPwErrors] = useState({})
+  const [pwBusy,   setPwBusy]   = useState(false)
+
+  function setPwField(key, val) {
+    setPwForm(f => ({ ...f, [key]: val }))
+    setPwErrors(e => ({ ...e, [key]: '' }))
+  }
+
+  function validatePw() {
+    const e = {}
+    if (!pwForm.current)             e.current = 'Enter your current password'
+    if (pwForm.newPw.length < 6)     e.newPw   = 'Minimum 6 characters'
+    if (pwForm.newPw !== pwForm.confirm) e.confirm = 'Passwords do not match'
+    return e
+  }
+
+  async function handleChangePassword(evt) {
+    evt.preventDefault()
+    const errs = validatePw()
+    if (Object.keys(errs).length) { setPwErrors(errs); return }
+
+    setPwBusy(true)
+    try {
+      // Verify current password by re-signing in
+      const email = `${studentRecord.username}@fastlife.internal`
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email,
+        password: pwForm.current,
+      })
+      if (signInErr) {
+        setPwErrors({ current: 'Current password is incorrect' })
+        return
+      }
+
+      // Update to new password
+      const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.newPw })
+      if (updateErr) throw updateErr
+
+      // Keep admin's password_plain column in sync
+      await supabase
+        .from('students')
+        .update({ password_plain: pwForm.newPw })
+        .eq('id', studentRecord.id)
+
+      toast({ message: 'Password updated successfully', type: 'success' })
+      setPwForm({ current: '', newPw: '', confirm: '' })
+    } catch (err) {
+      toast({ message: err.message ?? 'Failed to update password', type: 'error' })
+    } finally {
+      setPwBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!studentRecord) return
@@ -307,9 +417,66 @@ export default function ProfilePage() {
           )}
         </motion.div>
 
+        {/* ── Change Password ──────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+          className="rounded-2xl p-5"
+          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <h2 className="text-sm font-bold text-white mb-4">Change Password</h2>
+
+          <form onSubmit={handleChangePassword} className="space-y-3" noValidate>
+            <PwField
+              id="pw-current"
+              label="Current Password"
+              value={pwForm.current}
+              onChange={e => setPwField('current', e.target.value)}
+              error={pwErrors.current}
+              accent={accent}
+            />
+            <PwField
+              id="pw-new"
+              label="New Password"
+              value={pwForm.newPw}
+              onChange={e => setPwField('newPw', e.target.value)}
+              error={pwErrors.newPw}
+              accent={accent}
+            />
+            <PwField
+              id="pw-confirm"
+              label="Confirm New Password"
+              value={pwForm.confirm}
+              onChange={e => setPwField('confirm', e.target.value)}
+              error={pwErrors.confirm}
+              accent={accent}
+            />
+
+            <motion.button
+              type="submit"
+              disabled={pwBusy}
+              whileHover={pwBusy ? {} : { scale: 1.01 }}
+              whileTap={pwBusy ? {} : { scale: 0.98 }}
+              className="w-full mt-1 py-2.5 rounded-xl text-sm font-bold text-white
+                flex items-center justify-center gap-2 transition-opacity
+                disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: accent }}
+            >
+              {pwBusy ? (
+                <>
+                  <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                  Updating…
+                </>
+              ) : 'Update Password'}
+            </motion.button>
+          </form>
+        </motion.div>
+
         {/* ── Sign out ─────────────────────────────────────── */}
         <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}
           onClick={signOut}
           className="w-full py-3 rounded-xl text-sm font-semibold text-white/35 hover:text-white/65 border border-white/[0.07] hover:bg-white/[0.04] transition-all"
         >

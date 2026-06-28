@@ -77,14 +77,15 @@ export default function CreateStudentModal({ onClose, onCreated }) {
       const { data: student, error: studentErr } = await adminSupabase
         .from('students')
         .insert({
-          auth_user_id: authData.user.id,
-          full_name:   form.full_name.trim(),
-          age:         Number(form.age),
-          level:       form.level,
-          phone:       form.phone.trim(),
-          class_group: form.class_group.trim(),
+          auth_user_id:   authData.user.id,
+          full_name:      form.full_name.trim(),
+          age:            Number(form.age),
+          level:          form.level,
+          phone:          form.phone.trim(),
+          class_group:    form.class_group.trim(),
           clan,
           username,
+          password_plain: password,
         })
         .select()
         .single()

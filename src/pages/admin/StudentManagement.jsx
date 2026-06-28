@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { adminSupabase, supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { useToast } from '@/contexts/ToastContext'
 import CreateStudentModal from '@/components/admin/CreateStudentModal'
 import CredentialsModal  from '@/components/admin/CredentialsModal'
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function generatePassword(len = 8) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
 
 // ── Constants ─────────────────────────────────────────────────
 const LEVELS    = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -54,6 +61,26 @@ function ClanChip({ clanId }) {
   )
 }
 
+function EyeIcon({ open }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {open ? (
+        <>
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </>
+      ) : (
+        <>
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </>
+      )}
+    </svg>
+  )
+}
+
 function Toggle({ checked, onChange, disabled }) {
   return (
     <button
@@ -72,7 +99,7 @@ function Toggle({ checked, onChange, disabled }) {
 function SkeletonRow() {
   return (
     <tr className="border-b border-white/[0.04]">
-      {[...Array(7)].map((_, i) => (
+      {[...Array(8)].map((_, i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 rounded bg-white/[0.06] animate-pulse" style={{ width: `${40 + (i * 17) % 50}%` }} />
         </td>
@@ -81,13 +108,21 @@ function SkeletonRow() {
   )
 }
 
-function StudentRow({ student, onToggleActive, delay }) {
-  const [toggling, setToggling] = useState(false)
+function StudentRow({ student, onToggleActive, onResetPassword, delay }) {
+  const [toggling,   setToggling]   = useState(false)
+  const [showPw,     setShowPw]     = useState(false)
+  const [resetting,  setResetting]  = useState(false)
 
   async function handleToggle() {
     setToggling(true)
     await onToggleActive(student)
     setToggling(false)
+  }
+
+  async function handleReset() {
+    setResetting(true)
+    await onResetPassword(student)
+    setResetting(false)
   }
 
   return (
@@ -127,6 +162,46 @@ function StudentRow({ student, onToggleActive, delay }) {
       {/* Age */}
       <td className="px-4 py-3">
         <span className="text-xs text-white/40">{student.age}</span>
+      </td>
+
+      {/* Password */}
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPw(v => !v)}
+            className="shrink-0 text-white/30 hover:text-white/70 transition-colors"
+            title={showPw ? 'Hide password' : 'Reveal password'}
+          >
+            <EyeIcon open={showPw} />
+          </button>
+          <span className="font-mono text-xs text-white/55 select-all min-w-[64px]">
+            {showPw
+              ? (student.password_plain ?? <span className="text-white/20 not-italic">not set</span>)
+              : '••••••••'}
+          </span>
+          <button
+            onClick={handleReset}
+            disabled={resetting}
+            className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold
+              text-white/35 hover:text-white/70 border border-white/[0.07] hover:bg-white/[0.05]
+              disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            title="Reset password"
+          >
+            {resetting ? (
+              <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+              </svg>
+            ) : (
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5"/>
+              </svg>
+            )}
+            Reset
+          </button>
+        </div>
       </td>
 
       {/* Active toggle */}
@@ -206,6 +281,7 @@ export default function StudentManagement() {
   const [showCreate, setShowCreate] = useState(false)
   const [credentials, setCredentials] = useState(null)   // { username, password, clan }
   const [newStudentName, setNewStudentName] = useState('')
+  const [credentialMode, setCredentialMode] = useState('created')  // 'created' | 'reset'
 
   // ── Data loading ──────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
@@ -260,9 +336,44 @@ export default function StudentManagement() {
   function handleCreated(student, creds) {
     setShowCreate(false)
     setNewStudentName(student.full_name)
+    setCredentialMode('created')
     setCredentials(creds)
     fetchStudents()
     toast({ message: `${student.full_name} created and assigned to ${creds.clan}`, type: 'success' })
+  }
+
+  async function handleResetPassword(student) {
+    const newPw = generatePassword(8)
+
+    // 1. Update Supabase Auth password
+    const { error: authErr } = await adminSupabase.auth.admin.updateUserById(
+      student.auth_user_id,
+      { password: newPw }
+    )
+    if (authErr) {
+      toast({ message: `Auth reset failed: ${authErr.message}`, type: 'error' })
+      return
+    }
+
+    // 2. Save plain-text to students table
+    const { error: dbErr } = await supabase
+      .from('students')
+      .update({ password_plain: newPw })
+      .eq('id', student.id)
+    if (dbErr) {
+      toast({ message: `DB update failed: ${dbErr.message}`, type: 'error' })
+      return
+    }
+
+    // 3. Update local state so the row shows the new password immediately
+    setStudents(prev =>
+      prev.map(s => s.id === student.id ? { ...s, password_plain: newPw } : s)
+    )
+
+    // 4. Show credentials modal
+    setNewStudentName(student.full_name)
+    setCredentialMode('reset')
+    setCredentials({ username: student.username, password: newPw, clan: student.clan })
   }
 
   return (
@@ -294,12 +405,12 @@ export default function StudentManagement() {
       <FilterBar search={search} setSearch={setSearch} filters={filters} setFilters={setFilters} />
 
       {/* ── Table ──────────────────────────────────────────── */}
-      <div className="rounded-2xl overflow-hidden"
+      <div className="rounded-2xl overflow-x-auto"
         style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <table className="w-full text-left">
+        <table className="w-full min-w-[900px] text-left">
           <thead>
             <tr className="border-b border-white/[0.06]">
-              {['Student', 'Clan', 'Level', 'CP', 'Class Group', 'Age', 'Active'].map(h => (
+              {['Student', 'Clan', 'Level', 'CP', 'Class Group', 'Age', 'Password', 'Active'].map(h => (
                 <th key={h} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">
                   {h}
                 </th>
@@ -311,7 +422,7 @@ export default function StudentManagement() {
               [...Array(8)].map((_, i) => <SkeletonRow key={i} />)
             ) : visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center text-sm text-white/25">
+                <td colSpan={8} className="px-4 py-16 text-center text-sm text-white/25">
                   {search || filters.clan || filters.level
                     ? 'No students match your filters'
                     : 'No students yet — add one above'}
@@ -324,6 +435,7 @@ export default function StudentManagement() {
                     key={s.id}
                     student={s}
                     onToggleActive={toggleActive}
+                    onResetPassword={handleResetPassword}
                     delay={i * 0.025}
                   />
                 ))}
@@ -380,6 +492,7 @@ export default function StudentManagement() {
         <CredentialsModal
           credentials={credentials}
           studentName={newStudentName}
+          mode={credentialMode}
           onClose={() => { setCredentials(null); setNewStudentName('') }}
         />
       )}

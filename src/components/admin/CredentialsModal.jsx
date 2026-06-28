@@ -38,10 +38,11 @@ function CredRow({ label, value }) {
   )
 }
 
-export default function CredentialsModal({ credentials, studentName, onClose }) {
+export default function CredentialsModal({ credentials, studentName, onClose, mode = 'created' }) {
   if (!credentials) return null
   const { username, password, clan } = credentials
   const clanInfo = CLANS[clan]
+  const isReset  = mode === 'reset'
 
   function copyAll() {
     navigator.clipboard.writeText(
@@ -77,13 +78,22 @@ export default function CredentialsModal({ credentials, studentName, onClose }) 
           <div className="p-6 space-y-5">
             {/* Header */}
             <div className="text-center space-y-1">
-              <div className="text-2xl">{clanInfo?.emoji ?? '🎉'}</div>
-              <h2 className="text-lg font-bold text-white">Student Created!</h2>
+              <div className="text-2xl">{isReset ? '🔑' : (clanInfo?.emoji ?? '🎉')}</div>
+              <h2 className="text-lg font-bold text-white">
+                {isReset ? 'Password Reset' : 'Student Created!'}
+              </h2>
               <p className="text-sm text-white/50">
-                <span className="font-medium text-white/70">{studentName}</span> has been assigned to{' '}
-                <span className="font-semibold" style={{ color: clanInfo?.colorAccent }}>
-                  {clanInfo?.name ?? clan}
-                </span>
+                {isReset ? (
+                  <>New password generated for{' '}
+                    <span className="font-medium text-white/70">{studentName}</span>
+                  </>
+                ) : (
+                  <><span className="font-medium text-white/70">{studentName}</span> has been assigned to{' '}
+                    <span className="font-semibold" style={{ color: clanInfo?.colorAccent }}>
+                      {clanInfo?.name ?? clan}
+                    </span>
+                  </>
+                )}
               </p>
             </div>
 
@@ -93,7 +103,7 @@ export default function CredentialsModal({ credentials, studentName, onClose }) 
                 <path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19h-17L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
               </svg>
               <p className="text-xs text-amber-300/80 leading-relaxed">
-                Share these credentials with the student. The password is shown <strong>once only</strong> and cannot be recovered.
+                Share these credentials with the student. The password is shown <strong>once only</strong> — save it now.
               </p>
             </div>
 

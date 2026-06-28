@@ -9,6 +9,9 @@ import AdminDashboard       from '@/pages/admin/AdminDashboard'
 import StudentManagement    from '@/pages/admin/StudentManagement'
 import EventManagement      from '@/pages/admin/EventManagement'
 import AttendanceRegister   from '@/pages/admin/AttendanceRegister'
+import CpAwards             from '@/pages/admin/CpAwards'
+import Rankings             from '@/pages/admin/Rankings'
+import MonthlyReset         from '@/pages/admin/MonthlyReset'
 
 import StudentLogin       from '@/pages/student/StudentLogin'
 import StudentLayout      from '@/components/student/StudentLayout'
@@ -18,12 +21,6 @@ import EventsPage         from '@/pages/student/EventsPage'
 import LeaderboardPage    from '@/pages/student/LeaderboardPage'
 import ProfilePage        from '@/pages/student/ProfilePage'
 
-const Placeholder = ({ label }) => (
-  <div className="p-8 opacity-50 font-mono">
-    <h2 className="text-white text-xl mb-1">{label}</h2>
-    <p className="text-white/40 text-sm">Coming in a future step.</p>
-  </div>
-)
 
 export default function App() {
   return (
@@ -57,9 +54,9 @@ export default function App() {
               <Route path="students"            element={<StudentManagement />} />
               <Route path="events"              element={<EventManagement />} />
               <Route path="attendance/:eventId" element={<AttendanceRegister />} />
-              <Route path="cp"                  element={<Placeholder label="Manual CP Awards" />} />
-              <Route path="rankings"            element={<Placeholder label="Rankings" />} />
-              <Route path="reset"               element={<Placeholder label="Monthly Reset" />} />
+              <Route path="cp"                  element={<CpAwards />} />
+              <Route path="rankings"            element={<Rankings />} />
+              <Route path="reset"               element={<MonthlyReset />} />
               <Route path="*"                   element={<Navigate to="dashboard" replace />} />
             </Route>
 
