@@ -52,7 +52,7 @@ const getReason = r => REASON_META[r] ?? { label: r, emoji: '✨' }
 // ── Skeleton ──────────────────────────────────────────────────
 
 function Skeleton({ className }) {
-  return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
+  return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
 }
 
 // ── Password field with eye toggle ────────────────────────────
@@ -61,8 +61,11 @@ function PwField({ id, label, value, onChange, error, accent }) {
   const [show, setShow] = useState(false)
   return (
     <div>
-      <label htmlFor={id}
-        className="block text-[11px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
+      <label
+        htmlFor={id}
+        className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5"
+        style={{ color: 'var(--fl-text-3)' }}
+      >
         {label}
       </label>
       <div className="relative">
@@ -72,18 +75,20 @@ function PwField({ id, label, value, onChange, error, accent }) {
           value={value}
           onChange={onChange}
           autoComplete="new-password"
-          className="w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm text-white
-            bg-white/[0.04] border outline-none transition-colors"
+          className="w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm outline-none transition-colors"
           style={{
-            borderColor: error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)',
+            background:  'var(--fl-input-bg)',
+            border:      `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)'}`,
+            color:       'var(--fl-text)',
           }}
-          onFocus={e => e.target.style.borderColor = error ? 'rgba(239,68,68,0.6)' : `${accent}66`}
-          onBlur={e => e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'rgba(255,255,255,0.08)'}
+          onFocus={e  => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.7)' : `${accent}66` }}
+          onBlur={e   => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)' }}
         />
         <button
           type="button"
           onClick={() => setShow(v => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+          style={{ color: 'var(--fl-text-3)' }}
           tabIndex={-1}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -103,8 +108,32 @@ function PwField({ id, label, value, onChange, error, accent }) {
           </svg>
         </button>
       </div>
-      {error && <p className="mt-1 text-[11px] text-red-400">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-red-500">{error}</p>}
     </div>
+  )
+}
+
+// ── Clan image with fallback ───────────────────────────────────
+
+function ClanImg({ clanId, style }) {
+  const [err, setErr] = useState(false)
+  if (err || !clanId) {
+    return (
+      <span
+        aria-hidden
+        style={{ fontSize: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}
+      >
+        {CLANS[clanId]?.emoji ?? '⚔️'}
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/clans/${clanId.toLowerCase()}.png`}
+      alt=""
+      style={{ objectFit: 'cover', ...style }}
+      onError={() => setErr(true)}
+    />
   )
 }
 
@@ -133,9 +162,9 @@ export default function ProfilePage() {
 
   function validatePw() {
     const e = {}
-    if (!pwForm.current)             e.current = 'Enter your current password'
-    if (pwForm.newPw.length < 6)     e.newPw   = 'Minimum 6 characters'
-    if (pwForm.newPw !== pwForm.confirm) e.confirm = 'Passwords do not match'
+    if (!pwForm.current)                  e.current = 'Enter your current password'
+    if (pwForm.newPw.length < 6)          e.newPw   = 'Minimum 6 characters'
+    if (pwForm.newPw !== pwForm.confirm)  e.confirm = 'Passwords do not match'
     return e
   }
 
@@ -146,7 +175,6 @@ export default function ProfilePage() {
 
     setPwBusy(true)
     try {
-      // Verify current password by re-signing in
       const email = `${studentRecord.username}@fastlife.internal`
       const { error: signInErr } = await supabase.auth.signInWithPassword({
         email,
@@ -157,11 +185,9 @@ export default function ProfilePage() {
         return
       }
 
-      // Update to new password
       const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.newPw })
       if (updateErr) throw updateErr
 
-      // Keep admin's password_plain column in sync
       await supabase
         .from('students')
         .update({ password_plain: pwForm.newPw })
@@ -203,110 +229,158 @@ export default function ProfilePage() {
     : ''
 
   return (
-    <div className="min-h-screen bg-brand-dark">
+    <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
-        className="relative px-5 pt-12 pb-6 overflow-hidden"
+        className="relative overflow-hidden"
         style={{
           background: clanInfo
-            ? `linear-gradient(160deg, ${clanInfo.colorBg}cc 0%, ${clanInfo.colorBg}40 60%, transparent 100%)`
-            : 'transparent',
+            ? `linear-gradient(145deg, ${clanInfo.colorBg} 0%, ${clanInfo.colorBg}88 55%, transparent 100%)`
+            : '#161616',
+          minHeight: 180,
         }}
       >
+        {/* Background clan image */}
         {clanInfo && (
           <div
-            className="absolute top-0 right-0 pointer-events-none select-none"
-            style={{ fontSize: 130, lineHeight: 1, opacity: 0.07, transform: 'translate(20%, -15%)' }}
-            aria-hidden
+            className="absolute right-0 top-0 bottom-0 pointer-events-none select-none overflow-hidden"
+            style={{ width: '50%' }}
           >
-            {clanInfo.emoji}
+            <ClanImg
+              clanId={studentRecord?.clan}
+              style={{
+                position:   'absolute',
+                right:      -10,
+                top:        0,
+                width:      '120%',
+                height:     '100%',
+                opacity:    0.22,
+                objectFit:  'cover',
+              }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(90deg, ${clanInfo.colorBg} 0%, transparent 60%)` }}
+            />
           </div>
         )}
 
-        <div className="relative z-10">
-          {/* Avatar + name row */}
+        <div className="relative z-10 px-5 pt-5 pb-6">
           <div className="flex items-center gap-4">
+            {/* 80px circular avatar */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-              className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black text-white shrink-0"
-              style={{ background: accent }}
+              className="shrink-0 flex items-center justify-center text-2xl font-black text-white"
+              style={{
+                width:        80,
+                height:       80,
+                borderRadius: '50%',
+                background:   accent,
+                boxShadow:    `0 0 0 3px ${accent}40, 0 0 0 6px ${accent}18`,
+              }}
             >
               {initials}
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-              <h1 className="text-xl font-black text-white leading-tight">{studentRecord?.full_name}</h1>
-              <p className="text-[11px] font-mono text-white/35 mt-0.5">@{studentRecord?.username}</p>
+            <motion.div
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h1 className="text-xl font-black text-white leading-tight">
+                {studentRecord?.full_name}
+              </h1>
+              <p className="text-[11px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                @{studentRecord?.username}
+              </p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {clanInfo && (
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{
-                      background: `${accent}22`,
-                      color: accent,
-                      border: `1px solid ${accent}33`,
+                      background: `${accent}25`,
+                      color:      accent,
+                      border:     `1px solid ${accent}40`,
                     }}
                   >
                     {clanInfo.emoji} {clanInfo.name}
                   </span>
                 )}
-                <span className="text-[10px] text-white/30">{studentRecord?.level}</span>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  {studentRecord?.level}
+                </span>
                 {studentRecord?.class_group && (
                   <>
-                    <span className="text-[10px] text-white/20">·</span>
-                    <span className="text-[10px] text-white/30">{studentRecord.class_group}</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      {studentRecord.class_group}
+                    </span>
                   </>
                 )}
               </div>
             </motion.div>
           </div>
 
-          {/* Level progress */}
+          {/* Milestone level bar */}
           <motion.div
-            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="mt-5 space-y-1.5"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-5"
           >
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="font-bold text-white/70">{level.label}</span>
-              {nextLevel
-                ? <span className="text-white/30">{toNext} CP to {nextLevel.label}</span>
-                : <span className="text-white/30">Max level</span>}
+            <div className="flex items-center justify-between mb-1.5">
+              <span
+                className="text-[11px] font-bold px-2 py-0.5 rounded"
+                style={{ background: accent + '30', color: accent }}
+              >
+                {level.label}
+              </span>
+              {nextLevel ? (
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
+                  {toNext} CP → {nextLevel.label}
+                </span>
+              ) : (
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Max level</span>
+              )}
             </div>
-            <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+
+            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ delay: 0.5, duration: 1, type: 'spring', stiffness: 70, damping: 20 }}
                 className="h-full rounded-full"
-                style={{ background: `linear-gradient(90deg, ${accent}, ${accent}aa)` }}
+                style={{ background: `linear-gradient(90deg, ${accent}, ${accent}cc)` }}
               />
             </div>
-          </motion.div>
 
-          {/* CP total */}
-          <motion.p
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
-            className="text-[11px] text-white/35 mt-2"
-          >
-            {cp.toLocaleString()} CP · joined {joinDate}
-          </motion.p>
+            <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+              {cp.toLocaleString()} CP · joined {joinDate}
+            </p>
+          </motion.div>
         </div>
       </div>
 
-      <div className="px-5 pb-6 space-y-4">
+      <div className="px-5 pt-4 pb-6 space-y-4">
 
-        {/* ── Badges ──────────────────────────────────────── */}
+        {/* ── Badge gallery ────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
           className="rounded-2xl p-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{
+            background: 'var(--fl-card)',
+            border:     '1px solid var(--fl-border)',
+            boxShadow:  'var(--fl-shadow)',
+          }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white">Badges</h2>
-            <span className="text-[11px] text-white/30">
+            <h2 className="text-sm font-bold" style={{ color: 'var(--fl-text)' }}>Badges</h2>
+            <span className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>
               {loading ? '…' : `${earnedKeys.size} / ${allBadges.length}`}
             </span>
           </div>
@@ -328,23 +402,44 @@ export default function ProfilePage() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: i * 0.025 }}
                     title={`${badge.label}: ${badge.description}`}
-                    className="relative aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-default"
+                    className="relative aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-default overflow-hidden"
                     style={earned
-                      ? { background: `${accent}1a`, border: `1px solid ${accent}40` }
-                      : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      ? {
+                          background: `${accent}18`,
+                          border:     `1px solid ${accent}45`,
+                        }
+                      : {
+                          background: 'var(--fl-card-alt)',
+                          border:     '1px solid var(--fl-border)',
+                        }}
                   >
                     <span
                       className="text-xl leading-none"
-                      style={{ filter: earned ? 'none' : 'grayscale(1)', opacity: earned ? 1 : 0.2 }}
+                      style={{
+                        filter:  earned ? 'none' : 'grayscale(1)',
+                        opacity: earned ? 1 : 0.22,
+                      }}
                     >
                       {badge.icon}
                     </span>
                     <span
                       className="text-[8px] font-bold text-center leading-none px-0.5"
-                      style={{ color: earned ? accent : 'rgba(255,255,255,0.2)' }}
+                      style={{ color: earned ? accent : 'var(--fl-text-3)' }}
                     >
                       {badge.label.split(' ')[0]}
                     </span>
+
+                    {/* Lock overlay for unearned */}
+                    {!earned && (
+                      <div
+                        className="absolute inset-0 flex items-end justify-end p-1"
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <span style={{ fontSize: 9, opacity: 0.35 }}>🔒</span>
+                      </div>
+                    )}
+
+                    {/* Earned dot */}
                     {earned && (
                       <div
                         className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
@@ -360,14 +455,20 @@ export default function ProfilePage() {
 
         {/* ── CP History ──────────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.22 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           className="rounded-2xl p-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{
+            background: 'var(--fl-card)',
+            border:     '1px solid var(--fl-border)',
+            boxShadow:  'var(--fl-shadow)',
+          }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white">CP History</h2>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--fl-text)' }}>CP History</h2>
             {history.length > 0 && (
-              <span className="text-[11px] text-white/30">{history.length} awards</span>
+              <span className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>{history.length} awards</span>
             )}
           </div>
 
@@ -387,7 +488,9 @@ export default function ProfilePage() {
           ) : history.length === 0 ? (
             <div className="text-center py-8">
               <span className="text-3xl">🎯</span>
-              <p className="text-sm text-white/25 mt-2">No CP earned yet — attend events to start!</p>
+              <p className="text-sm mt-2" style={{ color: 'var(--fl-text-3)' }}>
+                No CP earned yet — attend events to start!
+              </p>
             </div>
           ) : (
             history.map((award, i) => {
@@ -398,18 +501,22 @@ export default function ProfilePage() {
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.025 }}
-                  className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0"
+                  className="flex items-center gap-3 py-2.5"
+                  style={{ borderBottom: '1px solid var(--fl-border-2)' }}
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 bg-white/[0.06]">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
+                    style={{ background: 'var(--fl-card-alt)' }}
+                  >
                     {emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white/85 truncate">{label}</p>
-                    <p className="text-[11px] text-white/35 truncate leading-snug">{award.note}</p>
+                    <p className="text-sm font-medium truncate" style={{ color: 'var(--fl-text)' }}>{label}</p>
+                    <p className="text-[11px] truncate leading-snug" style={{ color: 'var(--fl-text-3)' }}>{award.note}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-emerald-400">+{award.amount}</p>
-                    <p className="text-[10px] text-white/25">{timeAgo(award.created_at)}</p>
+                    <p className="text-sm font-bold text-emerald-500">+{award.amount}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{timeAgo(award.created_at)}</p>
                   </div>
                 </motion.div>
               )
@@ -419,11 +526,17 @@ export default function ProfilePage() {
 
         {/* ── Change Password ──────────────────────────────── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.26 }}
           className="rounded-2xl p-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{
+            background: 'var(--fl-card)',
+            border:     '1px solid var(--fl-border)',
+            boxShadow:  'var(--fl-shadow)',
+          }}
         >
-          <h2 className="text-sm font-bold text-white mb-4">Change Password</h2>
+          <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--fl-text)' }}>Change Password</h2>
 
           <form onSubmit={handleChangePassword} className="space-y-3" noValidate>
             <PwField
@@ -457,7 +570,7 @@ export default function ProfilePage() {
               whileHover={pwBusy ? {} : { scale: 1.01 }}
               whileTap={pwBusy ? {} : { scale: 0.98 }}
               className="w-full mt-1 py-2.5 rounded-xl text-sm font-bold text-white
-                flex items-center justify-center gap-2 transition-opacity
+                flex items-center justify-center gap-2
                 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: accent }}
             >
@@ -476,9 +589,24 @@ export default function ProfilePage() {
 
         {/* ── Sign out ─────────────────────────────────────── */}
         <motion.button
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
           onClick={signOut}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-white/35 hover:text-white/65 border border-white/[0.07] hover:bg-white/[0.04] transition-all"
+          className="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+          style={{
+            color:      'var(--fl-text-3)',
+            border:     '1px solid var(--fl-border)',
+            background: 'transparent',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'var(--fl-card-alt)'
+            e.currentTarget.style.color = 'var(--fl-text-2)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = 'var(--fl-text-3)'
+          }}
         >
           Sign out
         </motion.button>

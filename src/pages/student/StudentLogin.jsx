@@ -9,6 +9,14 @@ import { CLANS, CLAN_NAMES } from '@/constants/clans'
 // ── Clan panel data in display order ──────────────────────────
 const PANELS = CLAN_NAMES.map(id => CLANS[id])
 
+// Per-clan colour overlays that sit on top of the mascot image
+const CLAN_OVERLAY = {
+  VIPERON: 'rgba(74,124,63,0.5)',
+  CRODON:  'rgba(13,13,13,0.6)',
+  AVERON:  'rgba(10,22,40,0.6)',
+  WOLFRIN: 'rgba(139,0,0,0.5)',
+}
+
 // ── Animations ────────────────────────────────────────────────
 
 const panelVariants = {
@@ -41,7 +49,10 @@ const errorVariants = {
 // ── Sub-components ────────────────────────────────────────────
 
 function ClanPanel({ clan, index }) {
-  const [hovered, setHovered] = useState(false)
+  const [hovered,   setHovered]   = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
+
+  const overlayColor = CLAN_OVERLAY[clan.id] ?? 'rgba(0,0,0,0.55)'
 
   return (
     <motion.div
@@ -51,49 +62,82 @@ function ClanPanel({ clan, index }) {
       animate="visible"
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      className="relative flex-1 flex flex-col items-center justify-end overflow-hidden"
+      // flex-1 in the parent flex container guarantees exactly 25% width (desktop)
+      // or 25% height (mobile), regardless of image dimensions.
+      className="relative flex-1 overflow-hidden"
       style={{ background: clan.colorBg }}
     >
-      {/* Top gradient fade */}
+      {/* ── Mascot image — covers the entire panel ── */}
+      {!imgFailed ? (
+        <motion.img
+          src={`/clans/${clan.id.toLowerCase()}.png`}
+          alt=""
+          animate={{ scale: hovered ? 1.06 : 1 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            position:       'absolute',
+            inset:          0,
+            width:          '100%',
+            height:         '100%',
+            objectFit:      'cover',
+            objectPosition: 'center',
+            display:        'block',
+          }}
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        // Emoji fallback — centred, no size variation
+        <div
+          aria-hidden
+          style={{
+            position:        'absolute',
+            inset:           0,
+            display:         'flex',
+            alignItems:      'center',
+            justifyContent:  'center',
+            fontSize:        'clamp(64px, 10vw, 120px)',
+            opacity:         0.55,
+            pointerEvents:   'none',
+          }}
+        >
+          {clan.emoji}
+        </div>
+      )}
+
+      {/* ── Per-clan colour overlay ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: overlayColor }}
+      />
+
+      {/* ── Dark vignette at top and bottom ── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `linear-gradient(180deg, rgba(0,0,0,0.45) 0%, transparent 40%, rgba(0,0,0,0.3) 100%)`,
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%)',
         }}
       />
 
-      {/* Accent edge highlight on hover */}
+      {/* ── Accent inset border on hover ── */}
       <motion.div
         animate={{ opacity: hovered ? 1 : 0 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.2 }}
         className="absolute inset-0 pointer-events-none"
-        style={{
-          boxShadow: `inset 0 0 0 1.5px ${clan.colorAccent}60`,
-        }}
+        style={{ boxShadow: `inset 0 0 0 2px ${clan.colorAccent}80` }}
       />
 
-      {/* Mascot — large watermark */}
-      <motion.div
-        animate={{ scale: hovered ? 1.08 : 1, opacity: hovered ? 0.18 : 0.1 }}
-        transition={{ duration: 0.4 }}
-        className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
-        style={{ fontSize: 'clamp(80px, 14vw, 160px)', lineHeight: 1 }}
-        aria-hidden
-      >
-        {clan.emoji}
-      </motion.div>
-
-      {/* Clan name + accent strip at bottom */}
-      <div className="relative z-10 w-full pb-6 text-center space-y-1.5">
+      {/* ── Clan name strip at bottom ── */}
+      <div className="absolute bottom-0 inset-x-0 z-10 pb-5 text-center space-y-1.5">
         <motion.div
-          animate={{ scaleX: hovered ? 1 : 0.4, opacity: hovered ? 1 : 0.4 }}
-          transition={{ duration: 0.3 }}
-          className="h-[2px] w-8 mx-auto rounded-full"
+          animate={{ scaleX: hovered ? 1 : 0.35, opacity: hovered ? 1 : 0.4 }}
+          transition={{ duration: 0.25 }}
+          className="h-[2px] w-7 mx-auto rounded-full"
           style={{ background: clan.colorAccent }}
         />
         <p
           className="text-[10px] font-bold tracking-[0.22em] uppercase"
-          style={{ color: hovered ? clan.colorAccent : 'rgba(255,255,255,0.3)' }}
+          style={{ color: hovered ? clan.colorAccent : 'rgba(255,255,255,0.32)' }}
         >
           {clan.name}
         </p>
@@ -163,7 +207,12 @@ export default function StudentLogin() {
     <div className="fixed inset-0 overflow-hidden bg-black">
 
       {/* ── Four clan panels ──────────────────────────── */}
-      <div className="absolute inset-0 flex">
+      {/*
+        Desktop (md+): flex-row — four equal columns (each flex-1 = 25vw)
+        Mobile (<md):  flex-col — four equal rows    (each flex-1 = 25vh)
+        In both cases flex-1 on each panel guarantees identical sizes.
+      */}
+      <div className="absolute inset-0 flex flex-col md:flex-row">
         {PANELS.map((clan, i) => (
           <ClanPanel key={clan.id} clan={clan} index={i} />
         ))}

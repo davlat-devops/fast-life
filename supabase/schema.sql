@@ -75,6 +75,7 @@ create table if not exists public.attendance (
   present     boolean     not null default false,
   cp_awarded  integer     not null default 0,
   finalised   boolean     not null default false,
+  archived    boolean     not null default false,
   marked_at   timestamptz,
   unique(event_id, student_id)
 );
@@ -151,6 +152,7 @@ create index if not exists students_cp_idx         on public.students(cp desc);
 create index if not exists events_date_idx         on public.events(event_date desc);
 create index if not exists attendance_event_idx    on public.attendance(event_id);
 create index if not exists attendance_student_idx  on public.attendance(student_id);
+create index if not exists attendance_archived_idx on public.attendance(student_id, archived);
 create index if not exists cp_awards_student_idx   on public.cp_awards(student_id);
 create index if not exists badges_student_idx      on public.badges(student_id);
 create index if not exists snapshots_month_year_idx on public.monthly_snapshots(year, month);
@@ -308,9 +310,13 @@ $$;
 --       c) write Hall of Fame
 --       d) award badges (clan_champion, monthly_legend, fast_life_elite)
 --       e) apply end-of-month CP bonuses  (pre-reset, so rank is still known)
+--       e2) purge cp_awards — full delete; history is in monthly_snapshots
 --       f) reset all CP to 0
+--       f2) archive attendance — sets archived=true on all finalised rows so
+--           students see an empty feed; admins (service role) still see all rows
 --       g) randomly reshuffle clans
 --       h) give winning-clan head start to their new clan members
+--           (inserts fresh cp_awards rows — these become the new month's first feed entries)
 --       i) recompute clan totals
 create or replace function public.monthly_reset(p_month smallint, p_year smallint)
 returns jsonb
@@ -422,8 +428,24 @@ begin
     order by cp desc limit 5;
   end loop;
 
+  -- e2) purge cp_awards ----------------------------------------
+  -- Every award from the closing month has already been captured in
+  -- monthly_snapshots (step a).  Deleting here gives every student a
+  -- clean activity feed for the new month.  The head-start awards
+  -- inserted in step h will be the first entries of the new month.
+  delete from public.cp_awards;
+
   -- f) reset CP -----------------------------------------------
   update public.students set cp = 0 where is_active;
+
+  -- f2) archive attendance ------------------------------------
+  -- Marks every finalised attendance row as archived so the student
+  -- RLS policy ("not archived") hides it from student queries.
+  -- Admin reads (service-role) bypass RLS and still see the full history.
+  -- Unfinalised rows (future/unprocessed events) are left untouched.
+  update public.attendance
+  set archived = true
+  where finalised = true;
 
   -- g) reshuffle clans ----------------------------------------
   select array_agg(id order by random()) into v_students_arr
@@ -615,6 +637,7 @@ create policy "attendance: own read"
   using (
     not public.is_admin()
     and student_id = public.current_student_id()
+    and not archived
   );
 
 -- ── cp_awards ────────────────────────────────────────────────

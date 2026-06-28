@@ -4,21 +4,54 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
 
+// ── Clan image with fallback ───────────────────────────────────
+
+function ClanImg({ clanId, size = 40 }) {
+  const [err, setErr] = useState(false)
+  if (err || !clanId) {
+    return (
+      <span
+        aria-hidden
+        style={{
+          fontSize: (size ?? 40) * 0.55,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: size,
+          height: size,
+        }}
+      >
+        {CLANS[clanId]?.emoji ?? '⚔️'}
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/clans/${clanId.toLowerCase()}.png`}
+      width={size}
+      height={size}
+      alt=""
+      style={{ objectFit: 'cover', display: 'block' }}
+      onError={() => setErr(true)}
+    />
+  )
+}
+
 function Skeleton({ className }) {
-  return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
+  return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
 }
 
 // ── Podium slot ───────────────────────────────────────────────
-// Display order: 2nd (left), 1st (center), 3rd (right)
-const PODIUM_ORDER = [1, 0, 2] // index into top-3 array
+
+const PODIUM_ORDER = [1, 0, 2]
 
 function PodiumSlot({ student, rank, isMe, accent }) {
   if (!student) return <div className="flex-1" />
 
-  const platformH = rank === 0 ? 'h-20' : rank === 1 ? 'h-14' : 'h-10'
-  const medals    = ['🥇', '🥈', '🥉']
-  const platColor = rank === 0 ? '#C9A227' : rank === 1 ? '#9CA3AF' : '#92613A'
-  const initials  = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const platformH  = rank === 0 ? 80 : rank === 1 ? 56 : 40
+  const medals     = ['🥇', '🥈', '🥉']
+  const platColor  = rank === 0 ? '#C9A227' : rank === 1 ? '#9CA3AF' : '#92613A'
+  const initials   = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   const clanAccent = CLANS[student.clan]?.colorAccent ?? '#555'
 
   return (
@@ -30,29 +63,35 @@ function PodiumSlot({ student, rank, isMe, accent }) {
     >
       <span className="text-xl mb-2">{medals[rank]}</span>
 
-      {/* Avatar */}
       <div
-        className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-black text-white mb-1.5"
+        className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-black text-white mb-1.5"
         style={{
-          background:  clanAccent,
-          boxShadow:   isMe ? `0 0 0 2px ${accent}, 0 0 0 5px ${accent}33` : 'none',
+          background: clanAccent,
+          boxShadow: isMe ? `0 0 0 2px ${accent}, 0 0 0 5px ${accent}33` : 'none',
         }}
       >
         {initials}
       </div>
 
-      <p className={`text-[11px] font-bold truncate w-full text-center px-1 leading-tight ${isMe ? 'text-white' : 'text-white/65'}`}>
+      <p
+        className="text-[11px] font-bold truncate w-full text-center px-1 leading-tight"
+        style={{ color: isMe ? 'var(--fl-text)' : 'var(--fl-text-2)' }}
+      >
         {student.full_name.split(' ')[0]}
       </p>
-      <p className="text-[10px] text-white/30 mb-2">{student.cp.toLocaleString()}</p>
+      <p className="text-[10px] mb-2 tabular-nums" style={{ color: 'var(--fl-text-3)' }}>
+        {student.cp.toLocaleString()}
+      </p>
 
-      {/* Platform */}
-      <div className={`w-full ${platformH} rounded-t-lg`} style={{ background: platColor, opacity: 0.55 }} />
+      <div
+        className="w-full rounded-t-lg"
+        style={{ height: platformH, background: platColor, opacity: 0.55 }}
+      />
     </motion.div>
   )
 }
 
-// ── Row ───────────────────────────────────────────────────────
+// ── Leaderboard row ───────────────────────────────────────────
 
 function LeaderRow({ student, rank, isMe, accent, delay }) {
   const initials  = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -66,14 +105,28 @@ function LeaderRow({ student, rank, isMe, accent, delay }) {
       transition={{ delay, duration: 0.2 }}
       className="flex items-center gap-3 px-4 py-3 rounded-xl"
       style={isMe
-        ? { background: `${accent}15`, border: `1px solid ${accent}33` }
-        : { background: 'rgba(255,255,255,0.02)', border: '1px solid transparent' }}
+        ? {
+            background: `${accent}12`,
+            border: `1px solid ${accent}30`,
+            boxShadow: `0 0 0 1px ${accent}18`,
+          }
+        : {
+            background: 'var(--fl-card)',
+            border: '1px solid var(--fl-border)',
+          }}
     >
       {/* Rank */}
       <div className="w-7 text-center shrink-0">
         {medals[rank]
           ? <span className="text-base">{medals[rank]}</span>
-          : <span className="text-[11px] font-bold text-white/25">#{rank}</span>}
+          : (
+            <span
+              className="text-[11px] font-bold tabular-nums"
+              style={{ color: 'var(--fl-text-3)' }}
+            >
+              #{rank}
+            </span>
+          )}
       </div>
 
       {/* Avatar */}
@@ -86,18 +139,30 @@ function LeaderRow({ student, rank, isMe, accent, delay }) {
 
       {/* Name + clan */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold truncate ${isMe ? 'text-white' : 'text-white/70'}`}>
+        <p
+          className="text-sm font-semibold truncate"
+          style={{ color: isMe ? 'var(--fl-text)' : 'var(--fl-text-2)' }}
+        >
           {student.full_name}
           {isMe && <span className="ml-1.5 text-[10px]" style={{ color: accent }}>(you)</span>}
         </p>
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[10px]">{clanInfo?.emoji}</span>
-          <span className="text-[10px] text-white/28">{clanInfo?.name}</span>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          {/* Tiny clan thumbnail */}
+          <div
+            className="w-4 h-4 rounded overflow-hidden shrink-0"
+            style={{ background: clanInfo?.colorBg ?? '#222' }}
+          >
+            <ClanImg clanId={student.clan} size={16} />
+          </div>
+          <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{clanInfo?.name}</span>
         </div>
       </div>
 
       {/* CP */}
-      <span className="text-sm font-black shrink-0" style={{ color: isMe ? accent : 'rgba(255,255,255,0.45)' }}>
+      <span
+        className="text-sm font-black shrink-0 tabular-nums"
+        style={{ color: isMe ? accent : 'var(--fl-text-2)' }}
+      >
         {student.cp.toLocaleString()}
       </span>
     </motion.div>
@@ -135,20 +200,22 @@ export default function LeaderboardPage() {
     return list.map((s, i) => ({ ...s, rank: i + 1 }))
   }, [all, tab, studentRecord?.clan])
 
-  const top3 = ranked.slice(0, 3)
-  const rest = ranked.slice(3)
+  const top3    = ranked.slice(0, 3)
+  const rest    = ranked.slice(3)
   const myEntry = ranked.find(s => s.id === studentRecord?.id)
 
   return (
-    <div className="min-h-screen bg-brand-dark">
+    <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="px-5 pt-12 pb-4">
+      <div className="px-5 pt-5 pb-3">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-2xl font-black text-white">Leaderboard</h1>
+          <h1 className="text-2xl font-black" style={{ color: 'var(--fl-text)' }}>
+            Leaderboard
+          </h1>
           {myEntry && (
-            <p className="text-sm mt-0.5" style={{ color: accent }}>
-              You're #{myEntry.rank} · {studentRecord.cp.toLocaleString()} CP
+            <p className="text-sm mt-0.5 font-medium" style={{ color: accent }}>
+              You're #{myEntry.rank} · {(studentRecord?.cp ?? 0).toLocaleString()} CP
             </p>
           )}
         </motion.div>
@@ -156,16 +223,18 @@ export default function LeaderboardPage() {
 
       {/* ── Tabs ────────────────────────────────────────── */}
       <div className="px-5 mb-5">
-        <div className="flex rounded-xl overflow-hidden"
-             style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div
+          className="flex rounded-xl overflow-hidden p-1 gap-1"
+          style={{ background: 'var(--fl-card-alt)', border: '1px solid var(--fl-border)' }}
+        >
           {[['overall', 'Overall'], ['clan', 'My Clan']].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
+              className="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
               style={tab === key
-                ? { background: accent, color: '#fff' }
-                : { color: 'rgba(255,255,255,0.35)' }}
+                ? { background: accent, color: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }
+                : { color: 'var(--fl-text-3)', background: 'transparent' }}
             >
               {label}
             </button>
@@ -180,11 +249,11 @@ export default function LeaderboardPage() {
       ) : ranked.length === 0 ? (
         <div className="text-center py-16 space-y-2">
           <span className="text-4xl">🏆</span>
-          <p className="text-sm text-white/25">No students found</p>
+          <p className="text-sm" style={{ color: 'var(--fl-text-3)' }}>No students found</p>
         </div>
       ) : (
         <>
-          {/* ── Podium (overall tab only) ─────────────── */}
+          {/* ── Podium (overall only) ─────────────────── */}
           {tab === 'overall' && top3.length > 0 && (
             <motion.div
               initial={{ opacity: 0 }}

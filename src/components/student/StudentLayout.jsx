@@ -1,13 +1,88 @@
+import { useState } from 'react'
 import { Navigate, NavLink, Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
 import { CLANS } from '@/constants/clans'
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 
-// ── Tab bar icons ─────────────────────────────────────────────
+// ── Clan image with emoji fallback ────────────────────────────
+
+function ClanImg({ clanId, size = 24 }) {
+  const [err, setErr] = useState(false)
+  if (err || !clanId) {
+    return (
+      <span style={{ fontSize: size * 0.75, display: 'block', lineHeight: 1 }}>
+        {CLANS[clanId]?.emoji ?? '⚔️'}
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/clans/${clanId.toLowerCase()}.png`}
+      width={size}
+      height={size}
+      alt=""
+      style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+      onError={() => setErr(true)}
+    />
+  )
+}
+
+// ── Theme toggle ──────────────────────────────────────────────
+
+const SunIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+)
+
+const MoonIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+)
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  return (
+    <button
+      onClick={toggleTheme}
+      aria-label="Toggle theme"
+      style={{
+        background:     'var(--fl-card-alt)',
+        border:         '1px solid var(--fl-border)',
+        borderRadius:   999,
+        width:          34,
+        height:         34,
+        display:        'flex',
+        alignItems:     'center',
+        justifyContent: 'center',
+        cursor:         'pointer',
+        color:          'var(--fl-text-2)',
+        transition:     'background 0.2s',
+      }}
+    >
+      {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+    </button>
+  )
+}
+
+// ── Tab icons ─────────────────────────────────────────────────
+
 const Ic = (props) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
     {...props}
   />
 )
@@ -69,41 +144,81 @@ const TABS = [
   },
 ]
 
-// ── Layout ────────────────────────────────────────────────────
+// ── Inner layout (needs theme context) ────────────────────────
 
-export default function StudentLayout() {
+function StudentLayoutInner() {
   const { loading, studentLoading, session, isStudent, studentRecord } = useAuth()
+  const { theme } = useTheme()
 
   if (loading || studentLoading) return <FullPageLoader />
   if (!session || !isStudent)    return <Navigate to="/" replace />
 
-  // Clan accent for active tab indicator
   const accentColor = studentRecord
     ? (CLANS[studentRecord.clan]?.colorAccent ?? '#CC0000')
     : '#CC0000'
 
-  return (
-    <div className="flex flex-col h-screen bg-brand-dark overflow-hidden">
+  const firstName = studentRecord?.full_name?.split(' ')[0] ?? 'Student'
 
-      {/* Page content */}
+  return (
+    <div
+      className="flex flex-col h-screen overflow-hidden"
+      data-theme={theme}
+      style={{ background: 'var(--fl-bg)' }}
+    >
+      {/* ── Top bar ──────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between px-4 shrink-0"
+        style={{
+          background:    'var(--fl-nav-bg)',
+          borderBottom:  '1px solid var(--fl-border)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          paddingTop:    'max(env(safe-area-inset-top, 0px), 10px)',
+          paddingBottom: 10,
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          {studentRecord?.clan && <ClanImg clanId={studentRecord.clan} size={26} />}
+          <span style={{ color: 'var(--fl-text)', fontSize: 13, fontWeight: 700 }}>
+            {firstName}
+          </span>
+          <span
+            style={{
+              background:   accentColor + '18',
+              color:        accentColor,
+              border:       `1px solid ${accentColor}38`,
+              borderRadius: 999,
+              fontSize:     10,
+              fontWeight:   700,
+              padding:      '2px 8px',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {(studentRecord?.cp ?? 0).toLocaleString()} CP
+          </span>
+        </div>
+        <ThemeToggle />
+      </div>
+
+      {/* ── Page content ─────────────────────────────── */}
       <main className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         <motion.div
           key={location.pathname}
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-full"
         >
           <Outlet />
         </motion.div>
       </main>
 
-      {/* ── Bottom tab bar ──────────────────────────────── */}
+      {/* ── Bottom tab bar ──────────────────────────── */}
       <nav
-        className="fixed bottom-0 inset-x-0 z-30 flex items-end justify-around"
+        className="fixed bottom-0 inset-x-0 z-30 flex items-stretch justify-around"
         style={{
-          background:    'rgba(10,10,10,0.92)',
-          borderTop:     '1px solid rgba(255,255,255,0.07)',
+          background:    'var(--fl-nav-bg)',
+          borderTop:     '1px solid var(--fl-border)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -113,30 +228,36 @@ export default function StudentLayout() {
           <NavLink
             key={to}
             to={to}
-            className="flex-1 flex flex-col items-center gap-1 py-3 group"
+            className="flex-1 flex flex-col items-center justify-center gap-1 relative"
+            style={{ minHeight: 72 }}
           >
             {({ isActive }) => (
               <>
-                {/* Active indicator dot */}
-                <motion.div
-                  animate={{ scaleX: isActive ? 1 : 0, opacity: isActive ? 1 : 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-                  className="absolute top-0 h-[2px] w-8 rounded-full"
-                  style={{ background: accentColor }}
-                />
+                {isActive && (
+                  <motion.div
+                    layoutId="tab-indicator"
+                    className="absolute top-0 rounded-b-full"
+                    style={{
+                      background: accentColor,
+                      height:     3,
+                      left:       '20%',
+                      right:      '20%',
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                  />
+                )}
 
-                {/* Icon */}
-                <span
-                  className="transition-all duration-200"
-                  style={{ color: isActive ? accentColor : 'rgba(255,255,255,0.3)' }}
-                >
+                <span style={{ color: isActive ? accentColor : 'var(--fl-icon-dim)', transition: 'color 0.2s' }}>
                   {icon}
                 </span>
-
-                {/* Label */}
                 <span
-                  className="text-[10px] font-semibold tracking-wide transition-all duration-200"
-                  style={{ color: isActive ? accentColor : 'rgba(255,255,255,0.25)' }}
+                  style={{
+                    fontSize:      10,
+                    fontWeight:    600,
+                    letterSpacing: '0.04em',
+                    color:         isActive ? accentColor : 'var(--fl-text-3)',
+                    transition:    'color 0.2s',
+                  }}
                 >
                   {label}
                 </span>
@@ -146,5 +267,15 @@ export default function StudentLayout() {
         ))}
       </nav>
     </div>
+  )
+}
+
+// ── Exported layout wraps with ThemeProvider ──────────────────
+
+export default function StudentLayout() {
+  return (
+    <ThemeProvider>
+      <StudentLayoutInner />
+    </ThemeProvider>
   )
 }

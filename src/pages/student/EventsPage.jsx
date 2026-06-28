@@ -4,24 +4,59 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
 
-const CAT_STYLE = {
-  English:     { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
-  IELTS:       { color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-  Competition: { color: '#f87171', bg: 'rgba(248,113,113,0.12)' },
-  Volunteer:   { color: '#4ade80', bg: 'rgba(74,222,128,0.12)'  },
-  Korean:      { color: '#fb923c', bg: 'rgba(251,146,60,0.12)'  },
-  Russian:     { color: '#f472b6', bg: 'rgba(244,114,182,0.12)' },
-  Math:        { color: '#a3e635', bg: 'rgba(163,230,53,0.12)'  },
+// ── Category styles + icons ────────────────────────────────────
+
+const CAT_META = {
+  English:     { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',   icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+  )},
+  IELTS:       { color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)',   icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+    </svg>
+  )},
+  Competition: { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',    icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="8" r="6"/>
+      <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+    </svg>
+  )},
+  Volunteer:   { color: '#22c55e', bg: 'rgba(34,197,94,0.1)',    icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  )},
+  Korean:      { color: '#f97316', bg: 'rgba(249,115,22,0.1)',   icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  )},
+  Russian:     { color: '#ec4899', bg: 'rgba(236,72,153,0.1)',   icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M3 5h12M3 12h12M3 19h5M21 5l-3 14-4-6-4 6"/>
+    </svg>
+  )},
+  Math:        { color: '#84cc16', bg: 'rgba(132,204,22,0.1)',   icon: (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  )},
 }
 
 const CATEGORIES = ['All', 'English', 'IELTS', 'Competition', 'Volunteer', 'Korean', 'Russian', 'Math']
 
 function Skeleton({ className }) {
-  return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
+  return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
 }
 
 function EventCard({ event, myAttendance, accent, delay }) {
-  const cat       = CAT_STYLE[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.12)' }
+  const cat       = CAT_META[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.1)', icon: null }
   const eventDay  = new Date(event.event_date + 'T00:00:00')
   const today     = new Date(new Date().toDateString())
   const isPast    = eventDay < today
@@ -36,53 +71,68 @@ function EventCard({ event, myAttendance, accent, delay }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.22 }}
       className="flex items-center gap-4 p-4 rounded-2xl"
-      style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{
+        background:  'var(--fl-card)',
+        border:      '1px solid var(--fl-border)',
+        boxShadow:   'var(--fl-shadow)',
+        borderLeft:  `4px solid ${cat.color}`,
+      }}
     >
       {/* Date block */}
       <div className="shrink-0 w-10 text-center">
-        <p className="text-[9px] font-bold text-white/30 leading-none tracking-widest">{month}</p>
-        <p className="text-2xl font-black text-white leading-tight">{day}</p>
+        <p
+          className="text-[9px] font-bold leading-none tracking-widest"
+          style={{ color: 'var(--fl-text-3)' }}
+        >
+          {month}
+        </p>
+        <p className="text-2xl font-black leading-tight" style={{ color: 'var(--fl-text)' }}>
+          {day}
+        </p>
       </div>
 
-      <div className="w-px h-10 bg-white/[0.07] shrink-0" />
+      <div className="w-px h-10 shrink-0" style={{ background: 'var(--fl-border)' }} />
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate leading-snug">{event.title}</p>
+        <p className="text-sm font-semibold truncate leading-snug" style={{ color: 'var(--fl-text)' }}>
+          {event.title}
+        </p>
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+            className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
             style={{ color: cat.color, background: cat.bg }}
           >
+            {cat.icon}
             {event.category}
           </span>
           {event.room && (
-            <span className="text-[10px] text-white/25">{event.room}</span>
+            <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.room}</span>
           )}
           {event.event_time && (
-            <span className="text-[10px] text-white/25">{event.event_time.slice(0, 5)}</span>
+            <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.event_time.slice(0, 5)}</span>
           )}
         </div>
       </div>
 
-      {/* Status / CP */}
+      {/* Status / CP badge */}
       <div className="shrink-0 text-right">
         {attended ? (
           <div>
-            <p className="text-[11px] font-bold text-emerald-400">✓ Attended</p>
+            <p className="text-[11px] font-bold text-emerald-500">✓ Attended</p>
             {myAttendance.cp_awarded > 0 && (
-              <p className="text-[10px] text-emerald-400/50 mt-0.5">+{myAttendance.cp_awarded} CP</p>
+              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(34,197,94,0.6)' }}>+{myAttendance.cp_awarded} CP</p>
             )}
           </div>
         ) : isPast && event.finalised ? (
-          <p className="text-[11px] text-white/20">Missed</p>
+          <p className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>Missed</p>
         ) : (
           <div
             className="px-2 py-1.5 rounded-lg text-center"
             style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
           >
             <p className="text-[11px] font-black" style={{ color: accent }}>+{event.cp_value}</p>
-            <p className="text-[9px] text-white/30 leading-none mt-0.5">CP</p>
+            <p className="text-[9px] leading-none mt-0.5" style={{ color: 'var(--fl-text-3)' }}>CP</p>
           </div>
         )}
       </div>
@@ -136,30 +186,34 @@ export default function EventsPage() {
   ), [filtered, tab])
 
   return (
-    <div className="min-h-screen bg-brand-dark">
+    <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="px-5 pt-12 pb-4">
+      <div className="px-5 pt-5 pb-3">
         <motion.h1
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-black text-white"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-2xl font-black"
+          style={{ color: 'var(--fl-text)' }}
         >
           Events
         </motion.h1>
       </div>
 
-      {/* ── Tabs ────────────────────────────────────────── */}
+      {/* ── Upcoming / Past tabs ─────────────────────────── */}
       <div className="px-5 mb-4">
-        <div className="flex rounded-xl overflow-hidden"
-             style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <div
+          className="flex rounded-xl overflow-hidden p-1 gap-1"
+          style={{ background: 'var(--fl-card-alt)', border: '1px solid var(--fl-border)' }}
+        >
           {[['upcoming', 'Upcoming'], ['past', 'Past']].map(([key, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
+              className="flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
               style={tab === key
-                ? { background: accent, color: '#fff' }
-                : { color: 'rgba(255,255,255,0.35)' }}
+                ? { background: accent, color: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }
+                : { color: 'var(--fl-text-3)', background: 'transparent' }}
             >
               {label}
             </button>
@@ -169,28 +223,41 @@ export default function EventsPage() {
 
       {/* ── Category pills ──────────────────────────────── */}
       <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setCategory(cat)}
-            className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
-            style={category === cat
-              ? { background: accent, color: '#fff' }
-              : { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}
-          >
-            {cat}
-          </button>
-        ))}
+        {CATEGORIES.map(cat => {
+          const meta   = CAT_META[cat]
+          const active = category === cat
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
+              style={active
+                ? { background: meta?.color ?? accent, color: '#fff' }
+                : {
+                    background: 'var(--fl-card)',
+                    color: 'var(--fl-text-2)',
+                    border: '1px solid var(--fl-border)',
+                  }}
+            >
+              {meta?.icon && (
+                <span style={{ color: active ? '#fff' : meta.color, display: 'flex' }}>
+                  {meta.icon}
+                </span>
+              )}
+              {cat}
+            </button>
+          )
+        })}
       </div>
 
-      {/* ── List ────────────────────────────────────────── */}
+      {/* ── Event list ──────────────────────────────────── */}
       <div className="px-5 pb-6 space-y-3">
         {loading ? (
           [...Array(5)].map((_, i) => <Skeleton key={i} className="h-[76px] w-full rounded-2xl" />)
         ) : sorted.length === 0 ? (
           <div className="text-center py-16 space-y-2">
             <span className="text-4xl">📅</span>
-            <p className="text-sm text-white/25">
+            <p className="text-sm" style={{ color: 'var(--fl-text-3)' }}>
               {tab === 'upcoming' ? 'No upcoming events' : 'No past events'}
               {category !== 'All' ? ` in ${category}` : ''}
             </p>

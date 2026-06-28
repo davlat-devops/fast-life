@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, useMotionValue, useSpring } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { CLANS } from '@/constants/clans'
 import { LEVEL_THRESHOLDS } from '@/constants/badges'
 
@@ -19,12 +20,12 @@ function getLevelProgress(cp) {
   const nextIdx = LEVELS.findIndex(l => l.key === current.key) + 1
   const next    = LEVELS[nextIdx] ?? null
   if (!next) return { current, next: null, pct: 100, toNext: 0 }
-  const pct   = Math.min(((cp - current.min) / (next.min - current.min)) * 100, 100)
+  const pct    = Math.min(((cp - current.min) / (next.min - current.min)) * 100, 100)
   const toNext = next.min - cp
   return { current, next, pct, toNext }
 }
 
-// ── Formatting ────────────────────────────────────────────────
+// ── Time helper ───────────────────────────────────────────────
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now() - new Date(iso)) / 1000)
@@ -34,21 +35,170 @@ function timeAgo(iso) {
   return `${Math.floor(s / 86400)}d ago`
 }
 
-const REASON_META = {
-  attendance:             { label: 'Attendance',          emoji: '📋' },
-  volunteer:              { label: 'Volunteer',            emoji: '❤️' },
-  competition_1st:        { label: '1st Place',            emoji: '🥇' },
-  competition_2nd:        { label: '2nd Place',            emoji: '🥈' },
-  competition_3rd:        { label: '3rd Place',            emoji: '🥉' },
-  referral:               { label: 'Referral',             emoji: '🤝' },
-  peer_spotlight:         { label: 'Peer Spotlight',       emoji: '⭐' },
-  end_of_month_1st:       { label: '#1 of Month',          emoji: '👑' },
-  end_of_month_top5:      { label: 'Top 5 Overall',        emoji: '💎' },
-  end_of_month_top5_clan: { label: 'Top 5 in Clan',        emoji: '⚔️' },
-  clan_winner_headstart:  { label: 'Clan Head Start',      emoji: '🏆' },
-  perfect_month:          { label: 'Perfect Month',        emoji: '💯' },
+// ── Inline Tabler-style SVG icons ─────────────────────────────
+
+const I = ({ size = 16, children, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+    {...rest}>
+    {children}
+  </svg>
+)
+
+const Icons = {
+  calendarCheck: (s) => (
+    <I size={s}>
+      <rect x="4" y="5" width="16" height="16" rx="2"/>
+      <line x1="16" y1="3" x2="16" y2="7"/>
+      <line x1="8" y1="3" x2="8" y2="7"/>
+      <line x1="4" y1="11" x2="20" y2="11"/>
+      <path d="M9 15l2 2 4-4"/>
+    </I>
+  ),
+  heart: (s) => (
+    <I size={s}>
+      <path d="M19.5 12.572l-7.5 7.428l-7.5-7.428a5 5 0 1 1 7.5-6.566a5 5 0 1 1 7.5 6.572"/>
+    </I>
+  ),
+  trophy: (s) => (
+    <I size={s}>
+      <line x1="8" y1="21" x2="16" y2="21"/>
+      <line x1="12" y1="17" x2="12" y2="21"/>
+      <path d="M7 4h10l1 7a4 4 0 0 1-8 0a4 4 0 0 1-8 0z"/>
+      <path d="M4 7H2v3a3 3 0 0 0 3 3h1M20 7h2v3a3 3 0 0 1-3 3h-1"/>
+    </I>
+  ),
+  star: (s) => (
+    <I size={s}>
+      <path d="M12 17.75l-6.172 3.245l1.179-6.873l-5-4.867l6.9-1l3.086-6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/>
+    </I>
+  ),
+  crown: (s) => (
+    <I size={s}>
+      <path d="M12 6l4 6 5-4-2 12H5L3 8l5 4z"/>
+    </I>
+  ),
+  diamond: (s) => (
+    <I size={s}>
+      <path d="M6 3h12l4 6-10 13L2 9z"/>
+      <path d="M2 9h20M6 3l4 6 2-6 2 6 4-6"/>
+    </I>
+  ),
+  shield: (s) => (
+    <I size={s}>
+      <path d="M12 3L4 7v5c0 5.25 3.75 10.15 8 11 4.25-.85 8-5.75 8-11V7z"/>
+    </I>
+  ),
+  flag: (s) => (
+    <I size={s}>
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+      <line x1="4" y1="22" x2="4" y2="15"/>
+    </I>
+  ),
+  checkCircle: (s) => (
+    <I size={s}>
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M9 12l2 2 4-4"/>
+    </I>
+  ),
+  userPlus: (s) => (
+    <I size={s}>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+      <line x1="19" y1="8" x2="19" y2="14"/>
+      <line x1="22" y1="11" x2="16" y2="11"/>
+    </I>
+  ),
+  sparkle: (s) => (
+    <I size={s}>
+      <path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2zm0-12a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2zm-7 12a6 6 0 0 1 6-6a6 6 0 0 1-6-6a6 6 0 0 1-6 6a6 6 0 0 1 6 6z"/>
+    </I>
+  ),
+  // Stat chip icons
+  trendUp: (s) => (
+    <I size={s}>
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+      <polyline points="16 7 22 7 22 13"/>
+    </I>
+  ),
+  users: (s) => (
+    <I size={s}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </I>
+  ),
+  calendar: (s) => (
+    <I size={s}>
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8"  y1="2" x2="8"  y2="6"/>
+      <line x1="3"  y1="10" x2="21" y2="10"/>
+    </I>
+  ),
+  award: (s) => (
+    <I size={s}>
+      <circle cx="12" cy="8" r="6"/>
+      <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+    </I>
+  ),
+  // Nav icons
+  home: (s) => (
+    <I size={s}>
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </I>
+  ),
+  sun: (s) => (
+    <I size={s}>
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </I>
+  ),
+  moon: (s) => (
+    <I size={s}>
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </I>
+  ),
+  barChart: (s) => (
+    <I size={s}>
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6"  y1="20" x2="6"  y2="14"/>
+    </I>
+  ),
+  user: (s) => (
+    <I size={s}>
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </I>
+  ),
 }
-const getReason = (r) => REASON_META[r] ?? { label: r, emoji: '✨' }
+
+// ── Reason metadata (no emojis, uses icon keys + colors) ──────
+
+const REASON_META = {
+  attendance:             { label: 'Attendance',     iconFn: Icons.calendarCheck, color: '#60a5fa' },
+  volunteer:              { label: 'Volunteer',       iconFn: Icons.heart,         color: '#f87171' },
+  competition_1st:        { label: '1st Place',       iconFn: Icons.trophy,        color: '#C9A227' },
+  competition_2nd:        { label: '2nd Place',       iconFn: Icons.trophy,        color: '#9CA3AF' },
+  competition_3rd:        { label: '3rd Place',       iconFn: Icons.trophy,        color: '#92613A' },
+  referral:               { label: 'Referral',        iconFn: Icons.userPlus,      color: '#a78bfa' },
+  peer_spotlight:         { label: 'Peer Spotlight',  iconFn: Icons.star,          color: '#fbbf24' },
+  end_of_month_1st:       { label: '#1 of Month',     iconFn: Icons.crown,         color: '#C9A227' },
+  end_of_month_top5:      { label: 'Top 5 Overall',   iconFn: Icons.diamond,       color: '#60a5fa' },
+  end_of_month_top5_clan: { label: 'Top 5 in Clan',   iconFn: Icons.shield,        color: '#4ade80' },
+  clan_winner_headstart:  { label: 'Clan Head Start', iconFn: Icons.flag,          color: '#fb923c' },
+  perfect_month:          { label: 'Perfect Month',   iconFn: Icons.checkCircle,   color: '#4ade80' },
+}
+const getReason = (r) => REASON_META[r] ?? { label: r, iconFn: Icons.sparkle, color: '#94a3b8' }
 
 // ── Animated CP counter ────────────────────────────────────────
 
@@ -61,10 +211,7 @@ function CPCounter({ target }) {
   useEffect(() => {
     if (target == null || started.current) return
     started.current = true
-    // Small delay so the panel entrance finishes first
-    const t = setTimeout(() => {
-      raw.set(target)
-    }, 200)
+    const t = setTimeout(() => { raw.set(target) }, 300)
     return () => clearTimeout(t)
   }, [target, raw])
 
@@ -76,86 +223,200 @@ function CPCounter({ target }) {
   return <>{display.toLocaleString()}</>
 }
 
-// ── Level progress bar ────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────
 
-function LevelBar({ cp }) {
-  const { current, next, pct, toNext } = getLevelProgress(cp)
-
+function Skeleton({ w, h, r = 8 }) {
   return (
-    <div className="space-y-1.5">
-      {/* Labels */}
-      <div className="flex items-center justify-between text-[11px]">
-        <span className="font-bold text-white/70">{current.label}</span>
-        {next ? (
-          <span className="text-white/30">{toNext} CP to {next.label}</span>
-        ) : (
-          <span className="text-white/30">Max level</span>
-        )}
-      </div>
+    <div
+      className="animate-pulse"
+      style={{ width: w, height: h, borderRadius: r, background: 'var(--fl-skeleton)', flexShrink: 0 }}
+    />
+  )
+}
 
-      {/* Track */}
-      <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ delay: 0.4, duration: 1, type: 'spring', stiffness: 70, damping: 20 }}
-          className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, #CC0000, #ff3333)' }}
+// ── Hero background (image + color base) ─────────────────────
+
+function HeroBg({ clanId, clanBg }) {
+  const [err, setErr] = useState(false)
+  return (
+    <>
+      <div style={{ position: 'absolute', inset: 0, background: clanBg ?? '#111' }} />
+      {!err && clanId && (
+        <img
+          src={`/clans/${clanId.toLowerCase()}.png`}
+          alt=""
+          style={{
+            position:       'absolute',
+            inset:          0,
+            width:          '100%',
+            height:         '100%',
+            objectFit:      'cover',
+            objectPosition: 'center center',
+            display:        'block',
+          }}
+          onError={() => setErr(true)}
         />
+      )}
+    </>
+  )
+}
+
+// ── Tiny clan image for pill (with fallback) ──────────────────
+
+function TinyClanImg({ clanId, size = 20 }) {
+  const [err, setErr] = useState(false)
+  if (err || !clanId) {
+    return (
+      <span style={{ fontSize: size * 0.65, lineHeight: 1, display: 'block' }}>
+        {CLANS[clanId]?.emoji ?? ''}
+      </span>
+    )
+  }
+  return (
+    <img
+      src={`/clans/${clanId.toLowerCase()}.png`}
+      width={size}
+      height={size}
+      alt=""
+      style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+      onError={() => setErr(true)}
+    />
+  )
+}
+
+// ── Stat chip ─────────────────────────────────────────────────
+
+function StatChip({ iconFn, label, value, accent }) {
+  return (
+    <div
+      style={{
+        display:      'flex',
+        alignItems:   'center',
+        gap:          9,
+        background:   'var(--fl-card)',
+        border:       `1px solid ${accent ? accent + '40' : 'var(--fl-border)'}`,
+        borderRadius: 999,
+        padding:      '10px 18px 10px 13px',
+        flexShrink:   0,
+        boxShadow:    'var(--fl-shadow)',
+        minHeight:    44,
+      }}
+    >
+      <span style={{ color: accent ?? 'var(--fl-text-3)', display: 'flex', alignItems: 'center' }}>
+        {iconFn(18)}
+      </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: 'var(--fl-text-3)', textTransform: 'uppercase', lineHeight: 1.2 }}>
+          {label}
+        </span>
+        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--fl-text)', lineHeight: 1.2 }}>
+          {value}
+        </span>
       </div>
     </div>
   )
 }
 
-// ── Activity feed item ────────────────────────────────────────
+// ── Activity item ─────────────────────────────────────────────
 
-function ActivityItem({ award, delay }) {
-  const { label, emoji } = getReason(award.reason)
+function ActivityItem({ award, delay, accent }) {
+  const meta = getReason(award.reason)
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
+      initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.22 }}
-      className="flex items-center gap-3 py-2.5 border-b border-white/[0.05] last:border-0"
+      style={{
+        display:       'flex',
+        alignItems:    'center',
+        gap:           12,
+        padding:       '10px 0 10px 12px',
+        borderLeft:    `3px solid ${accent}55`,
+        borderBottom:  '1px solid var(--fl-border-2)',
+        marginLeft:    -12,
+      }}
     >
       {/* Icon circle */}
-      <div className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0 bg-white/[0.06]">
-        {emoji}
+      <div
+        style={{
+          width:           44,
+          height:          44,
+          borderRadius:    '50%',
+          background:      meta.color + '1A',
+          border:          `1.5px solid ${meta.color}40`,
+          display:         'flex',
+          alignItems:      'center',
+          justifyContent:  'center',
+          color:           meta.color,
+          flexShrink:      0,
+        }}
+      >
+        {meta.iconFn(18)}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white/85 truncate">{label}</p>
-        <p className="text-[11px] text-white/35 truncate leading-snug">{award.note}</p>
+      {/* Label + note */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--fl-text)', letterSpacing: '-0.01em', margin: 0, lineHeight: 1.3 }}>
+          {meta.label}
+        </p>
+        {award.note && (
+          <p style={{ fontSize: 11, color: 'var(--fl-text-3)', margin: '1px 0 0', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {award.note}
+          </p>
+        )}
       </div>
 
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold text-emerald-400">+{award.amount}</p>
-        <p className="text-[10px] text-white/25">{timeAgo(award.created_at)}</p>
+      {/* CP pill + time */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+        <span
+          style={{
+            background:   'rgba(34,197,94,0.14)',
+            border:       '1.5px solid rgba(34,197,94,0.35)',
+            borderRadius: 999,
+            color:        '#22c55e',
+            fontSize:     13,
+            fontWeight:   800,
+            padding:      '4px 11px',
+            whiteSpace:   'nowrap',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          +{award.amount} CP
+        </span>
+        <span style={{ fontSize: 10, color: 'var(--fl-text-3)' }}>{timeAgo(award.created_at)}</span>
       </div>
     </motion.div>
   )
 }
 
-// ── Skeleton ──────────────────────────────────────────────────
+// ── Quick nav card ─────────────────────────────────────────────
 
-function Skeleton({ className }) {
-  return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
-}
-
-// ── Quick nav card ────────────────────────────────────────────
-
-function NavCard({ to, emoji, label, accent }) {
+function NavCard({ to, iconFn, label, accent }) {
   return (
     <Link to={to}>
       <motion.div
         whileHover={{ scale: 1.03, y: -2 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        className="flex flex-col items-center gap-2 py-4 rounded-2xl border border-white/[0.07] bg-white/[0.03]"
+        style={{
+          display:         'flex',
+          flexDirection:   'column',
+          alignItems:      'center',
+          justifyContent:  'center',
+          gap:             10,
+          padding:         '20px 12px',
+          borderRadius:    16,
+          background:      'var(--fl-card)',
+          border:          '1px solid var(--fl-border)',
+          boxShadow:       'var(--fl-shadow)',
+          cursor:          'pointer',
+        }}
       >
-        <span className="text-2xl">{emoji}</span>
-        <span className="text-[11px] font-semibold text-white/50 uppercase tracking-wider">{label}</span>
+        <span style={{ color: accent ?? '#CC0000' }}>{iconFn(22)}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--fl-text-2)', textTransform: 'uppercase' }}>
+          {label}
+        </span>
       </motion.div>
     </Link>
   )
@@ -165,52 +426,62 @@ function NavCard({ to, emoji, label, accent }) {
 
 export default function StudentDashboard() {
   const { studentRecord } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
-  const [rank,    setRank]    = useState(null)
-  const [total,   setTotal]   = useState(null)
-  const [feed,    setFeed]    = useState([])
-  const [dataReady, setDataReady] = useState(false)
+  const [rank,         setRank]         = useState(null)
+  const [total,        setTotal]        = useState(null)
+  const [feed,         setFeed]         = useState([])
+  const [eventsCount,  setEventsCount]  = useState(null)
+  const [badgeCount,   setBadgeCount]   = useState(null)
+  const [dataReady,    setDataReady]    = useState(false)
 
-  const clanInfo  = CLANS[studentRecord?.clan] ?? null
-  const cp        = studentRecord?.cp ?? 0
+  const clanInfo = CLANS[studentRecord?.clan] ?? null
+  const cp       = studentRecord?.cp ?? 0
+  const accent   = clanInfo?.colorAccent ?? '#CC0000'
 
   useEffect(() => {
     if (!studentRecord) return
 
     async function load() {
-      const [rankRes, totalRes, feedRes] = await Promise.all([
-        // Count students with strictly more CP (= number of people ahead of me)
+      const [rankRes, totalRes, feedRes, eventsRes, badgesRes] = await Promise.all([
         supabase
           .from('students')
           .select('*', { count: 'exact', head: true })
           .gt('cp', cp)
           .eq('is_active', true),
-
-        // Total active students for context
         supabase
           .from('students')
           .select('*', { count: 'exact', head: true })
           .eq('is_active', true),
-
-        // Recent CP activity for this student
         supabase
           .from('cp_awards')
           .select('id, amount, reason, note, created_at')
           .eq('student_id', studentRecord.id)
           .order('created_at', { ascending: false })
           .limit(10),
+        supabase
+          .from('attendance')
+          .select('*', { count: 'exact', head: true })
+          .eq('student_id', studentRecord.id)
+          .eq('present', true)
+          .eq('finalised', true),
+        supabase
+          .from('badges')
+          .select('*', { count: 'exact', head: true })
+          .eq('student_id', studentRecord.id),
       ])
 
       setRank((rankRes.count ?? 0) + 1)
       setTotal(totalRes.count ?? 0)
       setFeed(feedRes.data ?? [])
+      setEventsCount(eventsRes.count ?? 0)
+      setBadgeCount(badgesRes.count ?? 0)
       setDataReady(true)
     }
 
     load()
   }, [studentRecord?.id, cp])
 
-  // Greeting
   const hour = new Date().getHours()
   const greeting =
     hour < 12 ? 'Good morning' :
@@ -218,193 +489,306 @@ export default function StudentDashboard() {
     'Good evening'
 
   const firstName = studentRecord?.full_name?.split(' ')[0] ?? ''
-
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'short', month: 'short', day: 'numeric',
   })
 
+  const { current: level, next: nextLevel, pct: levelPct, toNext } = getLevelProgress(cp)
+
   return (
-    <div className="min-h-screen bg-brand-dark">
+    <div style={{ minHeight: '100vh', background: 'var(--fl-bg)' }}>
 
-      {/* ── Clan-tinted hero header ────────────────────── */}
-      <div
-        className="relative px-5 pt-12 pb-6 overflow-hidden"
-        style={{
-          background: clanInfo
-            ? `linear-gradient(160deg, ${clanInfo.colorBg}cc 0%, ${clanInfo.colorBg}40 60%, transparent 100%)`
-            : 'transparent',
-        }}
-      >
-        {/* Clan mascot watermark */}
-        {clanInfo && (
-          <div
-            className="absolute top-0 right-0 pointer-events-none select-none"
-            style={{ fontSize: 120, lineHeight: 1, opacity: 0.07, transform: 'translate(20%, -15%)' }}
-            aria-hidden
-          >
-            {clanInfo.emoji}
-          </div>
-        )}
+      {/* ═══════════════════════════════════════════════════
+          HERO — 280px+, clan image fills it end-to-end
+          ═══════════════════════════════════════════════════ */}
+      <div style={{ position: 'relative', minHeight: 'clamp(320px, 52vw, 400px)', overflow: 'hidden' }}>
 
-        <div className="relative z-10">
-          {/* Greeting */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-          >
-            <p className="text-sm text-white/40">{today}</p>
-            <h1 className="text-2xl font-black text-white mt-0.5 leading-tight">
-              {greeting}{firstName ? `, ${firstName}` : '!'}
-            </h1>
-          </motion.div>
+        {/* Background layer: clan image covering the full hero */}
+        <HeroBg clanId={studentRecord?.clan} clanBg={clanInfo?.colorBg} />
 
-          {/* Clan chip */}
+        {/* Vignette ONLY at the bottom where text sits — top of image stays vivid */}
+        <div style={{
+          position:   'absolute',
+          inset:      0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.40) 32%, rgba(0,0,0,0.05) 58%, transparent 100%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* ── Top row: clan pill + theme toggle ── */}
+        <div style={{
+          position: 'absolute',
+          top:      0,
+          left:     0,
+          right:    0,
+          padding:  '14px 16px',
+          display:  'flex',
+          alignItems:      'center',
+          justifyContent:  'space-between',
+          zIndex:   10,
+        }}>
+          {/* Clan pill */}
           {clanInfo && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15, duration: 0.3 }}
-              className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, duration: 0.3 }}
               style={{
-                background: `${clanInfo.colorAccent}22`,
-                border: `1px solid ${clanInfo.colorAccent}44`,
+                display:        'flex',
+                alignItems:     'center',
+                gap:            8,
+                background:     `${clanInfo.colorBg ?? '#111'}CC`,
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+                border:         `1px solid ${accent}50`,
+                borderRadius:   999,
+                padding:        '4px 14px 4px 6px',
+                height:         44,
               }}
             >
-              <span className="text-sm">{clanInfo.emoji}</span>
-              <span
-                className="text-xs font-bold tracking-wider"
-                style={{ color: clanInfo.colorAccent }}
-              >
+              <TinyClanImg clanId={studentRecord?.clan} size={36} />
+              <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.04em', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
                 {clanInfo.name}
               </span>
             </motion.div>
           )}
+
+          {/* Theme toggle — glassmorphism, always dark since hero is dark */}
+          <motion.button
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            style={{
+              background:     'rgba(0,0,0,0.42)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border:         '1px solid rgba(255,255,255,0.2)',
+              borderRadius:   999,
+              width:          36,
+              height:         36,
+              display:        'flex',
+              alignItems:     'center',
+              justifyContent: 'center',
+              cursor:         'pointer',
+              color:          'rgba(255,255,255,0.85)',
+            }}
+          >
+            {theme === 'dark' ? Icons.sun(16) : Icons.moon(16)}
+          </motion.button>
         </div>
-      </div>
 
-      <div className="px-5 pb-6 space-y-4">
-
-        {/* ── CP card ──────────────────────────────────── */}
+        {/* ── Bottom content: name, CP number, level ── */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.35 }}
-          className="rounded-2xl p-5 space-y-4"
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            background: '#161616',
-            border: `1px solid ${clanInfo ? clanInfo.colorAccent + '30' : 'rgba(255,255,255,0.07)'}`,
+            position: 'absolute',
+            bottom:   0,
+            left:     0,
+            right:    0,
+            padding:  '0 20px 20px',
+            zIndex:   10,
           }}
         >
-          {/* CP number */}
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30 mb-1">
-                Community Points
-              </p>
-              <div
-                className="text-5xl font-black leading-none tabular-nums"
-                style={{ color: clanInfo?.colorAccent ?? '#CC0000' }}
-              >
-                {studentRecord ? <CPCounter target={cp} /> : <Skeleton className="w-24 h-12" />}
-              </div>
-            </div>
+          {/* Date */}
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 2px' }}>
+            {today}
+          </p>
 
-            {/* Rank badge */}
-            <div className="text-right">
-              <p className="text-[10px] text-white/25 uppercase tracking-widest mb-1">Rank</p>
-              {dataReady ? (
-                <div>
-                  <span className="text-2xl font-black text-white">
-                    #{rank}
-                  </span>
-                  <span className="text-sm text-white/30 ml-1">/ {total}</span>
-                </div>
-              ) : (
-                <Skeleton className="w-16 h-7 ml-auto" />
-              )}
+          {/* Student name */}
+          <h1 style={{ color: '#fff', fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, margin: '0 0 10px' }}>
+            {greeting}{firstName ? `, ${firstName}` : ''}
+          </h1>
+
+          {/* CP + level row */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 12 }}>
+            {/* Animated CP */}
+            <div style={{ color: accent, fontSize: 56, fontWeight: 900, lineHeight: 1, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>
+              {studentRecord ? <CPCounter target={cp} /> : '–'}
+            </div>
+            <div style={{ paddingBottom: 6 }}>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', lineHeight: 1 }}>
+                CP
+              </div>
+              {/* Level pill */}
+              <div style={{
+                marginTop:      4,
+                background:     accent + '28',
+                backdropFilter: 'blur(6px)',
+                border:         `1px solid ${accent}55`,
+                borderRadius:   999,
+                padding:        '2px 9px',
+                color:          accent,
+                fontSize:       10,
+                fontWeight:     700,
+                letterSpacing:  '0.05em',
+                display:        'inline-block',
+              }}>
+                {level.label}
+              </div>
             </div>
           </div>
 
-          {/* Level bar */}
-          {studentRecord ? (
-            <LevelBar cp={cp} />
+          {/* Level progress bar */}
+          <div style={{ maxWidth: 230 }}>
+            <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${levelPct}%` }}
+                transition={{ delay: 0.5, duration: 1, type: 'spring', stiffness: 70, damping: 20 }}
+                style={{ height: '100%', borderRadius: 999, background: accent }}
+              />
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10, margin: '4px 0 0' }}>
+              {nextLevel ? `${toNext.toLocaleString()} CP to ${nextLevel.label}` : 'Max level reached'}
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════
+          STAT CHIPS — horizontal scroll row
+          ═══════════════════════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18, duration: 0.3 }}
+        className="overflow-x-auto scrollbar-hide"
+        style={{ paddingTop: 16 }}
+      >
+        <div style={{ display: 'flex', gap: 10, paddingLeft: 20, paddingRight: 20, paddingBottom: 4 }}>
+          {/* Rank */}
+          {dataReady ? (
+            <StatChip
+              iconFn={Icons.trendUp}
+              label="Rank"
+              value={`#${rank} / ${total}`}
+              accent={accent}
+            />
           ) : (
-            <div className="space-y-1.5">
-              <div className="flex justify-between">
-                <Skeleton className="w-16 h-3" />
-                <Skeleton className="w-24 h-3" />
-              </div>
-              <Skeleton className="w-full h-1.5" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--fl-card)', border: '1px solid var(--fl-border)', borderRadius: 999, padding: '10px 18px 10px 13px', flexShrink: 0, minHeight: 44 }}>
+              <Skeleton w={14} h={14} r={4} />
+              <Skeleton w={60} h={22} r={6} />
             </div>
           )}
 
-          {/* Level + class group meta */}
-          <div className="flex items-center gap-3 pt-1">
-            <div
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold"
-              style={{
-                background: 'rgba(255,255,255,0.06)',
-                color: 'rgba(255,255,255,0.6)',
-              }}
-            >
-              <span>{studentRecord?.level ?? '–'}</span>
-            </div>
-            <span className="text-xs text-white/30">{studentRecord?.class_group ?? ''}</span>
-          </div>
-        </motion.div>
+          {/* Clan */}
+          {clanInfo && (
+            <StatChip
+              iconFn={Icons.shield}
+              label="Clan"
+              value={clanInfo.name}
+              accent={accent}
+            />
+          )}
 
-        {/* ── Activity feed ─────────────────────────────── */}
+          {/* Events attended */}
+          {dataReady ? (
+            <StatChip
+              iconFn={Icons.calendar}
+              label="Events"
+              value={eventsCount}
+              accent="#60a5fa"
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--fl-card)', border: '1px solid var(--fl-border)', borderRadius: 999, padding: '10px 18px 10px 13px', flexShrink: 0, minHeight: 44 }}>
+              <Skeleton w={14} h={14} r={4} />
+              <Skeleton w={55} h={22} r={6} />
+            </div>
+          )}
+
+          {/* Badges */}
+          {dataReady ? (
+            <StatChip
+              iconFn={Icons.award}
+              label="Badges"
+              value={badgeCount}
+              accent="#fbbf24"
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'var(--fl-card)', border: '1px solid var(--fl-border)', borderRadius: 999, padding: '10px 18px 10px 13px', flexShrink: 0, minHeight: 44 }}>
+              <Skeleton w={14} h={14} r={4} />
+              <Skeleton w={55} h={22} r={6} />
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      <div style={{ padding: '12px 20px 24px' }}>
+
+        {/* ═════════════════════════════════════════════════
+            RECENT ACTIVITY
+            ═════════════════════════════════════════════════ */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.35 }}
-          className="rounded-2xl p-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+          transition={{ delay: 0.26, duration: 0.32 }}
+          style={{
+            borderRadius: 16,
+            padding:      '16px 16px 4px 16px',
+            background:   'var(--fl-card)',
+            border:       '1px solid var(--fl-border)',
+            boxShadow:    'var(--fl-shadow)',
+            marginBottom: 12,
+          }}
         >
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-bold text-white">Recent Activity</h2>
-            <Link to="/profile" className="text-[11px] text-white/30 hover:text-white/60 transition-colors">
-              See all →
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--fl-text)', letterSpacing: '-0.02em', margin: 0 }}>
+              Recent Activity
+            </h2>
+            <Link
+              to="/profile"
+              style={{ fontSize: 11, fontWeight: 600, color: accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}
+            >
+              See all
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </Link>
           </div>
 
           {!dataReady ? (
-            <div className="space-y-3">
+            <div style={{ paddingBottom: 12 }}>
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-3 py-2">
-                  <Skeleton className="w-8 h-8 rounded-full shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <Skeleton className="w-3/4 h-3" />
-                    <Skeleton className="w-1/2 h-2.5" />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--fl-border-2)' }}>
+                  <Skeleton w={44} h={44} r={999} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <Skeleton w="70%" h={12} r={4} />
+                    <Skeleton w="45%" h={10} r={4} />
                   </div>
-                  <Skeleton className="w-10 h-4 shrink-0" />
+                  <Skeleton w={56} h={22} r={999} />
                 </div>
               ))}
             </div>
           ) : feed.length === 0 ? (
-            <div className="text-center py-8 space-y-2">
-              <span className="text-3xl">🎯</span>
-              <p className="text-sm text-white/30">No activity yet — attend events to earn CP!</p>
+            <div style={{ textAlign: 'center', padding: '24px 0 20px', color: 'var(--fl-text-3)', fontSize: 13 }}>
+              <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center', color: 'var(--fl-text-3)' }}>
+                {Icons.calendar(32)}
+              </div>
+              No activity yet — attend events to earn CP!
             </div>
           ) : (
-            feed.map((award, i) => (
-              <ActivityItem key={award.id} award={award} delay={i * 0.04} />
-            ))
+            <div style={{ paddingLeft: 12, marginLeft: -12 }}>
+              {feed.map((award, i) => (
+                <ActivityItem key={award.id} award={award} delay={i * 0.04} accent={accent} />
+              ))}
+            </div>
           )}
         </motion.div>
 
-        {/* ── Quick nav grid ─────────────────────────────── */}
+        {/* ═════════════════════════════════════════════════
+            QUICK NAV 2×2 GRID
+            ═════════════════════════════════════════════════ */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.35 }}
-          className="grid grid-cols-4 gap-3"
+          transition={{ delay: 0.34, duration: 0.32 }}
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
         >
-          <NavCard to="/clan"        emoji={clanInfo?.emoji ?? '👥'} label="Clan"   accent={clanInfo?.colorAccent} />
-          <NavCard to="/events"      emoji="📅"                       label="Events" />
-          <NavCard to="/leaderboard" emoji="🏆"                       label="Ranks"  />
-          <NavCard to="/profile"     emoji="🎖️"                       label="Badges" />
+          <NavCard to="/clan"        iconFn={Icons.users}    label="My Clan"  accent={accent} />
+          <NavCard to="/events"      iconFn={Icons.calendar} label="Events"   accent={accent} />
+          <NavCard to="/leaderboard" iconFn={Icons.barChart} label="Rankings" accent={accent} />
+          <NavCard to="/profile"     iconFn={Icons.user}     label="Profile"  accent={accent} />
         </motion.div>
 
       </div>
