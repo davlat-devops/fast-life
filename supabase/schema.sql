@@ -581,6 +581,13 @@ create policy "students: own row read"
     and auth_user_id = auth.uid()
   );
 
+-- Allows students to see other students for leaderboard + clan pages.
+-- Rows for all active students are visible; phone/age/class_group are
+-- exposed at the row level (PostgreSQL RLS cannot restrict columns).
+create policy "students: authenticated read"
+  on public.students for select
+  using (auth.uid() is not null);
+
 -- ── events ───────────────────────────────────────────────────
 -- All authenticated users read. Admins write.
 

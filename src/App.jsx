@@ -11,6 +11,10 @@ import StudentManagement  from '@/pages/admin/StudentManagement'
 import StudentLogin       from '@/pages/student/StudentLogin'
 import StudentLayout      from '@/components/student/StudentLayout'
 import StudentDashboard   from '@/pages/student/StudentDashboard'
+import ClanPage           from '@/pages/student/ClanPage'
+import EventsPage         from '@/pages/student/EventsPage'
+import LeaderboardPage    from '@/pages/student/LeaderboardPage'
+import ProfilePage        from '@/pages/student/ProfilePage'
 
 const Placeholder = ({ label }) => (
   <div className="p-8 opacity-50 font-mono">
@@ -33,10 +37,10 @@ export default function App() {
             {/* ── Student app (bottom-tab layout, auth-guarded in StudentLayout) */}
             <Route element={<StudentLayout />}>
               <Route path="/dashboard"   element={<StudentDashboard />} />
-              <Route path="/clan"        element={<Placeholder label="Clan Page" />} />
-              <Route path="/events"      element={<Placeholder label="Events" />} />
-              <Route path="/leaderboard" element={<Placeholder label="Leaderboard" />} />
-              <Route path="/profile"     element={<Placeholder label="Profile" />} />
+              <Route path="/clan"        element={<ClanPage />} />
+              <Route path="/events"      element={<EventsPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage />} />
+              <Route path="/profile"     element={<ProfilePage />} />
             </Route>
 
             {/* ── Admin login (standalone — no sidebar) ───── */}
