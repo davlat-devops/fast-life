@@ -360,7 +360,7 @@ begin
         top_student_id = excluded.top_student_id;
 
   -- d) badges -------------------------------------------------
-  update public.clans set crown = false;
+  update public.clans set crown = false where id = any(v_clans);
   update public.clans set crown = true where id = v_winner_clan;
 
   insert into public.badges (student_id, badge_key)
@@ -456,7 +456,8 @@ begin
     select coalesce(sum(s.cp), 0)
     from public.students s
     where s.clan = c.id and s.is_active
-  );
+  )
+  where c.id = any(v_clans);
 
   return jsonb_build_object(
     'success',      true,

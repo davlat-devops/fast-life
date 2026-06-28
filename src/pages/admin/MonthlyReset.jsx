@@ -655,7 +655,11 @@ export default function MonthlyReset() {
     setConfirm('')
 
     try {
-      const { data, error } = await supabase.rpc('monthly_reset')
+      const now = new Date()
+      const { data, error } = await supabase.rpc('monthly_reset', {
+        p_month: now.getMonth() + 1,   // 1–12, matches function parameter name
+        p_year:  now.getFullYear(),
+      })
       if (error) throw error
       setResult(data)
       setPhase('done')
