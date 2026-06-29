@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { CLANS } from '@/constants/clans'
 import { LEVEL_THRESHOLDS } from '@/constants/badges'
+import HeroSlideshow from '@/components/student/HeroSlideshow'
 
 // ── Level helpers ─────────────────────────────────────────────
 
@@ -31,31 +32,6 @@ function timeAgo(iso) {
   if (s < 3600)  return `${Math.floor(s / 60)}m ago`
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
-}
-
-// ── Clan gradient themes ──────────────────────────────────────
-
-const CLAN_THEME = {
-  VIPERON: {
-    bg:    'linear-gradient(160deg, #071a0c 0%, #0d3320 55%, #061508 100%)',
-    blob1: 'rgba(74,124,63,0.55)',
-    blob2: 'rgba(34,197,94,0.25)',
-  },
-  CRODON: {
-    bg:    'linear-gradient(160deg, #040d1c 0%, #0a1f4d 55%, #030a14 100%)',
-    blob1: 'rgba(59,130,246,0.50)',
-    blob2: 'rgba(37,99,235,0.30)',
-  },
-  AVERON: {
-    bg:    'linear-gradient(160deg, #0d0520 0%, #251868 55%, #080315 100%)',
-    blob1: 'rgba(124,58,237,0.55)',
-    blob2: 'rgba(167,139,250,0.25)',
-  },
-  WOLFRIN: {
-    bg:    'linear-gradient(160deg, #1a0505 0%, #4a0f0f 55%, #120404 100%)',
-    blob1: 'rgba(185,28,28,0.55)',
-    blob2: 'rgba(239,68,68,0.28)',
-  },
 }
 
 // ── Inline SVG icon set ───────────────────────────────────────
@@ -133,48 +109,6 @@ function Skeleton({ w, h, r = 8 }) {
   return (
     <div className="animate-pulse"
       style={{ width: w, height: h, borderRadius: r, background: 'var(--fl-skeleton)', flexShrink: 0 }} />
-  )
-}
-
-// ── Hero: animated gradient mesh ──────────────────────────────
-
-function HeroMesh({ clanId, accent }) {
-  const theme = CLAN_THEME[clanId] ?? {
-    bg:    'linear-gradient(160deg, #0a0a0f 0%, #1a0a1a 100%)',
-    blob1: 'rgba(200,0,0,0.35)',
-    blob2: 'rgba(100,0,0,0.2)',
-  }
-
-  return (
-    <>
-      <div style={{ position: 'absolute', inset: 0, background: theme.bg }} />
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        <div style={{
-          position: 'absolute', width: 400, height: 400, borderRadius: '50%',
-          top: '-30%', left: '-15%',
-          background: `radial-gradient(circle, ${theme.blob1} 0%, transparent 70%)`,
-          filter: 'blur(50px)',
-          animation: 'adMeshA 18s ease-in-out infinite',
-        }}/>
-        <div style={{
-          position: 'absolute', width: 320, height: 320, borderRadius: '50%',
-          bottom: '-20%', right: '-5%',
-          background: `radial-gradient(circle, ${theme.blob2} 0%, transparent 70%)`,
-          filter: 'blur(40px)',
-          animation: 'adMeshB 22s ease-in-out infinite',
-        }}/>
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${accent}14 0%, transparent 70%)`,
-          animation: 'adMeshC 26s ease-in-out infinite',
-        }}/>
-      </div>
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to top, var(--fl-bg) 0%, rgba(0,0,0,0.45) 30%, transparent 65%)',
-        pointerEvents: 'none',
-      }}/>
-    </>
   )
 }
 
@@ -414,7 +348,12 @@ export default function StudentDashboard() {
           ════════════════════════════════════════════════ */}
       <div style={{ position: 'relative', minHeight: 'clamp(220px, 45vh, 300px)', overflow: 'hidden' }}>
 
-        <HeroMesh clanId={studentRecord?.clan} accent={accent} />
+        <HeroSlideshow />
+        {/* Bottom fade blends photo into page background */}
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(to top, var(--fl-bg) 0%, rgba(0,0,0,0.18) 40%, transparent 72%)',
+        }} />
 
         {/* ── Top row: clan badge + rank badge + theme toggle ── */}
         <div style={{

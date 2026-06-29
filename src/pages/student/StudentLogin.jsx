@@ -1,60 +1,20 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import logo from '@/assets/logo.png'
+import HeroSlideshow from '@/components/student/HeroSlideshow'
 
-// ── Clan slideshow ────────────────────────────────────────────
-
-const SLIDES = [
-  { src: '/clans/wolfrin.png',  tint: 'rgba(80,0,0,0.5)'     },
-  { src: '/clans/averon.png',   tint: 'rgba(5,12,28,0.5)'    },
-  { src: '/clans/viperon.png',  tint: 'rgba(10,35,15,0.5)'   },
-  { src: '/clans/crodon.png',   tint: 'rgba(5,5,5,0.55)'     },
-]
+// ── Background slideshow with overlays ───────────────────────
 
 function ClanSlideshow() {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => setCurrent(i => (i + 1) % SLIDES.length), 3000)
-    return () => clearInterval(id)
-  }, [])
-
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {SLIDES.map((slide, i) => (
-        <AnimatePresence key={i}>
-          {current === i && (
-            <motion.div
-              key={`bg-${i}`}
-              initial={{ opacity: 0, scale: 1.0 }}
-              animate={{ opacity: 1, scale: 1.05 }}
-              exit={{ opacity: 0 }}
-              transition={{ opacity: { duration: 1.0, ease: 'easeInOut' }, scale: { duration: 3.5, ease: 'linear' } }}
-              style={{ position: 'absolute', inset: 0 }}
-            >
-              <img
-                src={slide.src}
-                alt=""
-                style={{
-                  position: 'absolute', inset: 0,
-                  width: '100%', height: '100%',
-                  objectFit: 'cover', objectPosition: 'center',
-                }}
-              />
-              <div style={{ position: 'absolute', inset: 0, background: slide.tint }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ))}
+      <HeroSlideshow overlay="rgba(0,0,0,0)" />
 
       {/* Heavy dark overlay */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'rgba(0,0,0,0.70)',
-      }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.70)' }} />
 
       {/* Red edge vignette */}
       <div style={{
