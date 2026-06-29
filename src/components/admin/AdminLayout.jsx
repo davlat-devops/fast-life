@@ -51,8 +51,7 @@ function Sidebar({ user, onSignOut }) {
         <img
           src={logo}
           alt="Fast Education"
-          className="h-12 w-auto object-contain"
-          style={{ filter: 'brightness(0) invert(1)' }}
+          style={{ height: 48, width: 'auto', objectFit: 'contain' }}
         />
       </div>
 
