@@ -207,7 +207,13 @@ export default function AdminLogin() {
       return
     }
 
-    if (data?.user?.user_metadata?.role !== 'admin') {
+    // Verify the signed-in user is an admin via the server-side RPC.
+    // is_admin() reads the JWT claim user_metadata->>'role' = 'admin'.
+    const { data: isAdminOk, error: rpcErr } = await supabaseAdminAuth.rpc('is_admin')
+    if (rpcErr) {
+      console.error('[AdminLogin] is_admin rpc error:', rpcErr)
+    }
+    if (!isAdminOk) {
       await supabaseAdminAuth.auth.signOut()
       setError('This portal is for authorised staff only.')
       setBusy(false)
