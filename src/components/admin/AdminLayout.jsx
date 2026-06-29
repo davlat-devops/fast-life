@@ -1,6 +1,6 @@
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { LayoutDashboard, Users, Calendar, Star, BarChart3, RefreshCw, Sun, Moon, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Calendar, Star, BarChart3, RefreshCw, Shield, Sun, Moon, LogOut } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
@@ -13,6 +13,7 @@ const NAV = [
   { to: '/admin/cp',        label: 'CP Awards',    Icon: Star            },
   { to: '/admin/rankings',  label: 'Rankings',     Icon: BarChart3       },
   { to: '/admin/reset',     label: 'Monthly Reset',Icon: RefreshCw       },
+  { to: '/admin/admins',    label: 'Admins',       Icon: Shield          },
 ]
 
 // ── Theme Toggle ──────────────────────────────────────────────
