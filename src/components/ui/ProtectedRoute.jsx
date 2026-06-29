@@ -11,11 +11,10 @@ export function GuestAdminRoute({ children }) {
   return children
 }
 
-/** Student login page guard — bounces already-authenticated users to their home. */
+/** Student login page guard — only redirects authenticated students. Admins may visit freely. */
 export function GuestStudentRoute({ children }) {
-  const { loading, isAdmin, isStudent } = useAuth()
+  const { loading, isStudent } = useAuth()
   if (loading)   return <FullPageLoader />
-  if (isAdmin)   return <Navigate to="/admin/dashboard" replace />
   if (isStudent) return <Navigate to="/dashboard" replace />
   return children
 }
