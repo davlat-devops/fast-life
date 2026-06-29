@@ -281,67 +281,90 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
       className="rounded-2xl p-6 space-y-5"
-      style={{ background: '#160808', border: '1px solid rgba(204,0,0,0.25)' }}
+      style={{
+        background: 'var(--ad-red-dim)',
+        border: '1px solid rgba(204,0,0,0.3)',
+        backdropFilter: 'blur(12px)',
+      }}
     >
       {/* Warning */}
       <div className="flex items-start gap-3">
-        <svg className="shrink-0 text-red-400 mt-0.5" width="18" height="18"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <svg className="shrink-0 mt-0.5" width="18" height="18"
+          viewBox="0 0 24 24" fill="none" stroke="var(--ad-red)" strokeWidth="2" strokeLinecap="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
         <div>
-          <p className="text-sm font-bold text-white">This action cannot be undone</p>
-          <p className="text-xs text-white/45 mt-1 leading-relaxed">
+          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--ad-red)', marginBottom: 4 }}>
+            This action cannot be undone
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--ad-text-2)', lineHeight: 1.6 }}>
             Executing the reset will immediately award all badges, archive{' '}
-            <span className="text-white/70 font-medium">{MONTH_LABEL}</span> to the Hall of Fame,
-            reshuffle all <span className="text-white/70 font-medium">{studentCount} students</span> into
-            new clans, and set everyone's CP to zero.
+            <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{MONTH_LABEL}</span> to the Hall of Fame,
+            reshuffle all{' '}
+            <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{studentCount} students</span>{' '}
+            into new clans, and set everyone's CP to zero.
           </p>
         </div>
       </div>
 
       {/* Confirmation input */}
       <div>
-        <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-2">
-          Type <span className="text-red-400 font-black">RESET</span> to confirm
+        <label style={{
+          display: 'block', fontSize: 11, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '0.12em',
+          color: 'var(--ad-text-3)', marginBottom: 8,
+        }}>
+          Type{' '}
+          <span style={{ color: 'var(--ad-red)', fontWeight: 800 }}>RESET</span>
+          {' '}to confirm
         </label>
         <input
           type="text"
           value={confirm}
-          onChange={e => setConfirm(e.target.value)}
+          onChange={e => setConfirm(e.target.value.toUpperCase())}
           placeholder="RESET"
           spellCheck={false}
-          className="w-full max-w-xs px-4 py-2.5 rounded-xl text-sm font-mono font-bold
-            bg-white/[0.04] outline-none transition-all"
           style={{
-            border: ready
-              ? '1px solid rgba(204,0,0,0.6)'
-              : '1px solid rgba(255,255,255,0.08)',
-            color: ready ? '#ff4444' : 'rgba(255,255,255,0.6)',
+            width: '100%', maxWidth: 240,
+            padding: '10px 16px', borderRadius: 12,
+            fontSize: 14, fontFamily: 'monospace', fontWeight: 700,
             letterSpacing: '0.15em',
+            background: 'var(--ad-input-bg)',
+            border: ready
+              ? '1px solid rgba(204,0,0,0.7)'
+              : '1px solid var(--ad-input-border)',
+            color: ready ? 'var(--ad-red)' : 'var(--ad-text)',
+            outline: 'none',
+            boxShadow: ready ? '0 0 0 3px rgba(204,0,0,0.15)' : 'none',
+            transition: 'border-color 0.2s, box-shadow 0.2s, color 0.2s',
           }}
         />
       </div>
 
       {/* Execute button */}
-      <div className="flex items-center gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <motion.button
-          whileHover={ready && !disabled ? { scale: 1.02 } : {}}
+          whileHover={ready && !disabled ? { scale: 1.02, boxShadow: '0 0 20px rgba(204,0,0,0.4)' } : {}}
           whileTap={ready && !disabled ? { scale: 0.97 } : {}}
           onClick={onExecute}
           disabled={!ready || disabled}
-          className="flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold text-white
-            transition-all disabled:cursor-not-allowed"
           style={{
-            background: ready && !disabled ? '#CC0000' : 'rgba(255,255,255,0.06)',
-            opacity: ready ? 1 : 0.45,
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '11px 24px', borderRadius: 12,
+            fontSize: 14, fontWeight: 700,
+            cursor: ready && !disabled ? 'pointer' : 'not-allowed',
+            transition: 'background 0.2s, color 0.2s, opacity 0.2s',
+            background: ready && !disabled ? 'var(--ad-red)' : 'var(--ad-hover)',
+            color: ready && !disabled ? '#fff' : 'var(--ad-text-3)',
+            border: ready && !disabled ? 'none' : '1px solid var(--ad-border)',
+            opacity: ready ? 1 : 0.6,
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             {ready
-              ? <><polygon points="5 3 19 12 5 21 5 3"/></>
+              ? <polygon points="5 3 19 12 5 21 5 3"/>
               : <><rect x="3" y="11" width="18" height="11" rx="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/></>
             }
@@ -350,7 +373,7 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
         </motion.button>
 
         {!ready && (
-          <p className="text-xs text-white/25">
+          <p style={{ fontSize: 12, color: 'var(--ad-text-4)' }}>
             Type RESET above to unlock
           </p>
         )}
