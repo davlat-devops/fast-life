@@ -136,7 +136,7 @@ function Skeleton({ w, h, r = 8 }) {
   )
 }
 
-// ── Hero: animated gradient mesh (replaces clan image) ────────
+// ── Hero: animated gradient mesh ──────────────────────────────
 
 function HeroMesh({ clanId, accent }) {
   const theme = CLAN_THEME[clanId] ?? {
@@ -147,37 +147,31 @@ function HeroMesh({ clanId, accent }) {
 
   return (
     <>
-      {/* Base gradient */}
       <div style={{ position: 'absolute', inset: 0, background: theme.bg }} />
-
-      {/* Animated blobs */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         <div style={{
-          position: 'absolute', width: 500, height: 500, borderRadius: '50%',
+          position: 'absolute', width: 400, height: 400, borderRadius: '50%',
           top: '-30%', left: '-15%',
           background: `radial-gradient(circle, ${theme.blob1} 0%, transparent 70%)`,
-          filter: 'blur(60px)',
+          filter: 'blur(50px)',
           animation: 'adMeshA 18s ease-in-out infinite',
         }}/>
         <div style={{
-          position: 'absolute', width: 400, height: 400, borderRadius: '50%',
+          position: 'absolute', width: 320, height: 320, borderRadius: '50%',
           bottom: '-20%', right: '-5%',
           background: `radial-gradient(circle, ${theme.blob2} 0%, transparent 70%)`,
-          filter: 'blur(50px)',
+          filter: 'blur(40px)',
           animation: 'adMeshB 22s ease-in-out infinite',
         }}/>
-        {/* Subtle noise texture shimmer */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${accent}18 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 80% 60% at 50% 30%, ${accent}14 0%, transparent 70%)`,
           animation: 'adMeshC 26s ease-in-out infinite',
         }}/>
       </div>
-
-      {/* Bottom fade into page bg */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(to top, var(--fl-bg) 0%, rgba(0,0,0,0.5) 25%, transparent 60%)',
+        background: 'linear-gradient(to top, var(--fl-bg) 0%, rgba(0,0,0,0.45) 30%, transparent 65%)',
         pointerEvents: 'none',
       }}/>
     </>
@@ -191,13 +185,13 @@ function ClanLetterBadge({ clanId, accent }) {
   const letter = info?.name[0]?.toUpperCase() ?? '?'
   return (
     <div style={{
-      width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+      width: 32, height: 32, borderRadius: 10, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: 18, fontWeight: 900, color: '#fff',
-      background: `${accent}30`,
-      border: `1.5px solid ${accent}60`,
+      fontSize: 14, fontWeight: 900, color: '#fff',
+      background: `${accent}28`,
+      border: `1.5px solid ${accent}55`,
       backdropFilter: 'blur(8px)',
-      boxShadow: `0 0 16px ${accent}40`,
+      boxShadow: `0 0 12px ${accent}35`,
       letterSpacing: '-0.02em',
     }}>
       {letter}
@@ -205,7 +199,7 @@ function ClanLetterBadge({ clanId, accent }) {
   )
 }
 
-// ── Premium rank badge ────────────────────────────────────────
+// ── Rank badge ────────────────────────────────────────────────
 
 const MEDAL_COLORS = ['#f59e0b', '#94a3b8', '#b45309']
 
@@ -216,21 +210,21 @@ function RankBadge({ rank, total }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      padding: '6px 14px', borderRadius: 12,
-      background: isTop3 ? `${color}22` : 'rgba(255,255,255,0.08)',
-      border: `1.5px solid ${isTop3 ? color + '55' : 'rgba(255,255,255,0.15)'}`,
+      padding: '4px 10px', borderRadius: 10,
+      background: isTop3 ? `${color}20` : 'rgba(255,255,255,0.08)',
+      border: `1px solid ${isTop3 ? color + '50' : 'rgba(255,255,255,0.15)'}`,
       backdropFilter: 'blur(8px)',
-      boxShadow: isTop3 ? `0 0 20px ${color}30` : 'none',
-      minWidth: 60,
+      boxShadow: isTop3 ? `0 0 14px ${color}28` : 'none',
+      minWidth: 48,
     }}>
       <span style={{
-        fontSize: 22, fontWeight: 900, color, lineHeight: 1,
+        fontSize: 16, fontWeight: 900, color, lineHeight: 1,
         fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em',
-        textShadow: isTop3 ? `0 0 12px ${color}80` : 'none',
+        textShadow: isTop3 ? `0 0 10px ${color}70` : 'none',
       }}>
         {rank != null ? `#${rank}` : '—'}
       </span>
-      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', marginTop: 1 }}>
+      <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em', marginTop: 1 }}>
         {total != null ? `of ${total}` : 'rank'}
       </span>
     </div>
@@ -242,36 +236,35 @@ function RankBadge({ rank, total }) {
 function StatCard({ iconFn, label, value, accent, delay = 0 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ y: -3, boxShadow: `0 12px 28px ${accent}25, 0 0 0 1px ${accent}30` }}
+      whileHover={{ y: -2, boxShadow: `0 8px 20px ${accent}22, 0 0 0 1px ${accent}28` }}
       style={{
-        flex: '1 1 0', minWidth: 76,
-        padding: '14px 12px 12px',
-        borderRadius: 18,
+        flex: '1 1 0', minWidth: 60,
+        padding: '10px 8px 8px',
+        borderRadius: 14,
         background: 'var(--fl-card)',
-        border: `1px solid ${accent}28`,
-        boxShadow: `0 0 0 1px ${accent}10, var(--fl-shadow)`,
+        border: `1px solid ${accent}25`,
+        boxShadow: `0 0 0 1px ${accent}08, var(--fl-shadow)`,
         position: 'relative', overflow: 'hidden',
-        display: 'flex', flexDirection: 'column', gap: 8,
+        display: 'flex', flexDirection: 'column', gap: 5,
         cursor: 'default',
         transition: 'box-shadow 0.2s',
       }}
     >
-      <span style={{ color: accent, opacity: 0.9 }}>{iconFn(18)}</span>
+      <span style={{ color: accent, opacity: 0.85 }}>{iconFn(14)}</span>
       <div>
-        <p style={{ fontSize: 22, fontWeight: 900, color: 'var(--fl-text)', lineHeight: 1, margin: 0 }}>
-          {value ?? <Skeleton w={36} h={20} r={4} />}
+        <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--fl-text)', lineHeight: 1, margin: 0 }}>
+          {value ?? <Skeleton w={28} h={16} r={4} />}
         </p>
-        <p style={{ fontSize: 9, fontWeight: 700, color: 'var(--fl-text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '3px 0 0' }}>
+        <p style={{ fontSize: 8, fontWeight: 600, color: 'var(--fl-text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', margin: '2px 0 0' }}>
           {label}
         </p>
       </div>
-      {/* Gradient accent bar at bottom */}
       <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0, height: 2.5,
-        background: `linear-gradient(90deg, transparent, ${accent}80, transparent)`,
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
+        background: `linear-gradient(90deg, transparent, ${accent}70, transparent)`,
       }}/>
     </motion.div>
   )
@@ -284,54 +277,51 @@ function ActivityItem({ award, delay, accent }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
+      initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay, duration: 0.22 }}
+      transition={{ delay, duration: 0.2 }}
       style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '11px 0 11px 14px',
-        borderLeft: `3px solid ${meta.color}55`,
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 0 8px 12px',
+        borderLeft: `2.5px solid ${meta.color}50`,
         borderBottom: '1px solid var(--fl-border-2)',
-        marginLeft: -14,
+        marginLeft: -12,
       }}
     >
-      {/* Icon circle */}
       <div style={{
-        width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
-        background: meta.color + '18',
-        border: `1.5px solid ${meta.color}40`,
+        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+        background: meta.color + '16',
+        border: `1px solid ${meta.color}35`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         color: meta.color,
       }}>
-        {meta.iconFn(17)}
+        {meta.iconFn(14)}
       </div>
 
-      {/* Label + note */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--fl-text)', margin: 0, lineHeight: 1.3 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--fl-text)', margin: 0, lineHeight: 1.3 }}>
           {meta.label}
         </p>
         {award.note && (
-          <p style={{ fontSize: 11, color: 'var(--fl-text-3)', margin: '2px 0 0', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: 10, color: 'var(--fl-text-3)', margin: '1px 0 0', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {award.note}
           </p>
         )}
       </div>
 
-      {/* CP + time */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flexShrink: 0 }}>
         <span style={{
-          background: 'rgba(34,197,94,0.14)',
-          border: '1.5px solid rgba(34,197,94,0.35)',
+          background: 'rgba(34,197,94,0.12)',
+          border: '1px solid rgba(34,197,94,0.30)',
           borderRadius: 999, color: '#22c55e',
-          fontSize: 12, fontWeight: 800,
-          padding: '3px 10px', whiteSpace: 'nowrap',
+          fontSize: 11, fontWeight: 700,
+          padding: '2px 8px', whiteSpace: 'nowrap',
           letterSpacing: '-0.01em',
-          textShadow: '0 0 8px rgba(34,197,94,0.4)',
+          textShadow: '0 0 6px rgba(34,197,94,0.35)',
         }}>
           +{award.amount} CP
         </span>
-        <span style={{ fontSize: 10, color: 'var(--fl-text-3)' }}>{timeAgo(award.created_at)}</span>
+        <span style={{ fontSize: 9, color: 'var(--fl-text-3)' }}>{timeAgo(award.created_at)}</span>
       </div>
     </motion.div>
   )
@@ -343,29 +333,28 @@ function NavCard({ to, iconFn, label, accent }) {
   return (
     <Link to={to}>
       <motion.div
-        whileHover={{ scale: 1.03, y: -3 }}
+        whileHover={{ scale: 1.02, y: -2 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', gap: 10,
-          padding: '18px 12px',
-          borderRadius: 18,
+          justifyContent: 'center', gap: 7,
+          padding: '13px 10px',
+          borderRadius: 16,
           background: 'var(--fl-card)',
-          border: `1px solid ${accent}25`,
-          boxShadow: `0 0 0 1px ${accent}08, var(--fl-shadow)`,
+          border: `1px solid ${accent}22`,
+          boxShadow: `0 0 0 1px ${accent}06, var(--fl-shadow)`,
           cursor: 'pointer',
           position: 'relative', overflow: 'hidden',
         }}
       >
-        <span style={{ color: accent ?? '#CC0000' }}>{iconFn(22)}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.03em', color: 'var(--fl-text-2)', textTransform: 'uppercase' }}>
+        <span style={{ color: accent ?? '#CC0000' }}>{iconFn(18)}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.03em', color: 'var(--fl-text-2)', textTransform: 'uppercase' }}>
           {label}
         </span>
-        {/* Gradient corner accent */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, width: 60, height: 60,
-          background: `radial-gradient(circle at top left, ${accent}18, transparent 70%)`,
+          position: 'absolute', top: 0, left: 0, width: 50, height: 50,
+          background: `radial-gradient(circle at top left, ${accent}14, transparent 70%)`,
           pointerEvents: 'none',
         }}/>
       </motion.div>
@@ -373,7 +362,7 @@ function NavCard({ to, iconFn, label, accent }) {
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────
 
 export default function StudentDashboard() {
   const { studentRecord } = useAuth()
@@ -421,34 +410,33 @@ export default function StudentDashboard() {
     <div style={{ minHeight: '100vh', background: 'var(--fl-bg)' }}>
 
       {/* ════════════════════════════════════════════════
-          HERO — gradient mesh, no clan image
+          HERO
           ════════════════════════════════════════════════ */}
-      <div style={{ position: 'relative', minHeight: 'clamp(340px, 56vw, 420px)', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', minHeight: 'clamp(220px, 45vh, 300px)', overflow: 'hidden' }}>
 
         <HeroMesh clanId={studentRecord?.clan} accent={accent} />
 
         {/* ── Top row: clan badge + rank badge + theme toggle ── */}
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0,
-          padding: '14px 16px',
+          padding: '10px 14px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           zIndex: 10,
         }}>
-          {/* Left: clan letter badge + name */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15, duration: 0.35 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             {clanInfo && (
               <>
                 <ClanLetterBadge clanId={studentRecord?.clan} accent={accent} />
                 <div>
-                  <p style={{ color: '#fff', fontSize: 13, fontWeight: 700, margin: 0, letterSpacing: '0.02em' }}>
+                  <p style={{ color: '#fff', fontSize: 12, fontWeight: 700, margin: 0, letterSpacing: '0.02em' }}>
                     {clanInfo.name}
                   </p>
-                  <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, margin: 0, letterSpacing: '0.04em' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 9, margin: 0, letterSpacing: '0.04em' }}>
                     Clan
                   </p>
                 </div>
@@ -456,12 +444,11 @@ export default function StudentDashboard() {
             )}
           </motion.div>
 
-          {/* Right: rank badge + theme toggle */}
           <motion.div
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15, duration: 0.35 }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             {dataReady && <RankBadge rank={rank} total={total} />}
 
@@ -469,87 +456,83 @@ export default function StudentDashboard() {
               onClick={toggleTheme}
               aria-label="Toggle theme"
               style={{
-                background: 'rgba(0,0,0,0.38)',
+                background: 'rgba(0,0,0,0.35)',
                 backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 999, width: 36, height: 36,
+                border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: 999, width: 30, height: 30,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', color: 'rgba(255,255,255,0.8)',
               }}
             >
-              {theme === 'dark' ? Icons.sun(15) : Icons.moon(15)}
+              {theme === 'dark' ? Icons.sun(13) : Icons.moon(13)}
             </button>
           </motion.div>
         </div>
 
         {/* ── Bottom: greeting, CP, level progress ── */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
-            padding: '0 20px 22px', zIndex: 10,
+            padding: '0 16px 14px', zIndex: 10,
           }}
         >
-          {/* Date */}
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 3px' }}>
+          <p style={{ color: 'rgba(255,255,255,0.38)', fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px' }}>
             {today}
           </p>
 
-          {/* Name */}
           <h1 style={{
-            color: '#fff', fontSize: 30, fontWeight: 900, letterSpacing: '-0.02em',
-            lineHeight: 1.15, margin: '0 0 14px',
-            textShadow: '0 2px 20px rgba(0,0,0,0.4)',
+            color: '#fff', fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em',
+            lineHeight: 1.2, margin: '0 0 10px',
+            textShadow: '0 2px 16px rgba(0,0,0,0.4)',
           }}>
             {greeting}{firstName ? `, ${firstName}` : ''}
           </h1>
 
-          {/* CP number */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 10 }}>
             <div style={{
               color: accent,
-              fontSize: 60, fontWeight: 900, lineHeight: 1,
+              fontSize: 44, fontWeight: 900, lineHeight: 1,
               fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em',
-              textShadow: `0 0 30px ${accent}80, 0 0 60px ${accent}30`,
+              textShadow: `0 0 22px ${accent}70, 0 0 44px ${accent}28`,
             }}>
               {studentRecord ? <CPCounter target={cp} /> : '–'}
             </div>
-            <div style={{ paddingBottom: 7 }}>
-              <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', lineHeight: 1 }}>
+            <div style={{ paddingBottom: 5 }}>
+              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', lineHeight: 1 }}>
                 CP
               </div>
               <div style={{
-                marginTop: 5,
-                background: `${accent}28`,
+                marginTop: 4,
+                background: `${accent}24`,
                 backdropFilter: 'blur(6px)',
-                border: `1px solid ${accent}55`,
-                borderRadius: 999, padding: '3px 10px',
-                color: accent, fontSize: 10, fontWeight: 800,
-                letterSpacing: '0.05em', display: 'inline-block',
-                textShadow: `0 0 8px ${accent}60`,
+                border: `1px solid ${accent}50`,
+                borderRadius: 999, padding: '2px 8px',
+                color: accent, fontSize: 9, fontWeight: 700,
+                letterSpacing: '0.04em', display: 'inline-block',
+                textShadow: `0 0 6px ${accent}55`,
               }}>
                 {level.label}
               </div>
             </div>
           </div>
 
-          {/* Level progress bar */}
-          <div style={{ maxWidth: 240 }}>
-            <div style={{ height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.12)', overflow: 'hidden' }}>
+          <div style={{ maxWidth: 200 }}>
+            <div style={{ height: 3, borderRadius: 999, background: 'rgba(255,255,255,0.10)', overflow: 'hidden' }}>
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${levelPct}%` }}
-                transition={{ delay: 0.55, duration: 1.1, type: 'spring', stiffness: 65, damping: 18 }}
+                transition={{ delay: 0.5, duration: 1.1, type: 'spring', stiffness: 65, damping: 18 }}
                 style={{
                   height: '100%', borderRadius: 999,
                   background: `linear-gradient(90deg, ${accent}, ${accent}cc)`,
-                  boxShadow: `0 0 10px ${accent}80`,
+                  boxShadow: `0 0 8px ${accent}70`,
                 }}
               />
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10, margin: '5px 0 0' }}>
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, margin: '4px 0 0' }}>
               {nextLevel ? `${toNext.toLocaleString()} CP to ${nextLevel.label}` : 'Max level reached'}
             </p>
           </div>
@@ -557,90 +540,66 @@ export default function StudentDashboard() {
       </div>
 
       {/* ════════════════════════════════════════════════
-          STAT CARDS — 4-across glass cards
+          STAT CARDS
           ════════════════════════════════════════════════ */}
-      <div style={{ padding: '16px 16px 0', display: 'flex', gap: 10 }}>
-        <StatCard
-          iconFn={Icons.trendUp}
-          label="Rank"
-          value={dataReady ? `#${rank}` : null}
-          accent={accent}
-          delay={0.12}
-        />
-        <StatCard
-          iconFn={Icons.shield}
-          label="Clan"
-          value={clanInfo?.name ?? '—'}
-          accent={accent}
-          delay={0.18}
-        />
-        <StatCard
-          iconFn={Icons.calendar}
-          label="Events"
-          value={dataReady ? eventsCount : null}
-          accent="#60a5fa"
-          delay={0.24}
-        />
-        <StatCard
-          iconFn={Icons.award}
-          label="Badges"
-          value={dataReady ? badgeCount : null}
-          accent="#fbbf24"
-          delay={0.30}
-        />
+      <div style={{ padding: '10px 12px 0', display: 'flex', gap: 8 }}>
+        <StatCard iconFn={Icons.trendUp} label="Rank"   value={dataReady ? `#${rank}` : null}       accent={accent}    delay={0.12} />
+        <StatCard iconFn={Icons.shield}  label="Clan"   value={clanInfo?.name ?? '—'}                accent={accent}    delay={0.18} />
+        <StatCard iconFn={Icons.calendar} label="Events" value={dataReady ? eventsCount : null}       accent="#60a5fa"   delay={0.24} />
+        <StatCard iconFn={Icons.award}   label="Badges" value={dataReady ? badgeCount : null}        accent="#fbbf24"   delay={0.30} />
       </div>
 
-      <div style={{ padding: '14px 16px 24px' }}>
+      <div style={{ padding: '10px 12px 16px' }}>
 
         {/* ════════════════════════════════════════════════
             RECENT ACTIVITY
             ════════════════════════════════════════════════ */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, duration: 0.32 }}
+          transition={{ delay: 0.26, duration: 0.3 }}
           style={{
-            borderRadius: 18, padding: '16px 16px 4px 16px',
+            borderRadius: 16, padding: '12px 12px 4px 12px',
             background: 'var(--fl-card)',
             border: '1px solid var(--fl-border)',
             boxShadow: 'var(--fl-shadow)',
-            marginBottom: 12,
+            marginBottom: 8,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--fl-text)', letterSpacing: '-0.02em', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 700, color: 'var(--fl-text)', letterSpacing: '-0.01em', margin: 0 }}>
               Recent Activity
             </h2>
-            <Link to="/profile" style={{ fontSize: 11, fontWeight: 600, color: accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Link to="/profile" style={{ fontSize: 10, fontWeight: 600, color: accent, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
               See all
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </Link>
           </div>
 
           {!dataReady ? (
-            <div style={{ paddingBottom: 12 }}>
+            <div style={{ paddingBottom: 8 }}>
               {[...Array(4)].map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--fl-border-2)' }}>
-                  <Skeleton w={40} h={40} r={999} />
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <Skeleton w="68%" h={12} r={4} />
-                    <Skeleton w="44%" h={10} r={4} />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--fl-border-2)' }}>
+                  <Skeleton w={32} h={32} r={999} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Skeleton w="65%" h={11} r={4} />
+                    <Skeleton w="42%" h={9} r={4} />
                   </div>
-                  <Skeleton w={60} h={22} r={999} />
+                  <Skeleton w={52} h={20} r={999} />
                 </div>
               ))}
             </div>
           ) : feed.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '28px 0 20px', color: 'var(--fl-text-3)', fontSize: 13 }}>
-              <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                {Icons.calendar(32)}
+            <div style={{ textAlign: 'center', padding: '20px 0 14px', color: 'var(--fl-text-3)', fontSize: 12 }}>
+              <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'center' }}>
+                {Icons.calendar(22)}
               </div>
               No activity yet — attend events to earn CP!
             </div>
           ) : (
-            <div style={{ paddingLeft: 14, marginLeft: -14 }}>
+            <div style={{ paddingLeft: 12, marginLeft: -12 }}>
               {feed.map((award, i) => (
-                <ActivityItem key={award.id} award={award} delay={i * 0.04} accent={accent} />
+                <ActivityItem key={award.id} award={award} delay={i * 0.035} accent={accent} />
               ))}
             </div>
           )}
@@ -650,10 +609,10 @@ export default function StudentDashboard() {
             QUICK NAV 2×2
             ════════════════════════════════════════════════ */}
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36, duration: 0.32 }}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
+          transition={{ delay: 0.34, duration: 0.3 }}
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}
         >
           <NavCard to="/clan"        iconFn={Icons.users}    label="My Clan"  accent={accent} />
           <NavCard to="/events"      iconFn={Icons.calendar} label="Events"   accent={accent} />

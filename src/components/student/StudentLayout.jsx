@@ -7,7 +7,7 @@ import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 
 // ── Clan letter badge for top bar ────────────────────────────
 
-function ClanLetterBadge({ clanId, accent, size = 28 }) {
+function ClanLetterBadge({ clanId, accent, size = 24 }) {
   const letter = CLANS[clanId]?.name[0]?.toUpperCase() ?? '?'
   const radius = Math.round(size * 0.32)
   return (
@@ -26,7 +26,7 @@ function ClanLetterBadge({ clanId, accent, size = 28 }) {
 // ── Theme toggle ──────────────────────────────────────────────
 
 const SunIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="5"/>
     <line x1="12" y1="1" x2="12" y2="3"/>
@@ -41,7 +41,7 @@ const SunIcon = () => (
 )
 
 const MoonIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
   </svg>
@@ -57,8 +57,8 @@ function ThemeToggle() {
         background:     'var(--fl-card-alt)',
         border:         '1px solid var(--fl-border)',
         borderRadius:   999,
-        width:          34,
-        height:         34,
+        width:          30,
+        height:         30,
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'center',
@@ -75,7 +75,7 @@ function ThemeToggle() {
 // ── Tab icons ─────────────────────────────────────────────────
 
 const Ic = (props) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
     {...props}
   />
@@ -162,19 +162,19 @@ function StudentLayoutInner() {
     >
       {/* ── Top bar ──────────────────────────────────── */}
       <div
-        className="flex items-center justify-between px-4 shrink-0"
+        className="flex items-center justify-between px-3.5 shrink-0"
         style={{
           background:    'var(--fl-nav-bg)',
           borderBottom:  '1px solid var(--fl-border)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          paddingTop:    'max(env(safe-area-inset-top, 0px), 10px)',
-          paddingBottom: 10,
+          paddingTop:    'max(env(safe-area-inset-top, 0px), 8px)',
+          paddingBottom: 7,
         }}
       >
-        <div className="flex items-center gap-2.5">
-          {studentRecord?.clan && <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={28} />}
-          <span style={{ color: 'var(--fl-text)', fontSize: 13, fontWeight: 700 }}>
+        <div className="flex items-center gap-2">
+          {studentRecord?.clan && <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={24} />}
+          <span style={{ color: 'var(--fl-text)', fontSize: 12, fontWeight: 700 }}>
             {firstName}
           </span>
           <span
@@ -183,9 +183,9 @@ function StudentLayoutInner() {
               color:        accentColor,
               border:       `1px solid ${accentColor}38`,
               borderRadius: 999,
-              fontSize:     10,
+              fontSize:     9,
               fontWeight:   700,
-              padding:      '2px 8px',
+              padding:      '2px 7px',
               letterSpacing: '0.02em',
             }}
           >
@@ -196,12 +196,12 @@ function StudentLayoutInner() {
       </div>
 
       {/* ── Page content ─────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto scrollbar-hide pb-20">
+      <main className="flex-1 overflow-y-auto scrollbar-hide pb-[56px]">
         <motion.div
           key={location.pathname}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-full"
         >
           <Outlet />
@@ -223,8 +223,8 @@ function StudentLayoutInner() {
           <NavLink
             key={to}
             to={to}
-            className="flex-1 flex flex-col items-center justify-center gap-1 relative"
-            style={{ minHeight: 76 }}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 relative"
+            style={{ minHeight: 56 }}
           >
             {({ isActive }) => (
               <>
@@ -234,10 +234,10 @@ function StudentLayoutInner() {
                     className="absolute top-0 rounded-b-full"
                     style={{
                       background: 'linear-gradient(90deg, transparent, #CC0000 25%, #e53e3e 50%, #CC0000 75%, transparent)',
-                      boxShadow:  '0 0 12px rgba(204,0,0,0.55)',
-                      height:     3.5,
-                      left:       '8%',
-                      right:      '8%',
+                      boxShadow:  '0 0 10px rgba(204,0,0,0.5)',
+                      height:     2.5,
+                      left:       '10%',
+                      right:      '10%',
                     }}
                     transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                   />
@@ -248,9 +248,9 @@ function StudentLayoutInner() {
                 </span>
                 <span
                   style={{
-                    fontSize:      10,
-                    fontWeight:    isActive ? 700 : 600,
-                    letterSpacing: '0.04em',
+                    fontSize:      9,
+                    fontWeight:    isActive ? 700 : 500,
+                    letterSpacing: '0.03em',
                     color:         isActive ? accentColor : 'var(--fl-text-3)',
                     transition:    'color 0.2s',
                   }}
