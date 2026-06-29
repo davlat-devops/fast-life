@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
+import SlideBackground, { CLAN_IMAGES } from '@/components/ui/SlideBackground'
 
 function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
@@ -74,34 +75,12 @@ export default function ClanPage() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden"
-        style={{ minHeight: 220, background: colorBg }}
+        style={{ minHeight: 220 }}
       >
-        {/* Animated gradient orbs */}
-        <motion.div
-          animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.55, 0.35] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute', top: '-40%', left: '-20%',
-            width: '70%', height: '180%', borderRadius: '50%',
-            background: `radial-gradient(circle, ${accent}40, transparent 65%)`,
-            pointerEvents: 'none',
-          }}
-        />
-        <motion.div
-          animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          style={{
-            position: 'absolute', bottom: '-50%', right: '-10%',
-            width: '60%', height: '160%', borderRadius: '50%',
-            background: `radial-gradient(circle, ${accent}28, transparent 60%)`,
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(180deg, transparent 55%, var(--fl-bg) 100%)',
-          }}
+        <SlideBackground
+          image={CLAN_IMAGES[studentRecord?.clan]}
+          overlay="rgba(0,0,0,0.48)"
+          bottomFade
         />
 
         <div className="relative z-10 px-5 pt-6 pb-7">

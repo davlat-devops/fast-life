@@ -4,6 +4,7 @@ import { Calendar, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
+import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Category styles + icons ────────────────────────────────────
 
@@ -194,16 +195,19 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
-      {/* ── Header ──────────────────────────────────────── */}
-      <div className="px-5 pt-5 pb-3">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-3"
-        >
-          <Calendar size={22} style={{ color: accent }} />
-          <h1 className="text-2xl font-black" style={{ color: 'var(--fl-text)' }}>Events</h1>
-        </motion.div>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ minHeight: 110 }}>
+        <SlideBackground overlay="rgba(0,0,0,0.60)" bottomFade />
+        <div className="relative z-10 px-5 pt-5 pb-5">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
+          >
+            <Calendar size={22} style={{ color: accent }} />
+            <h1 className="text-2xl font-black text-white">Events</h1>
+          </motion.div>
+        </div>
       </div>
 
       {/* ── Upcoming / Past tabs (premium pill) ─────────── */}

@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { CLANS } from '@/constants/clans'
 import { LEVEL_THRESHOLDS } from '@/constants/badges'
-import HeroSlideshow from '@/components/student/HeroSlideshow'
+import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Level helpers ─────────────────────────────────────────────
 
@@ -348,12 +348,7 @@ export default function StudentDashboard() {
           ════════════════════════════════════════════════ */}
       <div style={{ position: 'relative', minHeight: 'clamp(220px, 45vh, 300px)', overflow: 'hidden' }}>
 
-        <HeroSlideshow />
-        {/* Bottom fade blends photo into page background */}
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(to top, var(--fl-bg) 0%, rgba(0,0,0,0.18) 40%, transparent 72%)',
-        }} />
+        <SlideBackground overlay="rgba(0,0,0,0.52)" bottomFade />
 
         {/* ── Top row: clan badge + rank badge + theme toggle ── */}
         <div style={{

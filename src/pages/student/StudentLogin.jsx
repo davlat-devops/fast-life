@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import logo from '@/assets/logo.png'
-import HeroSlideshow from '@/components/student/HeroSlideshow'
+import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Background slideshow with overlays ───────────────────────
 
 function ClanSlideshow() {
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      <HeroSlideshow overlay="rgba(0,0,0,0)" />
+      <SlideBackground overlay="rgba(0,0,0,0)" />
 
       {/* Heavy dark overlay */}
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.70)' }} />

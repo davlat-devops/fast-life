@@ -1,9 +1,13 @@
-// Clan image paths (from /public/clans/)
+import imgViperon from '@/assets/clans/viperon.png'
+import imgCrodon  from '@/assets/clans/crodon.png'
+import imgAveron  from '@/assets/clans/averon.png'
+import imgWolfrin from '@/assets/clans/wolfrin.png'
+
 const CLAN_IMAGES = {
-  VIPERON: '/clans/viperon.png',
-  CRODON:  '/clans/crodon.png',
-  AVERON:  '/clans/averon.png',
-  WOLFRIN: '/clans/wolfrin.png',
+  VIPERON: imgViperon,
+  CRODON:  imgCrodon,
+  AVERON:  imgAveron,
+  WOLFRIN: imgWolfrin,
 }
 
 // ── ClanIcon — circular clan image ────────────────────────────

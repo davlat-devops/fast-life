@@ -1,96 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { supabaseAdminAuth } from '@/lib/supabase'
 import logo from '@/assets/logo.png'
-
-// ── Clan slideshow images ─────────────────────────────────────
-
-const SLIDES = [
-  { src: '/clans/wolfrin.png',  accent: 'rgba(139,0,0,0.55)'    },
-  { src: '/clans/averon.png',   accent: 'rgba(10,22,40,0.55)'   },
-  { src: '/clans/viperon.png',  accent: 'rgba(74,124,63,0.45)'  },
-  { src: '/clans/crodon.png',   accent: 'rgba(13,13,13,0.65)'   },
-]
-
-function ClanSlideshow() {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCurrent(i => (i + 1) % SLIDES.length)
-    }, 4000)
-    return () => clearInterval(id)
-  }, [])
-
-  return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      {SLIDES.map((slide, i) => (
-        <AnimatePresence key={i}>
-          {current === i && (
-            <motion.div
-              key={`slide-${i}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: 'easeInOut' }}
-              style={{ position: 'absolute', inset: 0 }}
-            >
-              {/* Clan image */}
-              <img
-                src={slide.src}
-                alt=""
-                style={{
-                  position: 'absolute', inset: 0,
-                  width: '100%', height: '100%',
-                  objectFit: 'cover', objectPosition: 'center',
-                }}
-              />
-              {/* Per-clan colour tint */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: slide.accent,
-              }} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ))}
-
-      {/* Universal dark overlay for card readability */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.6) 100%)',
-      }} />
-
-      {/* Vignette */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)',
-      }} />
-
-      {/* Slide dots */}
-      <div style={{
-        position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', gap: 6, zIndex: 2,
-      }}>
-        {SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            style={{
-              width: current === i ? 20 : 6,
-              height: 6, borderRadius: 3,
-              background: current === i ? '#fff' : 'rgba(255,255,255,0.35)',
-              border: 'none', cursor: 'pointer', padding: 0,
-              transition: 'width 0.3s ease, background 0.3s ease',
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
+import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Input field ───────────────────────────────────────────────
 
@@ -229,7 +143,7 @@ export default function AdminLogin() {
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
       {/* ── Clan background slideshow ──────────────────── */}
-      <ClanSlideshow />
+      <SlideBackground overlay="rgba(0,0,0,0.58)" />
 
       {/* ── Centered card ─────────────────────────────── */}
       <div style={{

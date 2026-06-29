@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
+import SlideBackground from '@/components/ui/SlideBackground'
 
 function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
@@ -199,19 +200,22 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
-      {/* ── Header ──────────────────────────────────────── */}
-      <div className="px-5 pt-5 pb-3">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-0.5">
-            <Trophy size={22} style={{ color: accent }} />
-            <h1 className="text-2xl font-black" style={{ color: 'var(--fl-text)' }}>Leaderboard</h1>
-          </div>
-          {myEntry && (
-            <p className="text-sm mt-0.5 font-medium" style={{ color: accent }}>
-              You are #{myEntry.rank} · {(studentRecord?.cp ?? 0).toLocaleString()} CP
-            </p>
-          )}
-        </motion.div>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <div className="relative overflow-hidden" style={{ minHeight: 120 }}>
+        <SlideBackground overlay="rgba(0,0,0,0.60)" bottomFade />
+        <div className="relative z-10 px-5 pt-5 pb-5">
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-3 mb-0.5">
+              <Trophy size={22} style={{ color: accent }} />
+              <h1 className="text-2xl font-black text-white">Leaderboard</h1>
+            </div>
+            {myEntry && (
+              <p className="text-sm mt-0.5 font-medium" style={{ color: accent }}>
+                You are #{myEntry.rank} · {(studentRecord?.cp ?? 0).toLocaleString()} CP
+              </p>
+            )}
+          </motion.div>
+        </div>
       </div>
 
       {/* ── Tabs (premium pill) ─────────────────────────── */}

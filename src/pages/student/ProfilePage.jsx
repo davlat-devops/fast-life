@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
+import SlideBackground, { CLAN_IMAGES } from '@/components/ui/SlideBackground'
 import { BADGES, LEVEL_THRESHOLDS } from '@/constants/badges'
 
 // ── Badge icon map ────────────────────────────────────────────
@@ -224,30 +225,13 @@ export default function ProfilePage() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden"
-        style={{ minHeight: 200, background: colorBg }}
+        style={{ minHeight: 200 }}
       >
-        {/* Animated gradient mesh */}
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          style={{
-            position: 'absolute', top: '-60%', right: '-20%',
-            width: '80%', height: '200%', borderRadius: '50%',
-            background: `radial-gradient(circle, ${accent}38, transparent 60%)`,
-            pointerEvents: 'none',
-          }}
+        <SlideBackground
+          image={CLAN_IMAGES[studentRecord?.clan]}
+          overlay="rgba(0,0,0,0.50)"
+          bottomFade
         />
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
-          style={{
-            position: 'absolute', bottom: '-40%', left: '-10%',
-            width: '60%', height: '150%', borderRadius: '50%',
-            background: `radial-gradient(circle, ${accent}28, transparent 65%)`,
-            pointerEvents: 'none',
-          }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, var(--fl-bg) 100%)' }} />
 
         <div className="relative z-10 px-5 pt-6 pb-6">
           <div className="flex items-center gap-4">
