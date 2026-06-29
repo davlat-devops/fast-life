@@ -303,7 +303,7 @@ export default function Rankings() {
   const visible    = filteredRanked.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
 
   return (
-    <div className="p-8 space-y-10 max-w-[1200px]">
+    <div className="p-4 sm:p-8 space-y-8 max-w-[1200px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div>
@@ -427,9 +427,9 @@ export default function Rankings() {
           )}
         </div>
 
-        {/* Table */}
+        {/* Table — desktop */}
         <div
-          className="rounded-2xl overflow-hidden"
+          className="hidden md:block rounded-2xl overflow-hidden"
           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <table className="w-full text-left">
@@ -508,6 +508,75 @@ export default function Rankings() {
                   Next →
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card list — mobile */}
+        <div className="md:hidden space-y-3">
+          {loading ? (
+            [...Array(5)].map((_, i) => (
+              <div key={i} className="rounded-2xl p-4 animate-pulse"
+                style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded" style={{ background: 'var(--ad-skeleton)' }} />
+                  <div className="w-9 h-9 rounded-full" style={{ background: 'var(--ad-skeleton)' }} />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 rounded" style={{ background: 'var(--ad-skeleton)' }} />
+                    <div className="h-3 w-24 rounded" style={{ background: 'var(--ad-skeleton)' }} />
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : visible.length === 0 ? (
+            <p className="text-center py-12 text-sm text-white/25">
+              {students.length === 0 ? 'No active students yet' : 'No students match your filters'}
+            </p>
+          ) : (
+            visible.map((s, i) => {
+              const clanInfo = CLANS[s.clan]
+              const initials = s.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+              return (
+                <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.025 }}
+                  className="rounded-2xl p-3.5 flex items-center gap-3"
+                  style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                  <RankBadge rank={s.rank} size={22} />
+                  <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
+                    style={{ background: clanInfo?.colorAccent ?? '#555' }}>
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{s.full_name}</p>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {clanInfo && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium" style={{ color: clanInfo.colorAccent }}>
+                          <ClanIcon clanId={s.clan} size={11} />
+                          {clanInfo.name}
+                        </span>
+                      )}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold"
+                        style={{ background: `${LEVEL_COLOUR[s.level] ?? '#666'}22`, color: LEVEL_COLOUR[s.level] ?? '#888' }}>
+                        {s.level}
+                      </span>
+                      {s.class_group && <span className="text-[10px] text-white/30">{s.class_group}</span>}
+                    </div>
+                  </div>
+                  <span className="text-sm font-black text-white shrink-0">{s.cp.toLocaleString()}</span>
+                </motion.div>
+              )
+            })
+          )}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                ← Prev
+              </button>
+              <span className="text-xs text-white/30">{page + 1} / {totalPages}</span>
+              <button disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                Next →
+              </button>
             </div>
           )}
         </div>

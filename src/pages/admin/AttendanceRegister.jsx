@@ -296,7 +296,7 @@ export default function AttendanceRegister() {
   const cat = event ? (CAT_STYLE[event.category] ?? { color: '#888', bg: '#222' }) : null
 
   return (
-    <div className="p-8 max-w-[900px] space-y-6">
+    <div className="p-4 sm:p-8 max-w-[900px] space-y-6">
 
       {/* ── Back + breadcrumb ───────────────────────────────── */}
       <button

@@ -369,13 +369,13 @@ export default function ProfilePage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {[...Array(15)].map((_, i) => (
                 <Skeleton key={i} className="aspect-square rounded-xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
               {allBadges.map((badge, i) => {
                 const earned    = earnedKeys.has(badge.key)
                 const BadgeIcon = BADGE_ICONS[badge.key] ?? Award

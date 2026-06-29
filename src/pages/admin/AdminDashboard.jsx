@@ -294,12 +294,12 @@ export default function AdminDashboard() {
   })
 
   return (
-    <div style={{ padding: 32, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div className="p-4 sm:p-8 max-w-[1200px] flex flex-col gap-6 sm:gap-7">
 
       {/* ── Header ────────────────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
+        className="flex items-start justify-between flex-wrap gap-3"
       >
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--ad-text)', letterSpacing: '-0.02em', margin: 0 }}>
@@ -322,7 +322,7 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* ── Stat cards ──────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <StatCard label="Active Students"  value={stats.students} Icon={Users}    accentColor="#e53e3e" loading={loading} delay={0.05} />
         <StatCard label="Events This Month" value={stats.events}  Icon={Calendar} accentColor="#C9A227" loading={loading} delay={0.1}  />
         <StatCard label="CP Awarded Today"  value={stats.cpToday} Icon={Star}     accentColor="#4ade80" loading={loading} delay={0.15} />
@@ -372,14 +372,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Clan race + Activity feed ──────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
         {/* Clan race */}
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="ad-surface rounded-2xl p-6"
-          style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
+          className="ad-surface rounded-2xl p-4 sm:p-6 lg:col-span-3 flex flex-col gap-5"
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--ad-text)', margin: 0 }}>Clan Race</h2>
@@ -419,7 +418,7 @@ export default function AdminDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="ad-surface rounded-2xl p-6"
+          className="ad-surface rounded-2xl p-4 sm:p-6 lg:col-span-2"
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--ad-text)', margin: 0 }}>Recent Activity</h2>
@@ -458,7 +457,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* ── Quick links ──────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {QUICK_LINKS.map(({ to, label, Icon, color }, i) => (
           <motion.div
             key={to}

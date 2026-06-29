@@ -627,7 +627,7 @@ export default function StudentManagement() {
   }
 
   return (
-    <div className="p-8 space-y-6 max-w-[1200px]">
+    <div className="p-4 sm:p-8 space-y-5 sm:space-y-6 max-w-[1200px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -667,8 +667,8 @@ export default function StudentManagement() {
       {/* ── Filters ────────────────────────────────────────── */}
       <FilterBar search={search} setSearch={setSearch} filters={filters} setFilters={setFilters} />
 
-      {/* ── Table ──────────────────────────────────────────── */}
-      <div className="rounded-2xl overflow-x-auto"
+      {/* ── Table — desktop ────────────────────────────────── */}
+      <div className="hidden md:block rounded-2xl overflow-x-auto"
         style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
         <table className="w-full min-w-[900px] text-left">
           <thead>
@@ -708,38 +708,118 @@ export default function StudentManagement() {
           </tbody>
         </table>
 
-        {/* ── Pagination ─────────────────────────────────── */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
             <p className="text-xs text-white/30">
               {page * PER_PAGE + 1}–{Math.min((page + 1) * PER_PAGE, filtered.length)} of {filtered.length}
             </p>
-            <div className="flex gap-2">
-              <button
-                disabled={page === 0}
-                onClick={() => setPage(p => p - 1)}
-                className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
+            <div className="flex gap-2 flex-wrap">
+              <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+                className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                 ← Prev
               </button>
               {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setPage(i)}
+                <button key={i} onClick={() => setPage(i)}
                   className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors
-                    ${i === page ? 'bg-brand-red text-white' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}
-                >
+                    ${i === page ? 'bg-brand-red text-white' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}>
                   {i + 1}
                 </button>
               ))}
-              <button
-                disabled={page === totalPages - 1}
-                onClick={() => setPage(p => p + 1)}
-                className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
+              <button disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}
+                className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                 Next →
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Card list — mobile ──────────────────────────────── */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          [...Array(5)].map((_, i) => (
+            <div key={i} className="rounded-2xl p-4 space-y-3 animate-pulse"
+              style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full" style={{ background: 'var(--ad-skeleton)' }} />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 rounded" style={{ background: 'var(--ad-skeleton)' }} />
+                  <div className="h-3 w-24 rounded" style={{ background: 'var(--ad-skeleton)' }} />
+                </div>
+              </div>
+            </div>
+          ))
+        ) : visible.length === 0 ? (
+          <p className="text-center py-12 text-sm text-white/25">
+            {search || filters.clan || filters.level ? 'No students match your filters' : 'No students yet'}
+          </p>
+        ) : (
+          visible.map((s, i) => {
+            const accent   = CLANS[s.clan]?.colorAccent ?? '#555'
+            const initials = s.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            return (
+              <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                className="rounded-2xl p-4 space-y-3"
+                style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                {/* Row 1: avatar + name + actions */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white"
+                      style={{ background: accent }}>
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{s.full_name}</p>
+                      <p className="text-[11px] text-white/35 font-mono">{s.username}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Toggle checked={s.is_active}
+                      onChange={async () => { await toggleActive(s) }}
+                      disabled={false} />
+                    <button onClick={() => setDeletingStudent(s)}
+                      className="flex items-center justify-center w-8 h-8 rounded-lg text-red-400/60 hover:text-red-400 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 transition-all">
+                      <Trash2 size={13} strokeWidth={2} />
+                    </button>
+                  </div>
+                </div>
+                {/* Row 2: meta badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <ClanChip clanId={s.clan} />
+                  <LevelBadge level={s.level} />
+                  <span className="text-xs font-bold text-white">{s.cp.toLocaleString()} CP</span>
+                  {s.class_group && <span className="text-[11px] text-white/40">{s.class_group}</span>}
+                  {s.age && <span className="text-[11px] text-white/30">Age {s.age}</span>}
+                </div>
+                {/* Row 3: password + reset */}
+                <div className="flex items-center gap-2 pt-1 border-t border-white/[0.05]">
+                  <span className="font-mono text-xs text-white/40 flex-1 truncate">
+                    {s.password_plain ?? 'no password set'}
+                  </span>
+                  <button
+                    onClick={() => handleResetPassword(s)}
+                    className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-md text-[10px] font-semibold
+                      text-white/35 hover:text-white/70 border border-white/[0.07] hover:bg-white/[0.05] transition-all min-h-[44px]"
+                  >
+                    Reset pw
+                  </button>
+                </div>
+              </motion.div>
+            )
+          })
+        )}
+        {/* Mobile pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between pt-2">
+            <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+              className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+              ← Prev
+            </button>
+            <span className="text-xs text-white/30">{page + 1} / {totalPages}</span>
+            <button disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}
+              className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+              Next →
+            </button>
           </div>
         )}
       </div>

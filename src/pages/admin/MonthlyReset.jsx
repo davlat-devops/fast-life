@@ -666,7 +666,7 @@ export default function MonthlyReset() {
   }
 
   return (
-    <div className="p-8 space-y-8 max-w-[1000px]">
+    <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 max-w-[1000px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <AnimatePresence mode="wait">

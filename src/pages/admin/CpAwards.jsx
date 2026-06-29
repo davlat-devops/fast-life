@@ -355,7 +355,7 @@ export default function CpAwards() {
   const selClan = selectedStudent ? CLANS[selectedStudent.clan] : null
 
   return (
-    <div className="p-8 space-y-8 max-w-[1100px]">
+    <div className="p-4 sm:p-8 space-y-7 max-w-[1100px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
       <div>
@@ -562,19 +562,16 @@ export default function CpAwards() {
           </select>
         </div>
 
-        {/* Table */}
+        {/* Table — desktop */}
         <div
-          className="rounded-2xl overflow-hidden"
+          className="hidden md:block rounded-2xl overflow-hidden"
           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-white/[0.06]">
                 {['When', 'Student', 'Reason', 'CP', 'Note'].map(h => (
-                  <th key={h}
-                    className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">
-                    {h}
-                  </th>
+                  <th key={h} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -592,9 +589,7 @@ export default function CpAwards() {
               ) : awVisible.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-16 text-center text-sm text-white/25">
-                    {awards.length === 0
-                      ? 'No CP awards yet — use the form above to make the first one'
-                      : 'No records match your filters'}
+                    {awards.length === 0 ? 'No CP awards yet — use the form above to make the first one' : 'No records match your filters'}
                   </td>
                 </tr>
               ) : (
@@ -606,43 +601,93 @@ export default function CpAwards() {
               )}
             </tbody>
           </table>
-
-          {/* Pagination */}
           {awTotalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
               <p className="text-xs text-white/30">
                 {awPage * AW_PER_PAGE + 1}–{Math.min((awPage + 1) * AW_PER_PAGE, filteredAwards.length)} of {filteredAwards.length}
               </p>
               <div className="flex gap-2">
-                <button
-                  disabled={awPage === 0}
-                  onClick={() => setAwPage(p => p - 1)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white
-                    hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
+                <button disabled={awPage === 0} onClick={() => setAwPage(p => p - 1)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                   ← Prev
                 </button>
                 {awTotalPages <= 7 && [...Array(awTotalPages)].map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setAwPage(i)}
-                    className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors
-                      ${i === awPage
-                        ? 'bg-brand-red text-white'
-                        : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}
-                  >
+                  <button key={i} onClick={() => setAwPage(i)}
+                    className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${i === awPage ? 'bg-brand-red text-white' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}>
                     {i + 1}
                   </button>
                 ))}
-                <button
-                  disabled={awPage === awTotalPages - 1}
-                  onClick={() => setAwPage(p => p + 1)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white
-                    hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                >
+                <button disabled={awPage === awTotalPages - 1} onClick={() => setAwPage(p => p + 1)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
                   Next →
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Card list — mobile */}
+        <div className="md:hidden space-y-3">
+          {awLoading ? (
+            [...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-2xl p-4 animate-pulse space-y-2"
+                style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                <div className="h-4 rounded" style={{ background: 'var(--ad-skeleton)', width: '50%' }} />
+                <div className="h-3 rounded" style={{ background: 'var(--ad-skeleton)', width: '70%' }} />
+              </div>
+            ))
+          ) : awVisible.length === 0 ? (
+            <p className="text-center py-12 text-sm text-white/25">
+              {awards.length === 0 ? 'No CP awards yet' : 'No records match your filters'}
+            </p>
+          ) : (
+            awVisible.map((award, i) => {
+              const student  = award.students
+              const clanInfo = CLANS[student?.clan]
+              const initials = (student?.full_name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+              const date     = new Date(award.created_at)
+              return (
+                <motion.div key={award.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.025 }}
+                  className="rounded-2xl p-4 space-y-2.5"
+                  style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ background: clanInfo?.colorAccent ?? '#555' }}>
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white truncate">{student?.full_name ?? 'Unknown'}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {clanInfo && <ClanIcon clanId={student?.clan} size={11} />}
+                          <span className="text-[10px] text-white/30">{clanInfo?.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-base font-black text-emerald-400 shrink-0">+{award.amount}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.05]">
+                    <span className="text-xs text-white/50">{REASON_LABELS[award.reason] ?? award.reason}</span>
+                    <span className="text-[10px] text-white/25">
+                      {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  {award.note && <p className="text-[11px] text-white/35 truncate">{award.note}</p>}
+                </motion.div>
+              )
+            })
+          )}
+          {awTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <button disabled={awPage === 0} onClick={() => setAwPage(p => p - 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                ← Prev
+              </button>
+              <span className="text-xs text-white/30">{awPage + 1} / {awTotalPages}</span>
+              <button disabled={awPage === awTotalPages - 1} onClick={() => setAwPage(p => p + 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                Next →
+              </button>
             </div>
           )}
         </div>
