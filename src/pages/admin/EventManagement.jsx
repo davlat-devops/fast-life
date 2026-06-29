@@ -454,7 +454,7 @@ function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
             onClick={() => onTakeAttendance(event.id)}
             className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
             style={event.finalised
-              ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
+              ? { background: 'var(--ad-hover)', color: 'var(--ad-text-2)', border: '1px solid var(--ad-border)' }
               : { background: '#CC0000', color: '#fff' }}
           >
             {event.finalised ? 'View' : 'Take Attendance'}
@@ -462,16 +462,16 @@ function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
 
           {/* Edit */}
           <motion.button
-            whileHover={{ scale: 1.08, background: 'rgba(255,255,255,0.1)' }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.93 }}
             onClick={() => onEdit(event)}
             title="Edit event"
             style={{
               width: 30, height: 30, borderRadius: 8, display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.5)',
+              background: 'var(--ad-hover)',
+              border: '1px solid var(--ad-border)',
+              color: 'var(--ad-text-2)',
               cursor: 'pointer', flexShrink: 0,
               transition: 'background 0.15s, color 0.15s',
             }}

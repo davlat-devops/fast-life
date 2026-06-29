@@ -317,7 +317,7 @@ export default function AttendanceRegister() {
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl p-6"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -407,7 +407,7 @@ export default function AttendanceRegister() {
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="rounded-2xl overflow-hidden"
-        style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
       >
         {/* List header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.05]">
@@ -462,7 +462,7 @@ export default function AttendanceRegister() {
               key="idle"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="flex items-center justify-between p-5 rounded-2xl"
-              style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
             >
               <div>
                 <p className="text-sm font-bold text-white">Finalise Attendance</p>
@@ -531,7 +531,7 @@ export default function AttendanceRegister() {
               key="finalising"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="flex items-center gap-3 p-5 rounded-2xl"
-              style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+              style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
             >
               <svg className="animate-spin text-brand-red shrink-0" width="16" height="16"
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
