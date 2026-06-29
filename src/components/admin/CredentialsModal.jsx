@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Key, PartyPopper } from 'lucide-react'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 
 function CopyButton({ value }) {
   const [copied, setCopied] = useState(false)
@@ -78,7 +80,14 @@ export default function CredentialsModal({ credentials, studentName, onClose, mo
           <div className="p-6 space-y-5">
             {/* Header */}
             <div className="text-center space-y-1">
-              <div className="text-2xl">{isReset ? '🔑' : (clanInfo?.emoji ?? '🎉')}</div>
+              <div className="flex justify-center">
+                {isReset
+                  ? <Key size={28} className="text-white/60" />
+                  : clan
+                    ? <ClanIcon clanId={clan} size={40} />
+                    : <PartyPopper size={28} className="text-white/60" />
+                }
+              </div>
               <h2 className="text-lg font-bold text-white">
                 {isReset ? 'Password Reset' : 'Student Created!'}
               </h2>

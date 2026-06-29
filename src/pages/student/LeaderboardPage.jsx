@@ -4,6 +4,7 @@ import { Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 
 function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
@@ -144,12 +145,7 @@ function LeaderRow({ student, rank, isMe, accent, delay }) {
           {isMe && <span className="ml-1.5 text-[10px]" style={{ color: accent }}>(you)</span>}
         </p>
         <div className="flex items-center gap-1.5 mt-0.5">
-          <div
-            className="w-4 h-4 rounded flex items-center justify-center font-black text-white shrink-0"
-            style={{ background: clanInfo?.colorAccent ?? '#555', fontSize: 7 }}
-          >
-            {clanInfo?.name?.[0] ?? '?'}
-          </div>
+          <ClanIcon clanId={student.clan} size={14} style={{ border: '1px solid rgba(255,255,255,0.15)' }} />
           <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{clanInfo?.name}</span>
         </div>
       </div>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -49,12 +50,6 @@ const REASON_ICON = {
   perfect_month:          { Icon: Star,      color: '#4ade80' },
 }
 
-const CLAN_GRADIENT = {
-  VIPERON: 'linear-gradient(135deg, #1a4731 0%, #2d6a4f 100%)',
-  CRODON:  'linear-gradient(135deg, #1a2744 0%, #2563eb 100%)',
-  AVERON:  'linear-gradient(135deg, #3b0764 0%, #7c3aed 100%)',
-  WOLFRIN: 'linear-gradient(135deg, #7c2d12 0%, #ea580c 100%)',
-}
 
 function formatReason(r) { return REASON_LABELS[r] ?? r }
 
@@ -74,24 +69,6 @@ function AnimatedNumber({ target, duration = 1100 }) {
   return <>{val.toLocaleString()}</>
 }
 
-// ── Clan badge (letter in gradient circle) ────────────────────
-
-function ClanBadge({ clanId, size = 28 }) {
-  const info = CLANS[clanId]
-  const letter = (info?.name ?? clanId)[0].toUpperCase()
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', flexShrink: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: CLAN_GRADIENT[clanId] ?? '#333',
-      fontSize: size * 0.4, fontWeight: 800, color: '#fff',
-      boxShadow: `0 2px 8px ${info?.colorAccent ?? '#555'}44`,
-      letterSpacing: '-0.01em',
-    }}>
-      {letter}
-    </div>
-  )
-}
 
 // ── Rank badge (#1 gold, #2 silver, #3 bronze, #4 plain) ──────
 
@@ -166,7 +143,7 @@ function ClanRaceBar({ clan, maxCp, rank, delay }) {
       style={{ display: 'flex', alignItems: 'center', gap: 10 }}
     >
       <RankBadge rank={rank} />
-      <ClanBadge clanId={clan.id} size={28} />
+      <ClanIcon clanId={clan.id} size={28} />
 
       <div style={{ width: 76, flexShrink: 0 }}>
         <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ad-text)', lineHeight: 1, display: 'flex', alignItems: 'center', gap: 4 }}>

@@ -4,6 +4,7 @@ import { Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 
 function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
@@ -33,25 +34,6 @@ function StatCard({ label, value, sub, accent }) {
   )
 }
 
-function ClanBadge({ clanId, size = 40, isHighlighted, accent }) {
-  const info   = CLANS[clanId]
-  const letter = info?.name?.[0] ?? '?'
-  return (
-    <div
-      className="shrink-0 rounded-xl flex items-center justify-center font-black text-white"
-      style={{
-        width:      size,
-        height:     size,
-        background: `linear-gradient(135deg, ${info?.colorAccent ?? '#555'}66, ${info?.colorAccent ?? '#555'}22)`,
-        border:     isHighlighted ? `2px solid ${accent}` : `2px solid ${info?.colorAccent ?? '#555'}33`,
-        boxShadow:  isHighlighted ? `0 0 14px ${accent}50` : 'none',
-        fontSize:   size * 0.4,
-      }}
-    >
-      {letter}
-    </div>
-  )
-}
 
 export default function ClanPage() {
   const { studentRecord } = useAuth()
@@ -201,11 +183,10 @@ export default function ClanPage() {
                 return (
                   <div key={clan.id}>
                     <div className="flex items-center gap-3 mb-2">
-                      <ClanBadge
+                      <ClanIcon
                         clanId={clan.id}
                         size={40}
-                        isHighlighted={isMe}
-                        accent={accent}
+                        style={isMe ? { border: `2px solid ${accent}`, boxShadow: `0 0 14px ${accent}50` } : undefined}
                       />
 
                       <div className="flex-1 min-w-0">
