@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import Logo from '@/components/ui/Logo'
+import logo from '@/assets/logo.png'
 
-// ── Animation variants ───────────────────────────────────────
+// ── Animations ────────────────────────────────────────────────
 
 const cardVariants = {
-  hidden:  { opacity: 0, y: 28, scale: 0.98 },
+  hidden:  { opacity: 0, y: 28, scale: 0.97 },
   visible: {
     opacity: 1, y: 0, scale: 1,
     transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
@@ -16,12 +16,42 @@ const cardVariants = {
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.2 } },
+  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.25 } },
 }
 
 const fadeUp = {
   hidden:  { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+}
+
+// ── Animated mesh background ──────────────────────────────────
+
+function MeshBg() {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      <div style={{
+        position: 'absolute', width: 700, height: 700, borderRadius: '50%',
+        top: '-20%', left: '-10%',
+        background: 'rgba(204,0,0,0.07)',
+        filter: 'blur(90px)',
+        animation: 'adMeshA 18s ease-in-out infinite',
+      }}/>
+      <div style={{
+        position: 'absolute', width: 600, height: 600, borderRadius: '50%',
+        bottom: '-15%', right: '-5%',
+        background: 'rgba(100,80,255,0.05)',
+        filter: 'blur(80px)',
+        animation: 'adMeshB 22s ease-in-out infinite',
+      }}/>
+      <div style={{
+        position: 'absolute', width: 500, height: 500, borderRadius: '50%',
+        top: '30%', right: '20%',
+        background: 'rgba(204,0,0,0.04)',
+        filter: 'blur(70px)',
+        animation: 'adMeshC 26s ease-in-out infinite',
+      }}/>
+    </div>
+  )
 }
 
 // ── Input field ───────────────────────────────────────────────
@@ -44,10 +74,11 @@ function Field({ id, label, type = 'text', value, onChange, placeholder, autoCom
         required
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="w-full px-4 py-3 rounded-lg text-sm text-white placeholder:text-white/20 bg-white/[0.04] outline-none transition-all duration-200"
+        className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder:text-white/20 bg-white/[0.06] outline-none"
         style={{
-          border: `1px solid ${focused ? 'rgba(204,0,0,0.6)' : 'rgba(255,255,255,0.09)'}`,
-          boxShadow: focused ? '0 0 0 3px rgba(204,0,0,0.12)' : 'none',
+          border: `1px solid ${focused ? 'rgba(204,0,0,0.65)' : 'rgba(255,255,255,0.1)'}`,
+          boxShadow: focused ? '0 0 0 3px rgba(204,0,0,0.18)' : 'none',
+          transition: 'border-color 0.2s, box-shadow 0.2s',
         }}
       />
     </motion.div>
@@ -67,7 +98,7 @@ function ErrorBanner({ message }) {
     >
       <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-red-950/60 border border-red-800/40">
         <svg className="shrink-0 text-red-400" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5Zm.75 7a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75Z" />
+          <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm-.75 3.75a.75.75 0 0 1 1.5 0v3.5a.75.75 0 0 1-1.5 0v-3.5Zm.75 7a.875.875 0 1 1 0-1.75.875.875 0 0 1 0 1.75Z"/>
         </svg>
         <p className="text-red-300 text-xs">{message}</p>
       </div>
@@ -75,7 +106,7 @@ function ErrorBanner({ message }) {
   )
 }
 
-// ── Main component ────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────
 
 export default function AdminLogin() {
   const { signIn } = useAuth()
@@ -95,7 +126,6 @@ export default function AdminLogin() {
     try {
       ;({ data, error: authError } = await signIn(email.trim(), password))
     } catch (networkErr) {
-      // signIn itself threw — treat as a network error
       console.error('[AdminLogin] signIn threw:', networkErr)
       setError('Network error — could not reach the server. Check your internet connection.')
       setBusy(false)
@@ -104,9 +134,7 @@ export default function AdminLogin() {
 
     if (authError) {
       console.error('[AdminLogin] Auth error:', authError)
-
       const msg = authError.message ?? ''
-      // Network / DNS failures arrive as "Load failed" (Safari) or "Failed to fetch" (Chrome/Firefox)
       if (msg === 'Load failed' || msg === 'Failed to fetch' || msg.toLowerCase().includes('network')) {
         setError(
           'Cannot reach Supabase. Check your internet connection and confirm ' +
@@ -117,12 +145,10 @@ export default function AdminLogin() {
       } else {
         setError(msg || 'Sign-in failed. Please try again.')
       }
-
       setBusy(false)
       return
     }
 
-    // Guard: only admin users may use this portal
     if (data?.user?.user_metadata?.role !== 'admin') {
       await supabase.auth.signOut()
       setError('This portal is for authorised staff only.')
@@ -134,26 +160,17 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{ background: '#080810', fontFamily: "'Inter', system-ui, sans-serif" }}
+    >
+      {/* Animated gradient mesh */}
+      <MeshBg />
 
-      {/* Subtle vignette */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 60% at 50% 50%, transparent 0%, rgba(0,0,0,0.6) 100%)',
-        }}
-      />
-
-      {/* Decorative grid lines */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
+      {/* Subtle radial vignette */}
+      <div className="fixed inset-0 pointer-events-none" style={{
+        background: 'radial-gradient(ellipse 80% 70% at 50% 50%, transparent 0%, rgba(0,0,0,0.55) 100%)',
+      }}/>
 
       <motion.div
         variants={cardVariants}
@@ -161,7 +178,7 @@ export default function AdminLogin() {
         animate="visible"
         className="relative w-full max-w-sm z-10"
       >
-        {/* ── Branding header ───────────────────────────────── */}
+        {/* ── Logo + branding ───────────────────────────── */}
         <motion.div
           variants={stagger}
           initial="hidden"
@@ -169,39 +186,35 @@ export default function AdminLogin() {
           className="flex flex-col items-center mb-8 select-none"
         >
           <motion.div variants={fadeUp} className="mb-5">
-            <Logo size={72} color="white" />
+            <img
+              src={logo}
+              alt="Fast Education"
+              style={{
+                height: 80, width: 'auto', objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                transition: 'filter 0.3s ease',
+              }}
+            />
           </motion.div>
 
-          <motion.div variants={fadeUp} className="text-center">
-            <div className="flex items-baseline justify-center gap-2">
-              <span
-                className="text-3xl font-black tracking-[0.18em] leading-none"
-                style={{ color: '#CC0000' }}
-              >
-                FAST
-              </span>
-              <span className="text-3xl font-light tracking-[0.18em] leading-none text-white">
-                EDUCATION
-              </span>
-            </div>
-            <p className="text-white/30 text-[10px] tracking-[0.25em] uppercase mt-2.5">
-              Today is your tomorrow
-            </p>
-          </motion.div>
+          <motion.p variants={fadeUp} className="text-white/30 text-[10px] tracking-[0.25em] uppercase">
+            Today is your tomorrow
+          </motion.p>
         </motion.div>
 
-        {/* ── Login card ────────────────────────────────────── */}
+        {/* ── Glass login card ──────────────────────────── */}
         <div
           className="rounded-2xl px-8 pt-7 pb-8"
           style={{
-            background: 'rgba(255,255,255,0.025)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            backdropFilter: 'blur(12px)',
+            background: 'rgba(0,0,0,0.60)',
+            border: '1px solid rgba(204,0,0,0.35)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            boxShadow: '0 0 40px rgba(204,0,0,0.12), 0 8px 40px rgba(0,0,0,0.5)',
           }}
         >
-          {/* Portal label */}
           <p className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-white/30 mb-6">
-            Staff portal · Fast&nbsp;Life
+            Staff portal
           </p>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -241,21 +254,26 @@ export default function AdminLogin() {
                 <motion.button
                   type="submit"
                   disabled={busy}
-                  whileHover={busy ? {} : { scale: 1.015 }}
+                  whileHover={busy ? {} : { scale: 1.015, boxShadow: '0 0 24px rgba(204,0,0,0.45)' }}
                   whileTap={busy   ? {} : { scale: 0.975 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   className="relative w-full py-3.5 rounded-xl text-sm font-semibold text-white tracking-wide overflow-hidden"
-                  style={{ background: busy ? '#7a0000' : '#CC0000' }}
+                  style={{
+                    background: busy
+                      ? '#7a0000'
+                      : 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+                    boxShadow: busy ? 'none' : '0 4px 16px rgba(204,0,0,0.3)',
+                  }}
                 >
-                  {/* Shimmer on idle */}
+                  {/* Shine sweep */}
                   {!busy && (
                     <motion.span
-                      className="absolute inset-0 -translate-x-full"
-                      animate={{ translateX: ['−100%', '200%'] }}
-                      transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                      className="absolute inset-0 pointer-events-none"
+                      animate={{ translateX: ['-100%', '250%'] }}
+                      transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 3.5, ease: 'easeInOut' }}
                       style={{
-                        background:
-                          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%)',
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)',
+                        transform: 'skewX(-15deg)',
                       }}
                     />
                   )}
@@ -277,8 +295,9 @@ export default function AdminLogin() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-white/15 text-[10px] tracking-widest uppercase mt-5">
-          Authorised personnel only
+        <p className="text-center text-[10px] tracking-widest uppercase mt-5"
+          style={{ color: '#e53e3e', opacity: 0.7 }}>
+          Authorised Personnel Only
         </p>
       </motion.div>
     </div>

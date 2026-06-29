@@ -3,18 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import Logo from '@/components/ui/Logo'
+import logo from '@/assets/logo.png'
 import { CLANS, CLAN_NAMES } from '@/constants/clans'
 
-// ── Clan panel data in display order ──────────────────────────
 const PANELS = CLAN_NAMES.map(id => CLANS[id])
 
-// Per-clan colour overlays that sit on top of the mascot image
 const CLAN_OVERLAY = {
-  VIPERON: 'rgba(74,124,63,0.5)',
-  CRODON:  'rgba(13,13,13,0.6)',
-  AVERON:  'rgba(10,22,40,0.6)',
-  WOLFRIN: 'rgba(139,0,0,0.5)',
+  VIPERON: 'rgba(74,124,63,0.65)',
+  CRODON:  'rgba(13,13,13,0.78)',
+  AVERON:  'rgba(10,22,40,0.75)',
+  WOLFRIN: 'rgba(139,0,0,0.65)',
 }
 
 // ── Animations ────────────────────────────────────────────────
@@ -23,20 +21,15 @@ const panelVariants = {
   hidden:  { y: '105%' },
   visible: (i) => ({
     y: 0,
-    transition: {
-      delay: i * 0.07,
-      type: 'spring',
-      stiffness: 55,
-      damping: 18,
-    },
+    transition: { delay: i * 0.07, type: 'spring', stiffness: 55, damping: 18 },
   }),
 }
 
-const overlayVariants = {
-  hidden:  { opacity: 0, y: 16 },
+const cardVariants = {
+  hidden:  { opacity: 0, y: 20, scale: 0.97 },
   visible: {
-    opacity: 1, y: 0,
-    transition: { delay: 0.55, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+    opacity: 1, y: 0, scale: 1,
+    transition: { delay: 0.45, duration: 0.5, ease: [0.22, 1, 0.36, 1] },
   },
 }
 
@@ -46,13 +39,12 @@ const errorVariants = {
   exit:    { opacity: 0, height: 0,      transition: { duration: 0.15 } },
 }
 
-// ── Sub-components ────────────────────────────────────────────
+// ── Clan panel ────────────────────────────────────────────────
 
 function ClanPanel({ clan, index }) {
   const [hovered,   setHovered]   = useState(false)
   const [imgFailed, setImgFailed] = useState(false)
-
-  const overlayColor = CLAN_OVERLAY[clan.id] ?? 'rgba(0,0,0,0.55)'
+  const overlayColor = CLAN_OVERLAY[clan.id] ?? 'rgba(0,0,0,0.65)'
 
   return (
     <motion.div
@@ -62,12 +54,9 @@ function ClanPanel({ clan, index }) {
       animate="visible"
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
-      // flex-1 in the parent flex container guarantees exactly 25% width (desktop)
-      // or 25% height (mobile), regardless of image dimensions.
       className="relative flex-1 overflow-hidden"
       style={{ background: clan.colorBg }}
     >
-      {/* ── Mascot image — covers the entire panel ── */}
       {!imgFailed ? (
         <motion.img
           src={`/clans/${clan.id.toLowerCase()}.png`}
@@ -75,59 +64,40 @@ function ClanPanel({ clan, index }) {
           animate={{ scale: hovered ? 1.06 : 1 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            position:       'absolute',
-            inset:          0,
-            width:          '100%',
-            height:         '100%',
-            objectFit:      'cover',
-            objectPosition: 'center',
-            display:        'block',
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'cover', objectPosition: 'center',
+            display: 'block',
           }}
           onError={() => setImgFailed(true)}
         />
       ) : (
-        // Emoji fallback — centred, no size variation
-        <div
-          aria-hidden
-          style={{
-            position:        'absolute',
-            inset:           0,
-            display:         'flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            fontSize:        'clamp(64px, 10vw, 120px)',
-            opacity:         0.55,
-            pointerEvents:   'none',
-          }}
-        >
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 'clamp(64px, 10vw, 120px)', opacity: 0.55, pointerEvents: 'none',
+        }}>
           {clan.emoji}
         </div>
       )}
 
-      {/* ── Per-clan colour overlay ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: overlayColor }}
-      />
+      {/* Clan colour overlay — darker than before for readability */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: overlayColor }} />
 
-      {/* ── Dark vignette at top and bottom ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 30%, transparent 65%, rgba(0,0,0,0.55) 100%)',
-        }}
-      />
+      {/* Top-and-bottom vignette — stronger */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 28%, transparent 60%, rgba(0,0,0,0.7) 100%)',
+      }} />
 
-      {/* ── Accent inset border on hover ── */}
+      {/* Accent inset border on hover */}
       <motion.div
         animate={{ opacity: hovered ? 1 : 0 }}
         transition={{ duration: 0.2 }}
         className="absolute inset-0 pointer-events-none"
-        style={{ boxShadow: `inset 0 0 0 2px ${clan.colorAccent}80` }}
+        style={{ boxShadow: `inset 0 0 0 2px ${clan.colorAccent}90` }}
       />
 
-      {/* ── Clan name strip at bottom ── */}
+      {/* Clan name strip */}
       <div className="absolute bottom-0 inset-x-0 z-10 pb-5 text-center space-y-1.5">
         <motion.div
           animate={{ scaleX: hovered ? 1 : 0.35, opacity: hovered ? 1 : 0.4 }}
@@ -135,10 +105,8 @@ function ClanPanel({ clan, index }) {
           className="h-[2px] w-7 mx-auto rounded-full"
           style={{ background: clan.colorAccent }}
         />
-        <p
-          className="text-[10px] font-bold tracking-[0.22em] uppercase"
-          style={{ color: hovered ? clan.colorAccent : 'rgba(255,255,255,0.32)' }}
-        >
+        <p className="text-[10px] font-bold tracking-[0.22em] uppercase"
+          style={{ color: hovered ? clan.colorAccent : 'rgba(255,255,255,0.32)' }}>
           {clan.name}
         </p>
       </div>
@@ -146,7 +114,7 @@ function ClanPanel({ clan, index }) {
   )
 }
 
-// ── Main component ────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────
 
 export default function StudentLogin() {
   const { signIn } = useAuth()
@@ -200,71 +168,65 @@ export default function StudentLogin() {
     navigate('/dashboard', { replace: true })
   }
 
-  const inputBorder = (focused) =>
-    focused ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)'
+  const inputStyle = (focused) => ({
+    border: `1px solid ${focused ? 'rgba(204,0,0,0.65)' : 'rgba(255,255,255,0.1)'}`,
+    boxShadow: focused ? '0 0 0 3px rgba(204,0,0,0.18)' : 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  })
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-black">
+    <div className="fixed inset-0 overflow-hidden bg-black" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-      {/* ── Four clan panels ──────────────────────────── */}
-      {/*
-        Desktop (md+): flex-row — four equal columns (each flex-1 = 25vw)
-        Mobile (<md):  flex-col — four equal rows    (each flex-1 = 25vh)
-        In both cases flex-1 on each panel guarantees identical sizes.
-      */}
+      {/* ── Four clan panels ─────────────────────────── */}
       <div className="absolute inset-0 flex flex-col md:flex-row">
         {PANELS.map((clan, i) => (
           <ClanPanel key={clan.id} clan={clan} index={i} />
         ))}
       </div>
 
-      {/* ── Center overlay ────────────────────────────── */}
+      {/* ── Center card ──────────────────────────────── */}
       <div className="absolute inset-0 flex items-center justify-center p-4 z-10">
         <motion.div
-          variants={overlayVariants}
+          variants={cardVariants}
           initial="hidden"
           animate="visible"
-          className="w-full max-w-[340px] flex flex-col items-center gap-6"
+          className="w-full max-w-[340px] flex flex-col items-center gap-5"
         >
-          {/* Branding */}
+          {/* Logo */}
           <div className="flex flex-col items-center gap-3 select-none">
-            <Logo size={64} color="white" />
-            <div className="text-center">
-              <div className="flex items-baseline justify-center gap-2">
-                <span
-                  className="text-2xl font-black tracking-[0.2em]"
-                  style={{ color: '#CC0000' }}
-                >
-                  FAST
-                </span>
-                <span className="text-2xl font-light tracking-[0.2em] text-white">
-                  EDUCATION
-                </span>
-              </div>
-              <p className="text-[10px] text-white/30 tracking-[0.25em] uppercase mt-1.5">
-                Today is your tomorrow
-              </p>
-            </div>
+            <img
+              src={logo}
+              alt="Fast Education"
+              style={{
+                height: 80, width: 'auto', objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                dropShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              }}
+            />
+            <p className="text-[11px] text-white/35 tracking-[0.25em] uppercase">
+              Today is your tomorrow
+            </p>
           </div>
 
-          {/* Form card */}
+          {/* Glass card */}
           <div
             className="w-full rounded-2xl px-7 py-6 space-y-4"
             style={{
-              background:    'rgba(6, 6, 6, 0.82)',
-              border:        '1px solid rgba(255,255,255,0.09)',
-              backdropFilter: 'blur(24px)',
-              WebkitBackdropFilter: 'blur(24px)',
+              background: 'rgba(0,0,0,0.60)',
+              border: '1px solid rgba(204,0,0,0.35)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 0 40px rgba(204,0,0,0.12), 0 8px 32px rgba(0,0,0,0.4)',
             }}
           >
-            <p className="text-[10px] font-semibold text-center uppercase tracking-[0.2em] text-white/25">
+            <p className="text-[10px] font-semibold text-center uppercase tracking-[0.2em] text-white/30">
               Student sign in
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-3" noValidate>
               {/* Username */}
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
+                <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-1.5">
                   Username
                 </label>
                 <input
@@ -277,14 +239,14 @@ export default function StudentLogin() {
                   required
                   onFocus={() => setUserFocused(true)}
                   onBlur={() => setUserFocused(false)}
-                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder:text-white/20 bg-white/[0.05] outline-none transition-all"
-                  style={{ border: `1px solid ${inputBorder(userFocused)}` }}
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white placeholder:text-white/20 bg-white/[0.05] outline-none"
+                  style={inputStyle(userFocused)}
                 />
               </div>
 
               {/* Password */}
               <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/35 mb-1.5">
+                <label className="block text-[11px] font-semibold uppercase tracking-widest text-white/40 mb-1.5">
                   Password
                 </label>
                 <div className="relative">
@@ -297,8 +259,8 @@ export default function StudentLogin() {
                     required
                     onFocus={() => setPassFocused(true)}
                     onBlur={() => setPassFocused(false)}
-                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm text-white placeholder:text-white/20 bg-white/[0.05] outline-none transition-all"
-                    style={{ border: `1px solid ${inputBorder(passFocused)}` }}
+                    className="w-full px-4 py-3 pr-11 rounded-xl text-sm text-white placeholder:text-white/20 bg-white/[0.05] outline-none"
+                    style={inputStyle(passFocused)}
                   />
                   <button
                     type="button"
@@ -347,12 +309,29 @@ export default function StudentLogin() {
               <motion.button
                 type="submit"
                 disabled={busy}
-                whileHover={busy ? {} : { scale: 1.02 }}
+                whileHover={busy ? {} : { scale: 1.02, boxShadow: '0 0 20px rgba(204,0,0,0.4)' }}
                 whileTap={busy  ? {} : { scale: 0.97 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="relative w-full py-3.5 rounded-xl text-sm font-bold text-white overflow-hidden"
-                style={{ background: busy ? '#7a0000' : '#CC0000' }}
+                style={{
+                  background: busy
+                    ? '#7a0000'
+                    : 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
+                  boxShadow: busy ? 'none' : '0 4px 16px rgba(204,0,0,0.3)',
+                }}
               >
+                {/* Shine sweep */}
+                {!busy && (
+                  <motion.span
+                    className="absolute inset-0 pointer-events-none"
+                    animate={{ translateX: ['-100%', '250%'] }}
+                    transition={{ duration: 2.6, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                    style={{
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)',
+                      transform: 'skewX(-15deg)',
+                    }}
+                  />
+                )}
                 {busy ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -365,7 +344,7 @@ export default function StudentLogin() {
             </form>
           </div>
 
-          <p className="text-white/15 text-[10px] tracking-widest uppercase">
+          <p className="text-white/20 text-[10px] tracking-widest uppercase">
             Fast Life · Fast Education
           </p>
         </motion.div>
