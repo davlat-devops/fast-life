@@ -107,9 +107,6 @@ function MeshBackground() {
 
 // ── Sidebar ────────────────────────────────────────────────────
 function Sidebar({ user, onSignOut }) {
-  const { theme } = useAdminTheme()
-  const isDark = theme === 'dark'
-
   return (
     <aside
       className="w-60 shrink-0 flex flex-col h-full relative"
@@ -136,11 +133,7 @@ function Sidebar({ user, onSignOut }) {
         <img
           src={logo}
           alt="Fast Education"
-          style={{
-            height: 44, width: 'auto', objectFit: 'contain',
-            filter: isDark ? 'brightness(0) invert(1)' : 'none',
-            transition: 'filter 0.3s ease',
-          }}
+          style={{ height: 44, width: 'auto', objectFit: 'contain' }}
         />
         <ThemeToggle />
       </div>
