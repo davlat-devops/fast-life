@@ -1,13 +1,24 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL     ?? ''
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
-const serviceRoleKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY ?? ''
+const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL               ?? ''
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY           ?? ''
+const serviceRoleKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY   ?? ''
 
+// Student portal auth — session stored under 'fl-student'
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
+    persistSession:   true,
     autoRefreshToken: true,
+    storageKey:       'fl-student',
+  },
+})
+
+// Admin portal auth — completely separate session stored under 'fl-admin'
+export const supabaseAdminAuth = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession:   true,
+    autoRefreshToken: true,
+    storageKey:       'fl-admin',
   },
 })
 
@@ -15,6 +26,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export const adminSupabase = createClient(supabaseUrl, serviceRoleKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false,
+    persistSession:   false,
   },
 })

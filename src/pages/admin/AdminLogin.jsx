@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import logo from '@/assets/logo.png'
 
 // ── Clan slideshow images ─────────────────────────────────────
@@ -170,7 +170,7 @@ function ErrorBanner({ message }) {
 // ── Page ──────────────────────────────────────────────────────
 
 export default function AdminLogin() {
-  const { signIn } = useAuth()
+  const { signIn } = useAdminAuth()
   const navigate   = useNavigate()
 
   const [email,    setEmail]    = useState('')
@@ -208,7 +208,7 @@ export default function AdminLogin() {
     }
 
     if (data?.user?.user_metadata?.role !== 'admin') {
-      await supabase.auth.signOut()
+      await supabaseAdminAuth.auth.signOut()
       setError('This portal is for authorised staff only.')
       setBusy(false)
       return

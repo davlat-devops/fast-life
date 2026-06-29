@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LayoutDashboard, Users, Calendar, Star, BarChart3, RefreshCw, Sun, Moon, LogOut } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
 import logo from '@/assets/logo.png'
@@ -172,7 +172,7 @@ function Sidebar({ user, onSignOut }) {
 
 // ── Inner layout (needs AdminThemeContext) ─────────────────────
 function AdminLayoutInner() {
-  const { loading, session, isAdmin, user, signOut } = useAuth()
+  const { loading, session, isAdmin, user, signOut } = useAdminAuth()
   const { theme } = useAdminTheme()
   const navigate  = useNavigate()
   const location  = useLocation()

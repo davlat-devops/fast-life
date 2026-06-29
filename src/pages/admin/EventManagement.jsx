@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase, adminSupabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
 
@@ -516,7 +516,7 @@ function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
 // ── Page ─────────────────────────────────────────────────────
 
 export default function EventManagement() {
-  const { user } = useAuth()
+  const { user } = useAdminAuth()
   const { toast } = useToast()
   const navigate = useNavigate()
 

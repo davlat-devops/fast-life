@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { ToastProvider } from '@/contexts/ToastContext'
+import { AuthProvider }      from '@/contexts/AuthContext'
+import { AdminAuthProvider } from '@/contexts/AdminAuthContext'
+import { ToastProvider }     from '@/contexts/ToastContext'
 import { GuestAdminRoute, GuestStudentRoute } from '@/components/ui/ProtectedRoute'
 
 import AdminLayout          from '@/components/admin/AdminLayout'
@@ -25,45 +26,53 @@ import ProfilePage        from '@/pages/student/ProfilePage'
 export default function App() {
   return (
     <BrowserRouter>
+      {/*
+        Both providers are mounted at the top so every route can access its
+        own auth context. They are entirely independent — different Supabase
+        clients, different localStorage keys ('fl-student' / 'fl-admin').
+        Student code uses useAuth(); admin code uses useAdminAuth().
+      */}
       <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* ── Student login (standalone — no nav) ─────── */}
-            <Route path="/" element={
-              <GuestStudentRoute><StudentLogin /></GuestStudentRoute>
-            } />
+        <AdminAuthProvider>
+          <ToastProvider>
+            <Routes>
+              {/* ── Student login ────────────────────────────── */}
+              <Route path="/" element={
+                <GuestStudentRoute><StudentLogin /></GuestStudentRoute>
+              } />
 
-            {/* ── Student app (bottom-tab layout, auth-guarded in StudentLayout) */}
-            <Route element={<StudentLayout />}>
-              <Route path="/dashboard"   element={<StudentDashboard />} />
-              <Route path="/clan"        element={<ClanPage />} />
-              <Route path="/events"      element={<EventsPage />} />
-              <Route path="/leaderboard" element={<LeaderboardPage />} />
-              <Route path="/profile"     element={<ProfilePage />} />
-            </Route>
+              {/* ── Student app (auth-guarded inside StudentLayout) */}
+              <Route element={<StudentLayout />}>
+                <Route path="/dashboard"   element={<StudentDashboard />} />
+                <Route path="/clan"        element={<ClanPage />} />
+                <Route path="/events"      element={<EventsPage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                <Route path="/profile"     element={<ProfilePage />} />
+              </Route>
 
-            {/* ── Admin login (standalone — no sidebar) ───── */}
-            <Route path="/admin/login" element={
-              <GuestAdminRoute><AdminLogin /></GuestAdminRoute>
-            } />
+              {/* ── Admin login ───────────────────────────────── */}
+              <Route path="/admin/login" element={
+                <GuestAdminRoute><AdminLogin /></GuestAdminRoute>
+              } />
 
-            {/* ── Admin app (sidebar layout, auth-guarded in AdminLayout) */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="dashboard" replace />} />
-              <Route path="dashboard"           element={<AdminDashboard />} />
-              <Route path="students"            element={<StudentManagement />} />
-              <Route path="events"              element={<EventManagement />} />
-              <Route path="attendance/:eventId" element={<AttendanceRegister />} />
-              <Route path="cp"                  element={<CpAwards />} />
-              <Route path="rankings"            element={<Rankings />} />
-              <Route path="reset"               element={<MonthlyReset />} />
-              <Route path="*"                   element={<Navigate to="dashboard" replace />} />
-            </Route>
+              {/* ── Admin app (auth-guarded inside AdminLayout) */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard"           element={<AdminDashboard />} />
+                <Route path="students"            element={<StudentManagement />} />
+                <Route path="events"              element={<EventManagement />} />
+                <Route path="attendance/:eventId" element={<AttendanceRegister />} />
+                <Route path="cp"                  element={<CpAwards />} />
+                <Route path="rankings"            element={<Rankings />} />
+                <Route path="reset"               element={<MonthlyReset />} />
+                <Route path="*"                   element={<Navigate to="dashboard" replace />} />
+              </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </ToastProvider>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </ToastProvider>
+        </AdminAuthProvider>
       </AuthProvider>
     </BrowserRouter>
   )
