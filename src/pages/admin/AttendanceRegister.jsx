@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Shield } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
@@ -71,7 +72,7 @@ function StudentRow({ student, present, onToggle, toggling, finalised, delay }) 
           {clanInfo && (
             <>
               <span className="text-white/15">·</span>
-              <span className="text-[10px]">{clanInfo.emoji}</span>
+              <Shield size={11} style={{ color: clanInfo.colorAccent ?? 'var(--ad-text-3)' }} />
               <span className="text-[10px] text-white/30">{clanInfo.name}</span>
             </>
           )}
@@ -488,7 +489,7 @@ export default function AttendanceRegister() {
               key="confirm"
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               className="p-5 rounded-2xl"
-              style={{ background: '#1a0a0a', border: '1px solid rgba(204,0,0,0.3)' }}
+              style={{ background: 'var(--ad-red-dim)', border: '1px solid var(--ad-red-glow)' }}
             >
               <div className="flex items-start gap-3">
                 <svg className="shrink-0 text-red-400 mt-0.5" width="16" height="16" viewBox="0 0 24 24"
