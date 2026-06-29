@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import {
+  Users, Calendar, Star, Trophy,
+  CalendarPlus, RefreshCw, Crown,
+  Zap, Award, Heart, BookOpen, Globe,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 
@@ -29,6 +34,28 @@ const REASON_LABELS = {
   perfect_month:          'Perfect Month',
 }
 
+const REASON_ICON = {
+  attendance:             { Icon: Calendar,  color: '#60a5fa' },
+  volunteer:              { Icon: Heart,     color: '#f472b6' },
+  competition_1st:        { Icon: Trophy,    color: '#f59e0b' },
+  competition_2nd:        { Icon: Trophy,    color: '#94a3b8' },
+  competition_3rd:        { Icon: Trophy,    color: '#b45309' },
+  referral:               { Icon: Users,     color: '#4ade80' },
+  peer_spotlight:         { Icon: Star,      color: '#a78bfa' },
+  end_of_month_1st:       { Icon: Crown,     color: '#f59e0b' },
+  end_of_month_top5:      { Icon: Award,     color: '#fb923c' },
+  end_of_month_top5_clan: { Icon: Award,     color: '#fb923c' },
+  clan_winner_headstart:  { Icon: Zap,       color: '#e53e3e' },
+  perfect_month:          { Icon: Star,      color: '#4ade80' },
+}
+
+const CLAN_GRADIENT = {
+  VIPERON: 'linear-gradient(135deg, #1a4731 0%, #2d6a4f 100%)',
+  CRODON:  'linear-gradient(135deg, #1a2744 0%, #2563eb 100%)',
+  AVERON:  'linear-gradient(135deg, #3b0764 0%, #7c3aed 100%)',
+  WOLFRIN: 'linear-gradient(135deg, #7c2d12 0%, #ea580c 100%)',
+}
+
 function formatReason(r) { return REASON_LABELS[r] ?? r }
 
 function AnimatedNumber({ target, duration = 1100 }) {
@@ -47,15 +74,57 @@ function AnimatedNumber({ target, duration = 1100 }) {
   return <>{val.toLocaleString()}</>
 }
 
+// ── Clan badge (letter in gradient circle) ────────────────────
+
+function ClanBadge({ clanId, size = 28 }) {
+  const info = CLANS[clanId]
+  const letter = (info?.name ?? clanId)[0].toUpperCase()
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: CLAN_GRADIENT[clanId] ?? '#333',
+      fontSize: size * 0.4, fontWeight: 800, color: '#fff',
+      boxShadow: `0 2px 8px ${info?.colorAccent ?? '#555'}44`,
+      letterSpacing: '-0.01em',
+    }}>
+      {letter}
+    </div>
+  )
+}
+
+// ── Rank badge (#1 gold, #2 silver, #3 bronze, #4 plain) ──────
+
+const RANK_STYLE = [
+  { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.35)' },
+  { color: '#94a3b8', bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.3)' },
+  { color: '#b45309', bg: 'rgba(180,83,9,0.13)',   border: 'rgba(180,83,9,0.32)'  },
+  { color: 'var(--ad-text-3)', bg: 'var(--ad-hover)', border: 'var(--ad-border)'  },
+]
+
+function RankBadge({ rank }) {
+  const s = RANK_STYLE[rank] ?? RANK_STYLE[3]
+  return (
+    <div style={{
+      width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: s.bg, border: `1px solid ${s.border}`,
+      fontSize: 10, fontWeight: 800, color: s.color, letterSpacing: '-0.01em',
+    }}>
+      #{rank + 1}
+    </div>
+  )
+}
+
 // ── Sub-components ────────────────────────────────────────────
 
-function StatCard({ label, value, icon, accentColor, loading, delay = 0 }) {
+function StatCard({ label, value, Icon, accentColor, loading, delay = 0 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className="ad-surface rounded-2xl p-5 relative overflow-hidden group"
+      className="ad-surface rounded-2xl p-5 relative overflow-hidden"
     >
       <div className="flex items-start justify-between">
         <div>
@@ -72,46 +141,44 @@ function StatCard({ label, value, icon, accentColor, loading, delay = 0 }) {
         <div style={{
           width: 40, height: 40, borderRadius: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: `${accentColor}18`,
-          fontSize: 18,
+          background: `${accentColor}18`, color: accentColor,
           transition: 'transform 0.2s',
         }}>
-          {icon}
+          <Icon size={18} strokeWidth={2} />
         </div>
       </div>
-      {/* Bottom accent bar */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
         background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
-        transition: 'opacity 0.2s',
       }}/>
     </motion.div>
   )
 }
 
 function ClanRaceBar({ clan, maxCp, rank, delay }) {
-  const info = CLANS[clan.id]
-  const pct  = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
-  const rankEmoji = ['🥇', '🥈', '🥉', '4️⃣'][rank]
+  const pct = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.3 }}
-      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+      style={{ display: 'flex', alignItems: 'center', gap: 10 }}
     >
-      <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>{rankEmoji}</span>
-      <span style={{ fontSize: 18, width: 24, textAlign: 'center', flexShrink: 0 }}>{info?.emoji}</span>
-      <div style={{ width: 80, flexShrink: 0 }}>
-        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ad-text)', lineHeight: 1 }}>
+      <RankBadge rank={rank} />
+      <ClanBadge clanId={clan.id} size={28} />
+
+      <div style={{ width: 76, flexShrink: 0 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ad-text)', lineHeight: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
           {clan.name}
           {clan.crown && (
             <motion.span
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              style={{ marginLeft: 4 }}
-            >👑</motion.span>
+              style={{ display: 'flex', alignItems: 'center', color: '#f59e0b' }}
+            >
+              <Crown size={11} fill="#f59e0b" strokeWidth={1.5} />
+            </motion.span>
           )}
         </p>
         <p style={{ fontSize: 10, color: 'var(--ad-text-3)', marginTop: 2 }}>{clan.total_cp.toLocaleString()} CP</p>
@@ -150,8 +217,7 @@ function ClanRaceBar({ clan, maxCp, rank, delay }) {
 
 function ActivityItem({ award, delay }) {
   const clanInfo = CLANS[award.students?.clan]
-  const initials = (award.students?.full_name ?? '?')
-    .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  const { Icon, color } = REASON_ICON[award.reason] ?? { Icon: Star, color: '#a78bfa' }
 
   return (
     <motion.div
@@ -163,23 +229,27 @@ function ActivityItem({ award, delay }) {
         padding: '10px 0', borderBottom: '1px solid var(--ad-border-2)',
       }}
     >
+      {/* Reason icon badge */}
       <div style={{
-        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: 700, color: '#fff',
-        background: clanInfo?.colorAccent ?? '#555',
+        background: `${color}18`,
+        border: `1px solid ${color}30`,
+        color,
       }}>
-        {initials}
+        <Icon size={14} strokeWidth={2} />
       </div>
+
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 12, color: 'var(--ad-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <span style={{ fontWeight: 600 }}>{award.students?.full_name ?? 'Unknown'}</span>
           {' — '}{formatReason(award.reason)}
         </p>
         <p style={{ fontSize: 10, color: 'var(--ad-text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {award.note}
+          {award.note ?? (clanInfo ? `${clanInfo.name} clan` : '')}
         </p>
       </div>
+
       <div style={{ flexShrink: 0, textAlign: 'right' }}>
         <p style={{
           fontSize: 12, fontWeight: 800, color: '#4ade80',
@@ -192,6 +262,15 @@ function ActivityItem({ award, delay }) {
     </motion.div>
   )
 }
+
+// ── Quick link icon components ────────────────────────────────
+
+const QUICK_LINKS = [
+  { to: '/admin/students', label: 'Manage Students', Icon: Users,       color: '#e53e3e' },
+  { to: '/admin/events',   label: 'Create Event',    Icon: CalendarPlus, color: '#C9A227' },
+  { to: '/admin/cp',       label: 'Award CP',        Icon: Star,         color: '#4ade80' },
+  { to: '/admin/reset',    label: 'Monthly Reset',   Icon: RefreshCw,    color: '#a78bfa' },
+]
 
 // ── Page ──────────────────────────────────────────────────────
 
@@ -260,18 +339,16 @@ export default function AdminDashboard() {
             textDecoration: 'none',
           }}
         >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
+          <Users size={13} strokeWidth={2.5} />
           Add Student
         </Link>
       </motion.div>
 
       {/* ── Stat cards ──────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-        <StatCard label="Active Students" value={stats.students} icon="🎓" accentColor="#e53e3e" loading={loading} delay={0.05} />
-        <StatCard label="Events This Month" value={stats.events}  icon="📅" accentColor="#C9A227" loading={loading} delay={0.1} />
-        <StatCard label="CP Awarded Today"  value={stats.cpToday} icon="⭐" accentColor="#4ade80" loading={loading} delay={0.15} />
+        <StatCard label="Active Students"  value={stats.students} Icon={Users}    accentColor="#e53e3e" loading={loading} delay={0.05} />
+        <StatCard label="Events This Month" value={stats.events}  Icon={Calendar} accentColor="#C9A227" loading={loading} delay={0.1}  />
+        <StatCard label="CP Awarded Today"  value={stats.cpToday} Icon={Star}     accentColor="#4ade80" loading={loading} delay={0.15} />
 
         {/* Top student card */}
         <motion.div
@@ -279,9 +356,18 @@ export default function AdminDashboard() {
           transition={{ delay: 0.2, duration: 0.35 }}
           className="ad-surface rounded-2xl p-5 relative overflow-hidden"
         >
-          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ad-text-3)', marginBottom: 6 }}>
-            Top Student
-          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ad-text-3)', marginBottom: 6 }}>
+              Top Student
+            </p>
+            <div style={{
+              width: 40, height: 40, borderRadius: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(245,158,11,0.15)', color: '#f59e0b',
+            }}>
+              <Trophy size={18} strokeWidth={2} />
+            </div>
+          </div>
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
               <div style={{ height: 16, width: 128, borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
@@ -303,7 +389,7 @@ export default function AdminDashboard() {
           )}
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
-            background: 'linear-gradient(90deg, transparent, rgba(150,150,150,0.5), transparent)',
+            background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.5), transparent)',
           }}/>
         </motion.div>
       </div>
@@ -331,12 +417,12 @@ export default function AdminDashboard() {
           {loading ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[...Array(4)].map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {[24, 24, 80, undefined, 72].map((w, j) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {[26, 28, 80, undefined].map((w, j) => (
                     <div key={j} style={{
-                      width: w, height: j === 3 ? 32 : 20,
+                      width: w, height: j === 2 ? 16 : j === 3 ? 32 : w,
                       flex: j === 3 ? 1 : undefined,
-                      borderRadius: j === 3 ? 8 : 4,
+                      borderRadius: j === 1 ? '50%' : j === 3 ? 8 : 7,
                       background: 'var(--ad-skeleton)',
                     }}/>
                   ))}
@@ -372,7 +458,7 @@ export default function AdminDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[...Array(6)].map((_, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--ad-skeleton)', flexShrink: 0 }}/>
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--ad-skeleton)', flexShrink: 0 }}/>
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     <div style={{ height: 12, borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
                     <div style={{ height: 10, width: '60%', borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
@@ -396,12 +482,7 @@ export default function AdminDashboard() {
 
       {/* ── Quick links ──────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
-        {[
-          { to: '/admin/students', label: 'Manage Students', icon: '👥', color: '#e53e3e' },
-          { to: '/admin/events',   label: 'Create Event',    icon: '📅', color: '#C9A227' },
-          { to: '/admin/cp',       label: 'Award CP',        icon: '⭐', color: '#4ade80' },
-          { to: '/admin/reset',    label: 'Monthly Reset',   icon: '🔄', color: '#a78bfa' },
-        ].map(({ to, label, icon, color }, i) => (
+        {QUICK_LINKS.map(({ to, label, Icon, color }, i) => (
           <motion.div
             key={to}
             initial={{ opacity: 0, y: 8 }}
@@ -429,11 +510,11 @@ export default function AdminDashboard() {
               }}
             >
               <span style={{
-                fontSize: 18, width: 34, height: 34, borderRadius: 8,
+                width: 34, height: 34, borderRadius: 8,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `${color}14`, flexShrink: 0,
+                background: `${color}14`, color, flexShrink: 0,
               }}>
-                {icon}
+                <Icon size={16} strokeWidth={2} />
               </span>
               {label}
             </Link>
