@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
+import imgWolfrin from '@/assets/clans/wolfrin.png'
+import imgAveron  from '@/assets/clans/averon.png'
+import imgCrodon  from '@/assets/clans/crodon.png'
+import imgViperon from '@/assets/clans/viperon.png'
+
+const CLAN_IMG_MAP = {
+  WOLFRIN: imgWolfrin,
+  AVERON:  imgAveron,
+  CRODON:  imgCrodon,
+  VIPERON: imgViperon,
+}
 import { MANUAL_CP_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -100,8 +111,12 @@ function StudentPicker({ allStudents, selected, onSelect }) {
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-30 mt-1 w-full rounded-xl overflow-hidden shadow-2xl"
-            style={{ background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.1)' }}
+            className="absolute z-30 mt-1 w-full rounded-xl overflow-hidden"
+            style={{
+              background:  'var(--ad-surface-solid)',
+              border:      '1px solid var(--ad-border)',
+              boxShadow:   '0 8px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
+            }}
           >
             {matches.map(s => {
               const info     = CLANS[s.clan]
@@ -123,11 +138,18 @@ function StudentPicker({ allStudents, selected, onSelect }) {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm text-white font-medium truncate">{s.full_name}</p>
-                      <p className="text-[10px] text-white/35">
-                        <ClanIcon clanId={s.clan} size={12} /> {info?.name}
-                        <span className="text-white/20 mx-1">·</span>
-                        {s.cp.toLocaleString()} CP
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {CLAN_IMG_MAP[s.clan] && (
+                          <img
+                            src={CLAN_IMG_MAP[s.clan]}
+                            alt={s.clan}
+                            style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                          />
+                        )}
+                        <span className="text-[10px] text-white/35">{info?.name}</span>
+                        <span className="text-white/20">·</span>
+                        <span className="text-[10px] text-white/35">{s.cp.toLocaleString()} CP</span>
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -494,13 +516,23 @@ export default function CpAwards() {
           </div>
 
           <motion.button
-            whileHover={{ scale: canSubmit ? 1.02 : 1 }}
-            whileTap={{ scale: canSubmit ? 0.97 : 1 }}
+            whileHover={canSubmit && !submitting ? { scale: 1.02, boxShadow: '0 6px 24px rgba(204,0,0,0.55)' } : {}}
+            whileTap={canSubmit && !submitting ? { scale: 0.97 } : {}}
             onClick={submitAward}
             disabled={!canSubmit || submitting}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white
-              disabled:opacity-35 disabled:cursor-not-allowed transition-opacity"
-            style={{ background: '#CC0000' }}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
+            style={canSubmit && !submitting ? {
+              background:  'linear-gradient(135deg, #e53e3e 0%, #cc0000 100%)',
+              color:       '#fff',
+              cursor:      'pointer',
+              boxShadow:   '0 4px 16px rgba(204,0,0,0.40)',
+            } : {
+              background:  'var(--ad-input-bg)',
+              color:       'var(--ad-text-3)',
+              cursor:      'not-allowed',
+              boxShadow:   'none',
+              border:      '1px solid var(--ad-border)',
+            }}
           >
             {submitting ? (
               <>
