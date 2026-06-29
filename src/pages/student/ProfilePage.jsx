@@ -1,10 +1,52 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import {
+  Star, CheckCircle, Zap, Calendar, Heart, Award, Trophy, Crown,
+  Shield, Lock, Flame, Users, FileText,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
 import { BADGES, LEVEL_THRESHOLDS } from '@/constants/badges'
+
+// ── Badge icon map ────────────────────────────────────────────
+
+const BADGE_ICONS = {
+  first_step:          Star,
+  regular:             CheckCircle,
+  dedicated:           Zap,
+  event_machine:       Calendar,
+  volunteer_heart:     Heart,
+  super_volunteer:     Award,
+  competition_rookie:  Trophy,
+  champion:            Crown,
+  clan_warrior:        Shield,
+  mvp:                 Award,
+  perfect_month:       CheckCircle,
+  clan_legend:         Flame,
+  fast_life_elite:     Crown,
+  monthly_legend:      Crown,
+  clan_champion:       Shield,
+}
+
+// ── CP history icon map ───────────────────────────────────────
+
+const REASON_META = {
+  attendance:             { label: 'Attendance',     Icon: Calendar },
+  volunteer:              { label: 'Volunteer',       Icon: Heart },
+  competition_1st:        { label: '1st Place',       Icon: Trophy },
+  competition_2nd:        { label: '2nd Place',       Icon: Award },
+  competition_3rd:        { label: '3rd Place',       Icon: Star },
+  referral:               { label: 'Referral',        Icon: Users },
+  peer_spotlight:         { label: 'Peer Spotlight',  Icon: Star },
+  end_of_month_1st:       { label: '#1 of Month',     Icon: Crown },
+  end_of_month_top5:      { label: 'Top 5 Overall',   Icon: Award },
+  end_of_month_top5_clan: { label: 'Top 5 in Clan',   Icon: Shield },
+  clan_winner_headstart:  { label: 'Clan Head Start', Icon: Trophy },
+  perfect_month:          { label: 'Perfect Month',   Icon: CheckCircle },
+}
+const getReason = r => REASON_META[r] ?? { label: r, Icon: Star }
 
 // ── Level helpers ─────────────────────────────────────────────
 
@@ -32,22 +74,6 @@ function timeAgo(iso) {
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
 }
-
-const REASON_META = {
-  attendance:             { label: 'Attendance',     emoji: '📋' },
-  volunteer:              { label: 'Volunteer',       emoji: '❤️' },
-  competition_1st:        { label: '1st Place',       emoji: '🥇' },
-  competition_2nd:        { label: '2nd Place',       emoji: '🥈' },
-  competition_3rd:        { label: '3rd Place',       emoji: '🥉' },
-  referral:               { label: 'Referral',        emoji: '🤝' },
-  peer_spotlight:         { label: 'Peer Spotlight',  emoji: '⭐' },
-  end_of_month_1st:       { label: '#1 of Month',     emoji: '👑' },
-  end_of_month_top5:      { label: 'Top 5 Overall',   emoji: '💎' },
-  end_of_month_top5_clan: { label: 'Top 5 in Clan',   emoji: '⚔️' },
-  clan_winner_headstart:  { label: 'Clan Head Start', emoji: '🏆' },
-  perfect_month:          { label: 'Perfect Month',   emoji: '💯' },
-}
-const getReason = r => REASON_META[r] ?? { label: r, emoji: '✨' }
 
 // ── Skeleton ──────────────────────────────────────────────────
 
@@ -77,12 +103,12 @@ function PwField({ id, label, value, onChange, error, accent }) {
           autoComplete="new-password"
           className="w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm outline-none transition-colors"
           style={{
-            background:  'var(--fl-input-bg)',
-            border:      `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)'}`,
-            color:       'var(--fl-text)',
+            background: 'var(--fl-input-bg)',
+            border:     `1px solid ${error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)'}`,
+            color:      'var(--fl-text)',
           }}
-          onFocus={e  => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.7)' : `${accent}66` }}
-          onBlur={e   => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)' }}
+          onFocus={e => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.7)' : `${accent}66` }}
+          onBlur={e  => { e.target.style.borderColor = error ? 'rgba(239,68,68,0.5)' : 'var(--fl-border)' }}
         />
         <button
           type="button"
@@ -113,30 +139,6 @@ function PwField({ id, label, value, onChange, error, accent }) {
   )
 }
 
-// ── Clan image with fallback ───────────────────────────────────
-
-function ClanImg({ clanId, style }) {
-  const [err, setErr] = useState(false)
-  if (err || !clanId) {
-    return (
-      <span
-        aria-hidden
-        style={{ fontSize: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}
-      >
-        {CLANS[clanId]?.emoji ?? '⚔️'}
-      </span>
-    )
-  }
-  return (
-    <img
-      src={`/clans/${clanId.toLowerCase()}.png`}
-      alt=""
-      style={{ objectFit: 'cover', ...style }}
-      onError={() => setErr(true)}
-    />
-  )
-}
-
 // ── Page ─────────────────────────────────────────────────────
 
 export default function ProfilePage() {
@@ -144,13 +146,13 @@ export default function ProfilePage() {
   const { toast } = useToast()
   const clanInfo = CLANS[studentRecord?.clan]
   const accent   = clanInfo?.colorAccent ?? '#CC0000'
+  const colorBg  = clanInfo?.colorBg ?? '#0a0a0a'
   const cp       = studentRecord?.cp ?? 0
 
   const [earnedBadges, setEarnedBadges] = useState([])
   const [history,      setHistory]      = useState([])
   const [loading,      setLoading]      = useState(true)
 
-  // ── Change password form ─────────────────────────────────────
   const [pwForm,   setPwForm]   = useState({ current: '', newPw: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
   const [pwBusy,   setPwBusy]   = useState(false)
@@ -162,9 +164,9 @@ export default function ProfilePage() {
 
   function validatePw() {
     const e = {}
-    if (!pwForm.current)                  e.current = 'Enter your current password'
-    if (pwForm.newPw.length < 6)          e.newPw   = 'Minimum 6 characters'
-    if (pwForm.newPw !== pwForm.confirm)  e.confirm = 'Passwords do not match'
+    if (!pwForm.current)                 e.current = 'Enter your current password'
+    if (pwForm.newPw.length < 6)         e.newPw   = 'Minimum 6 characters'
+    if (pwForm.newPw !== pwForm.confirm) e.confirm = 'Passwords do not match'
     return e
   }
 
@@ -176,22 +178,13 @@ export default function ProfilePage() {
     setPwBusy(true)
     try {
       const email = `${studentRecord.username}@fastlife.internal`
-      const { error: signInErr } = await supabase.auth.signInWithPassword({
-        email,
-        password: pwForm.current,
-      })
-      if (signInErr) {
-        setPwErrors({ current: 'Current password is incorrect' })
-        return
-      }
+      const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password: pwForm.current })
+      if (signInErr) { setPwErrors({ current: 'Current password is incorrect' }); return }
 
       const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.newPw })
       if (updateErr) throw updateErr
 
-      await supabase
-        .from('students')
-        .update({ password_plain: pwForm.newPw })
-        .eq('id', studentRecord.id)
+      await supabase.from('students').update({ password_plain: pwForm.newPw }).eq('id', studentRecord.id)
 
       toast({ message: 'Password updated successfully', type: 'success' })
       setPwForm({ current: '', newPw: '', confirm: '' })
@@ -215,10 +208,7 @@ export default function ProfilePage() {
     })
   }, [studentRecord?.id])
 
-  const earnedKeys = useMemo(
-    () => new Set(earnedBadges.map(b => b.badge_key)),
-    [earnedBadges]
-  )
+  const earnedKeys = useMemo(() => new Set(earnedBadges.map(b => b.badge_key)), [earnedBadges])
 
   const { current: level, next: nextLevel, pct, toNext } = getLevelProgress(cp)
 
@@ -234,66 +224,53 @@ export default function ProfilePage() {
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden"
-        style={{
-          background: clanInfo
-            ? `linear-gradient(145deg, ${clanInfo.colorBg} 0%, ${clanInfo.colorBg}88 55%, transparent 100%)`
-            : '#161616',
-          minHeight: 180,
-        }}
+        style={{ minHeight: 200, background: colorBg }}
       >
-        {/* Background clan image */}
-        {clanInfo && (
-          <div
-            className="absolute right-0 top-0 bottom-0 pointer-events-none select-none overflow-hidden"
-            style={{ width: '50%' }}
-          >
-            <ClanImg
-              clanId={studentRecord?.clan}
-              style={{
-                position:   'absolute',
-                right:      -10,
-                top:        0,
-                width:      '120%',
-                height:     '100%',
-                opacity:    0.22,
-                objectFit:  'cover',
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(90deg, ${clanInfo.colorBg} 0%, transparent 60%)` }}
-            />
-          </div>
-        )}
+        {/* Animated gradient mesh */}
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', top: '-60%', right: '-20%',
+            width: '80%', height: '200%', borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent}38, transparent 60%)`,
+            pointerEvents: 'none',
+          }}
+        />
+        <motion.div
+          animate={{ scale: [1, 1.15, 1], opacity: [0.2, 0.35, 0.2] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+          style={{
+            position: 'absolute', bottom: '-40%', left: '-10%',
+            width: '60%', height: '150%', borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent}28, transparent 65%)`,
+            pointerEvents: 'none',
+          }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 50%, var(--fl-bg) 100%)' }} />
 
-        <div className="relative z-10 px-5 pt-5 pb-6">
+        <div className="relative z-10 px-5 pt-6 pb-6">
           <div className="flex items-center gap-4">
-            {/* 80px circular avatar */}
+            {/* Avatar */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 280, damping: 22 }}
               className="shrink-0 flex items-center justify-center text-2xl font-black text-white"
               style={{
-                width:        80,
-                height:       80,
+                width:        90,
+                height:       90,
                 borderRadius: '50%',
                 background:   accent,
-                boxShadow:    `0 0 0 3px ${accent}40, 0 0 0 6px ${accent}18`,
+                boxShadow:    `0 0 0 3px ${accent}50, 0 0 0 6px ${accent}22, 0 0 32px ${accent}45`,
               }}
             >
               {initials}
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h1 className="text-xl font-black text-white leading-tight">
-                {studentRecord?.full_name}
-              </h1>
-              <p className="text-[11px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>
+            <motion.div initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+              <h1 className="text-xl font-black text-white leading-tight">{studentRecord?.full_name}</h1>
+              <p className="text-[11px] font-mono mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 @{studentRecord?.username}
               </p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -301,21 +278,21 @@ export default function ProfilePage() {
                   <span
                     className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                     style={{
-                      background: `${accent}25`,
+                      background: `${accent}22`,
                       color:      accent,
                       border:     `1px solid ${accent}40`,
                     }}
                   >
-                    {clanInfo.emoji} {clanInfo.name}
+                    {clanInfo.name}
                   </span>
                 )}
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.32)' }}>
                   {studentRecord?.level}
                 </span>
                 {studentRecord?.class_group && (
                   <>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.2)' }}>·</span>
-                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.18)' }}>·</span>
+                    <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.32)' }}>
                       {studentRecord.class_group}
                     </span>
                   </>
@@ -324,7 +301,7 @@ export default function ProfilePage() {
             </motion.div>
           </div>
 
-          {/* Milestone level bar */}
+          {/* Level progress bar */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -334,30 +311,36 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-1.5">
               <span
                 className="text-[11px] font-bold px-2 py-0.5 rounded"
-                style={{ background: accent + '30', color: accent }}
+                style={{ background: `${accent}28`, color: accent }}
               >
                 {level.label}
               </span>
               {nextLevel ? (
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                  {toNext} CP → {nextLevel.label}
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  {toNext} CP to {nextLevel.label}
                 </span>
               ) : (
-                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.38)' }}>Max level</span>
+                <span className="text-[10px]" style={{ color: 'rgba(255,255,255,0.35)' }}>Max level</span>
               )}
             </div>
 
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
+            <div
+              className="h-2.5 rounded-full overflow-hidden"
+              style={{ background: 'rgba(255,255,255,0.1)' }}
+            >
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
                 transition={{ delay: 0.5, duration: 1, type: 'spring', stiffness: 70, damping: 20 }}
                 className="h-full rounded-full"
-                style={{ background: `linear-gradient(90deg, ${accent}, ${accent}cc)` }}
+                style={{
+                  background: `linear-gradient(90deg, ${accent}cc, ${accent})`,
+                  boxShadow:  `0 0 8px ${accent}80`,
+                }}
               />
             </div>
 
-            <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+            <p className="text-[10px] mt-1.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
               {cp.toLocaleString()} CP · joined {joinDate}
             </p>
           </motion.div>
@@ -394,7 +377,9 @@ export default function ProfilePage() {
           ) : (
             <div className="grid grid-cols-5 gap-2">
               {allBadges.map((badge, i) => {
-                const earned = earnedKeys.has(badge.key)
+                const earned    = earnedKeys.has(badge.key)
+                const BadgeIcon = BADGE_ICONS[badge.key] ?? Award
+
                 return (
                   <motion.div
                     key={badge.key}
@@ -405,37 +390,39 @@ export default function ProfilePage() {
                     className="relative aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-default overflow-hidden"
                     style={earned
                       ? {
-                          background: `${accent}18`,
+                          background: 'rgba(255,255,255,0.05)',
+                          backdropFilter: 'blur(8px)',
+                          WebkitBackdropFilter: 'blur(8px)',
                           border:     `1px solid ${accent}45`,
+                          boxShadow:  `0 0 12px ${accent}30, inset 0 1px 0 rgba(255,255,255,0.1)`,
                         }
                       : {
                           background: 'var(--fl-card-alt)',
                           border:     '1px solid var(--fl-border)',
                         }}
                   >
-                    <span
-                      className="text-xl leading-none"
+                    <BadgeIcon
+                      size={18}
                       style={{
-                        filter:  earned ? 'none' : 'grayscale(1)',
-                        opacity: earned ? 1 : 0.22,
+                        color:   earned ? '#C9A227' : 'var(--fl-text-3)',
+                        opacity: earned ? 1 : 0.25,
+                        filter:  earned ? `drop-shadow(0 0 4px #C9A22760)` : 'none',
                       }}
-                    >
-                      {badge.icon}
-                    </span>
+                    />
                     <span
                       className="text-[8px] font-bold text-center leading-none px-0.5"
-                      style={{ color: earned ? accent : 'var(--fl-text-3)' }}
+                      style={{ color: earned ? accent : 'var(--fl-text-3)', opacity: earned ? 1 : 0.35 }}
                     >
                       {badge.label.split(' ')[0]}
                     </span>
 
-                    {/* Lock overlay for unearned */}
+                    {/* Lock overlay for locked badges */}
                     {!earned && (
                       <div
                         className="absolute inset-0 flex items-end justify-end p-1"
                         style={{ pointerEvents: 'none' }}
                       >
-                        <span style={{ fontSize: 9, opacity: 0.35 }}>🔒</span>
+                        <Lock size={9} style={{ color: 'var(--fl-text-3)', opacity: 0.35 }} />
                       </div>
                     )}
 
@@ -443,7 +430,7 @@ export default function ProfilePage() {
                     {earned && (
                       <div
                         className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full"
-                        style={{ background: accent }}
+                        style={{ background: accent, boxShadow: `0 0 4px ${accent}` }}
                       />
                     )}
                   </motion.div>
@@ -487,14 +474,16 @@ export default function ProfilePage() {
             </div>
           ) : history.length === 0 ? (
             <div className="text-center py-8">
-              <span className="text-3xl">🎯</span>
-              <p className="text-sm mt-2" style={{ color: 'var(--fl-text-3)' }}>
+              <div className="flex justify-center mb-2">
+                <Trophy size={32} style={{ color: 'var(--fl-text-3)', opacity: 0.45 }} />
+              </div>
+              <p className="text-sm" style={{ color: 'var(--fl-text-3)' }}>
                 No CP earned yet — attend events to start!
               </p>
             </div>
           ) : (
             history.map((award, i) => {
-              const { label, emoji } = getReason(award.reason)
+              const { label, Icon } = getReason(award.reason)
               return (
                 <motion.div
                   key={award.id}
@@ -505,10 +494,10 @@ export default function ProfilePage() {
                   style={{ borderBottom: '1px solid var(--fl-border-2)' }}
                 >
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
-                    style={{ background: 'var(--fl-card-alt)' }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: `${accent}18`, border: `1px solid ${accent}28` }}
                   >
-                    {emoji}
+                    <Icon size={15} style={{ color: accent }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate" style={{ color: 'var(--fl-text)' }}>{label}</p>
@@ -569,10 +558,8 @@ export default function ProfilePage() {
               disabled={pwBusy}
               whileHover={pwBusy ? {} : { scale: 1.01 }}
               whileTap={pwBusy ? {} : { scale: 0.98 }}
-              className="w-full mt-1 py-2.5 rounded-xl text-sm font-bold text-white
-                flex items-center justify-center gap-2
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: accent }}
+              className="w-full mt-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: accent, boxShadow: `0 2px 12px ${accent}40` }}
             >
               {pwBusy ? (
                 <>

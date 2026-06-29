@@ -1,42 +1,9 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { CLANS } from '@/constants/clans'
-
-// ── Clan image with fallback ───────────────────────────────────
-
-function ClanImg({ clanId, size, style }) {
-  const [err, setErr] = useState(false)
-  if (err || !clanId) {
-    return (
-      <span
-        aria-hidden
-        style={{
-          fontSize: (size ?? 40) * 0.6,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: size,
-          height: size,
-          ...style,
-        }}
-      >
-        {CLANS[clanId]?.emoji ?? '⚔️'}
-      </span>
-    )
-  }
-  return (
-    <img
-      src={`/clans/${clanId.toLowerCase()}.png`}
-      alt=""
-      width={size}
-      height={size}
-      style={{ objectFit: 'cover', ...style }}
-      onError={() => setErr(true)}
-    />
-  )
-}
 
 function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
@@ -47,19 +14,41 @@ function StatCard({ label, value, sub, accent }) {
     <div
       className="flex-1 rounded-xl p-3.5 text-center"
       style={{
-        background: 'var(--fl-card)',
-        border:     '1px solid var(--fl-border)',
-        boxShadow:  'var(--fl-shadow)',
+        background: 'rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: `1px solid ${accent}28`,
+        boxShadow: `0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06)`,
       }}
     >
       <p
         className="text-[10px] font-semibold uppercase tracking-widest mb-1"
-        style={{ color: 'var(--fl-text-3)' }}
+        style={{ color: 'rgba(255,255,255,0.4)' }}
       >
         {label}
       </p>
       <p className="text-xl font-black" style={{ color: accent }}>{value}</p>
-      {sub && <p className="text-[10px] mt-0.5" style={{ color: 'var(--fl-text-3)' }}>{sub}</p>}
+      {sub && <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>{sub}</p>}
+    </div>
+  )
+}
+
+function ClanBadge({ clanId, size = 40, isHighlighted, accent }) {
+  const info   = CLANS[clanId]
+  const letter = info?.name?.[0] ?? '?'
+  return (
+    <div
+      className="shrink-0 rounded-xl flex items-center justify-center font-black text-white"
+      style={{
+        width:      size,
+        height:     size,
+        background: `linear-gradient(135deg, ${info?.colorAccent ?? '#555'}66, ${info?.colorAccent ?? '#555'}22)`,
+        border:     isHighlighted ? `2px solid ${accent}` : `2px solid ${info?.colorAccent ?? '#555'}33`,
+        boxShadow:  isHighlighted ? `0 0 14px ${accent}50` : 'none',
+        fontSize:   size * 0.4,
+      }}
+    >
+      {letter}
     </div>
   )
 }
@@ -68,6 +57,7 @@ export default function ClanPage() {
   const { studentRecord } = useAuth()
   const clanInfo = CLANS[studentRecord?.clan]
   const accent   = clanInfo?.colorAccent ?? '#CC0000'
+  const colorBg  = clanInfo?.colorBg ?? '#0a0a0a'
 
   const [clans,   setClans]   = useState([])
   const [members, setMembers] = useState([])
@@ -94,56 +84,59 @@ export default function ClanPage() {
   const myClanData = clans.find(c => c.id === studentRecord?.clan)
   const maxCp      = Math.max(clans[0]?.total_cp ?? 0, 1)
 
+  const rankColors = ['#C9A227', '#9CA3AF', '#92613A']
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
         className="relative overflow-hidden"
-        style={{
-          background: clanInfo
-            ? `linear-gradient(145deg, ${clanInfo.colorBg} 0%, ${clanInfo.colorBg}88 60%, transparent 100%)`
-            : '#161616',
-          minHeight: 200,
-        }}
+        style={{ minHeight: 220, background: colorBg }}
       >
-        {/* Clan mascot image – large, right-aligned */}
-        {clanInfo && (
-          <div
-            className="absolute right-0 top-0 bottom-0 pointer-events-none select-none overflow-hidden"
-            style={{ width: '60%' }}
-          >
-            <ClanImg
-              clanId={studentRecord?.clan}
-              style={{
-                position:   'absolute',
-                right:      -10,
-                top:        0,
-                width:      '110%',
-                height:     '100%',
-                opacity:    0.35,
-                objectFit:  'cover',
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: `linear-gradient(90deg, ${clanInfo.colorBg} 0%, transparent 55%)`,
-              }}
-            />
-          </div>
-        )}
+        {/* Animated gradient orbs */}
+        <motion.div
+          animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.55, 0.35] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', top: '-40%', left: '-20%',
+            width: '70%', height: '180%', borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent}40, transparent 65%)`,
+            pointerEvents: 'none',
+          }}
+        />
+        <motion.div
+          animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          style={{
+            position: 'absolute', bottom: '-50%', right: '-10%',
+            width: '60%', height: '160%', borderRadius: '50%',
+            background: `radial-gradient(circle, ${accent}28, transparent 60%)`,
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(180deg, transparent 55%, var(--fl-bg) 100%)',
+          }}
+        />
 
-        <div className="relative z-10 px-5 pt-5 pb-6">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="relative z-10 px-5 pt-6 pb-7">
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
             <p
-              className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1"
-              style={{ color: accent + 'cc' }}
+              className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2"
+              style={{ color: `${accent}bb` }}
             >
               Your Clan
             </p>
-            <h1 className="text-3xl font-black text-white">{clanInfo?.name ?? '—'}</h1>
-            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
+            <h1
+              className="text-4xl font-black text-white"
+              style={{ textShadow: `0 0 40px ${accent}55, 0 2px 12px rgba(0,0,0,0.7)` }}
+            >
+              {clanInfo?.name ?? '—'}
+            </h1>
+            <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.42)' }}>
               {loading
                 ? '…'
                 : `${members.length} members · ${(myClanData?.total_cp ?? 0).toLocaleString()} total CP`}
@@ -180,7 +173,7 @@ export default function ClanPage() {
           />
         </motion.div>
 
-        {/* ── Clan standings (race bars) ───────────────────── */}
+        {/* ── Clan standings ───────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -208,18 +201,12 @@ export default function ClanPage() {
                 return (
                   <div key={clan.id}>
                     <div className="flex items-center gap-3 mb-2">
-                      {/* Mascot thumbnail */}
-                      <div
-                        className="shrink-0 rounded-lg overflow-hidden"
-                        style={{
-                          width:  40,
-                          height: 40,
-                          background: info?.colorBg ?? '#222',
-                          border: isMe ? `2px solid ${accent}` : '2px solid transparent',
-                        }}
-                      >
-                        <ClanImg clanId={clan.id} size={40} style={{ width: 40, height: 40 }} />
-                      </div>
+                      <ClanBadge
+                        clanId={clan.id}
+                        size={40}
+                        isHighlighted={isMe}
+                        accent={accent}
+                      />
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 mb-1.5">
@@ -227,7 +214,7 @@ export default function ClanPage() {
                             className="text-xs font-bold"
                             style={{ color: isMe ? 'var(--fl-text)' : 'var(--fl-text-2)' }}
                           >
-                            {info?.name}
+                            #{i + 1} {info?.name}
                           </span>
                           {isMe && (
                             <span
@@ -237,7 +224,9 @@ export default function ClanPage() {
                               YOU
                             </span>
                           )}
-                          {i === 0 && clan.total_cp > 0 && <span className="text-sm">👑</span>}
+                          {i === 0 && clan.total_cp > 0 && (
+                            <Crown size={11} style={{ color: '#C9A227' }} />
+                          )}
                           <span
                             className="ml-auto text-xs font-bold tabular-nums"
                             style={{ color: 'var(--fl-text-2)' }}
@@ -304,7 +293,6 @@ export default function ClanPage() {
             members.map((member, i) => {
               const isMe     = member.id === studentRecord?.id
               const initials = member.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-              const medal    = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
 
               return (
                 <motion.div
@@ -315,16 +303,22 @@ export default function ClanPage() {
                   className="flex items-center gap-3 px-5 py-3"
                   style={{
                     borderBottom: '1px solid var(--fl-border-2)',
-                    background: isMe ? `${accent}0d` : 'transparent',
+                    background:   isMe ? `${accent}0d` : 'transparent',
                   }}
                 >
-                  <span className="text-sm w-6 text-center shrink-0">
-                    {medal ?? <span className="text-[11px] font-bold" style={{ color: 'var(--fl-text-3)' }}>{i + 1}</span>}
+                  <span
+                    className="text-[11px] font-black w-6 text-center shrink-0 tabular-nums"
+                    style={{ color: i < 3 ? rankColors[i] : 'var(--fl-text-3)' }}
+                  >
+                    {i + 1}
                   </span>
 
                   <div
                     className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[12px] font-bold text-white"
-                    style={{ background: accent }}
+                    style={{
+                      background: accent,
+                      boxShadow:  isMe ? `0 0 0 2px ${accent}50` : 'none',
+                    }}
                   >
                     {initials}
                   </div>
