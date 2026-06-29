@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { adminSupabase, supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { useToast } from '@/contexts/ToastContext'
@@ -99,7 +100,7 @@ function Toggle({ checked, onChange, disabled }) {
 function SkeletonRow() {
   return (
     <tr className="border-b border-white/[0.04]">
-      {[...Array(8)].map((_, i) => (
+      {[...Array(9)].map((_, i) => (
         <td key={i} className="px-4 py-3">
           <div className="h-4 rounded bg-white/[0.06] animate-pulse" style={{ width: `${40 + (i * 17) % 50}%` }} />
         </td>
@@ -108,7 +109,195 @@ function SkeletonRow() {
   )
 }
 
-function StudentRow({ student, onToggleActive, onResetPassword, delay }) {
+// ── Delete single student modal ───────────────────────────────
+
+function DeleteStudentModal({ student, onConfirm, onClose, busy }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)',
+      padding: 16,
+    }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 12 }}
+        transition={{ duration: 0.18 }}
+        style={{
+          background: 'var(--ad-surface)', border: '1px solid rgba(185,28,28,0.35)',
+          borderRadius: 16, padding: '24px', width: '100%', maxWidth: 420,
+          boxShadow: '0 0 0 1px rgba(185,28,28,0.15), 0 24px 48px rgba(0,0,0,0.5)',
+        }}
+      >
+        {/* Icon + title */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 16 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: 10, background: 'rgba(185,28,28,0.15)',
+            border: '1px solid rgba(185,28,28,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <AlertTriangle size={18} strokeWidth={2} style={{ color: '#f87171' }} />
+          </div>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--ad-text)', margin: '0 0 4px' }}>
+              Delete Student
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--ad-text-2)', margin: 0, lineHeight: 1.5 }}>
+              Are you sure you want to permanently delete{' '}
+              <strong style={{ color: 'var(--ad-text)' }}>{student.full_name}</strong>?
+              This will remove ALL their data — attendance, CP, badges, and snapshots.
+            </p>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
+          <button
+            onClick={onClose}
+            disabled={busy}
+            style={{
+              padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: 'var(--ad-hover)', border: '1px solid var(--ad-border)',
+              color: 'var(--ad-text-2)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '9px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+              background: busy ? 'rgba(185,28,28,0.4)' : '#b91c1c',
+              border: '1px solid rgba(185,28,28,0.5)',
+              color: '#fff', cursor: busy ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {busy
+              ? <><Loader2 size={13} strokeWidth={2} style={{ animation: 'spin 0.8s linear infinite' }} /> Deleting…</>
+              : <><Trash2 size={13} strokeWidth={2} /> Delete</>
+            }
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Delete ALL students modal ─────────────────────────────────
+
+function DeleteAllModal({ count, onConfirm, onClose, busy }) {
+  const [input, setInput] = useState('')
+  const ready = input === 'DELETE'
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)',
+      padding: 16,
+    }} onClick={e => { if (e.target === e.currentTarget && !busy) onClose() }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.92, y: 16 }}
+        transition={{ duration: 0.2 }}
+        style={{
+          background: 'var(--ad-surface)', border: '1px solid rgba(185,28,28,0.4)',
+          borderRadius: 18, padding: '28px', width: '100%', maxWidth: 460,
+          boxShadow: '0 0 0 1px rgba(185,28,28,0.2), 0 32px 64px rgba(0,0,0,0.6)',
+        }}
+      >
+        {/* Warning header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, background: 'rgba(185,28,28,0.18)',
+            border: '1px solid rgba(185,28,28,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <AlertTriangle size={20} strokeWidth={2} style={{ color: '#f87171' }} />
+          </div>
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 800, color: '#f87171', margin: 0 }}>
+              Danger — Irreversible Action
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--ad-text-3)', margin: '2px 0 0' }}>
+              This cannot be undone
+            </p>
+          </div>
+        </div>
+
+        <p style={{ fontSize: 13, color: 'var(--ad-text-2)', lineHeight: 1.6, margin: '0 0 20px' }}>
+          This will permanently delete{' '}
+          <strong style={{ color: '#f87171' }}>all {count} students</strong>{' '}
+          and their data — attendance records, CP awards, badges, monthly snapshots, and auth accounts.
+        </p>
+
+        {/* Confirmation input */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--ad-text-3)', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Type <span style={{ color: '#f87171', fontFamily: 'monospace' }}>DELETE</span> to confirm
+          </label>
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value.toUpperCase())}
+            placeholder="DELETE"
+            disabled={busy}
+            autoFocus
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'var(--ad-input-bg)', border: `1.5px solid ${ready ? '#b91c1c' : 'var(--ad-input-border)'}`,
+              borderRadius: 10, padding: '10px 13px', fontSize: 15,
+              fontWeight: 700, color: ready ? '#f87171' : 'var(--ad-text)',
+              outline: 'none', letterSpacing: '0.08em',
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+          />
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            disabled={busy}
+            style={{
+              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: 'var(--ad-hover)', border: '1px solid var(--ad-border)',
+              color: 'var(--ad-text-2)', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={!ready || busy}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
+              background: ready && !busy ? '#b91c1c' : 'var(--ad-hover)',
+              border: `1px solid ${ready && !busy ? 'rgba(185,28,28,0.5)' : 'var(--ad-border)'}`,
+              color: ready && !busy ? '#fff' : 'var(--ad-text-3)',
+              cursor: !ready || busy ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {busy
+              ? <><Loader2 size={13} strokeWidth={2} style={{ animation: 'spin 0.8s linear infinite' }} /> Deleting all…</>
+              : <><Trash2 size={13} strokeWidth={2} /> Delete All {count} Students</>
+            }
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ── Student row ───────────────────────────────────────────────
+
+function StudentRow({ student, onToggleActive, onResetPassword, onDelete, delay }) {
   const [toggling,   setToggling]   = useState(false)
   const [showPw,     setShowPw]     = useState(false)
   const [resetting,  setResetting]  = useState(false)
@@ -208,6 +397,20 @@ function StudentRow({ student, onToggleActive, onResetPassword, delay }) {
       <td className="px-4 py-3">
         <Toggle checked={student.is_active} onChange={handleToggle} disabled={toggling} />
       </td>
+
+      {/* Delete */}
+      <td className="px-4 py-3">
+        <button
+          onClick={() => onDelete(student)}
+          title="Delete student"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold
+            text-red-400/60 hover:text-red-400 border border-transparent hover:border-red-500/30
+            hover:bg-red-500/10 transition-all"
+        >
+          <Trash2 size={13} strokeWidth={2} />
+          Delete
+        </button>
+      </td>
     </motion.tr>
   )
 }
@@ -282,6 +485,11 @@ export default function StudentManagement() {
   const [credentials, setCredentials] = useState(null)   // { username, password, clan }
   const [newStudentName, setNewStudentName] = useState('')
   const [credentialMode, setCredentialMode] = useState('created')  // 'created' | 'reset'
+
+  const [deletingStudent, setDeletingStudent] = useState(null)  // student object to confirm delete
+  const [deleteStudentBusy, setDeleteStudentBusy] = useState(false)
+  const [showDeleteAll, setShowDeleteAll] = useState(false)
+  const [deleteAllBusy, setDeleteAllBusy] = useState(false)
 
   // ── Data loading ──────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
@@ -376,11 +584,52 @@ export default function StudentManagement() {
     setCredentials({ username: student.username, password: newPw, clan: student.clan })
   }
 
+  async function deleteStudentData(student) {
+    const id     = student.id
+    const authId = student.auth_user_id
+    await adminSupabase.from('cp_awards').delete().eq('student_id', id)
+    await adminSupabase.from('attendance').delete().eq('student_id', id)
+    await adminSupabase.from('badges').delete().eq('student_id', id)
+    await adminSupabase.from('monthly_snapshots').delete().eq('student_id', id)
+    await adminSupabase.from('students').delete().eq('id', id)
+    if (authId) await adminSupabase.auth.admin.deleteUser(authId)
+  }
+
+  async function handleDeleteStudent() {
+    if (!deletingStudent) return
+    setDeleteStudentBusy(true)
+    try {
+      await deleteStudentData(deletingStudent)
+      setStudents(prev => prev.filter(s => s.id !== deletingStudent.id))
+      toast({ message: 'Student deleted successfully', type: 'success' })
+    } catch (err) {
+      toast({ message: 'Delete failed: ' + err.message, type: 'error' })
+    }
+    setDeleteStudentBusy(false)
+    setDeletingStudent(null)
+  }
+
+  async function handleDeleteAll() {
+    setDeleteAllBusy(true)
+    try {
+      for (const student of students) {
+        await deleteStudentData(student)
+      }
+      setStudents([])
+      toast({ message: `All ${students.length} students deleted`, type: 'success' })
+    } catch (err) {
+      toast({ message: 'Delete all failed: ' + err.message, type: 'error' })
+      await fetchStudents()
+    }
+    setDeleteAllBusy(false)
+    setShowDeleteAll(false)
+  }
+
   return (
     <div className="p-8 space-y-6 max-w-[1200px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-black text-white tracking-tight">Students</h1>
           <p className="text-sm text-white/35 mt-1">
@@ -388,17 +637,30 @@ export default function StudentManagement() {
             {filtered.length !== students.length && ` · ${filtered.length} shown`}
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-          style={{ background: '#CC0000' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M12 5v14M5 12h14"/>
-          </svg>
-          Add Student
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {students.length > 0 && (
+            <motion.button
+              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              onClick={() => setShowDeleteAll(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold"
+              style={{ background: 'rgba(185,28,28,0.15)', border: '1px solid rgba(185,28,28,0.35)', color: '#f87171' }}
+            >
+              <Trash2 size={14} strokeWidth={2} />
+              Delete All
+            </motion.button>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+            style={{ background: '#CC0000' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Add Student
+          </motion.button>
+        </div>
       </div>
 
       {/* ── Filters ────────────────────────────────────────── */}
@@ -410,7 +672,7 @@ export default function StudentManagement() {
         <table className="w-full min-w-[900px] text-left">
           <thead>
             <tr className="border-b border-white/[0.06]">
-              {['Student', 'Clan', 'Level', 'CP', 'Class Group', 'Age', 'Password', 'Active'].map(h => (
+              {['Student', 'Clan', 'Level', 'CP', 'Class Group', 'Age', 'Password', 'Active', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">
                   {h}
                 </th>
@@ -422,7 +684,7 @@ export default function StudentManagement() {
               [...Array(8)].map((_, i) => <SkeletonRow key={i} />)
             ) : visible.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-16 text-center text-sm text-white/25">
+                <td colSpan={9} className="px-4 py-16 text-center text-sm text-white/25">
                   {search || filters.clan || filters.level
                     ? 'No students match your filters'
                     : 'No students yet — add one above'}
@@ -436,6 +698,7 @@ export default function StudentManagement() {
                     student={s}
                     onToggleActive={toggleActive}
                     onResetPassword={handleResetPassword}
+                    onDelete={setDeletingStudent}
                     delay={i * 0.025}
                   />
                 ))}
@@ -496,6 +759,25 @@ export default function StudentManagement() {
           onClose={() => { setCredentials(null); setNewStudentName('') }}
         />
       )}
+
+      <AnimatePresence>
+        {deletingStudent && (
+          <DeleteStudentModal
+            student={deletingStudent}
+            busy={deleteStudentBusy}
+            onConfirm={handleDeleteStudent}
+            onClose={() => !deleteStudentBusy && setDeletingStudent(null)}
+          />
+        )}
+        {showDeleteAll && (
+          <DeleteAllModal
+            count={students.length}
+            busy={deleteAllBusy}
+            onConfirm={handleDeleteAll}
+            onClose={() => !deleteAllBusy && setShowDeleteAll(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
