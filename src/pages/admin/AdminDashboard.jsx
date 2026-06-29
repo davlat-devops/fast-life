@@ -8,8 +8,8 @@ import { CLANS } from '@/constants/clans'
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now() - new Date(iso)) / 1000)
-  if (s < 60)  return `${s}s ago`
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 60)    return `${s}s ago`
+  if (s < 3600)  return `${Math.floor(s / 60)}m ago`
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`
   return `${Math.floor(s / 86400)}d ago`
 }
@@ -17,9 +17,9 @@ function timeAgo(iso) {
 const REASON_LABELS = {
   attendance:             'Attendance',
   volunteer:              'Volunteer',
-  competition_1st:        '🥇 1st Place',
-  competition_2nd:        '🥈 2nd Place',
-  competition_3rd:        '🥉 3rd Place',
+  competition_1st:        '1st Place',
+  competition_2nd:        '2nd Place',
+  competition_3rd:        '3rd Place',
   referral:               'Referral',
   peer_spotlight:         'Peer Spotlight',
   end_of_month_1st:       '#1 of Month',
@@ -31,9 +31,8 @@ const REASON_LABELS = {
 
 function formatReason(r) { return REASON_LABELS[r] ?? r }
 
-function AnimatedNumber({ target, duration = 900 }) {
+function AnimatedNumber({ target, duration = 1100 }) {
   const [val, setVal] = useState(0)
-
   useEffect(() => {
     if (!target) return
     const start = performance.now()
@@ -45,35 +44,47 @@ function AnimatedNumber({ target, duration = 900 }) {
     }
     requestAnimationFrame(tick)
   }, [target, duration])
-
   return <>{val.toLocaleString()}</>
 }
 
 // ── Sub-components ────────────────────────────────────────────
 
-function StatCard({ label, value, icon, accent, loading }) {
+function StatCard({ label, value, icon, accentColor, loading, delay = 0 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="relative rounded-2xl p-5 overflow-hidden"
-      style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="ad-surface rounded-2xl p-5 relative overflow-hidden group"
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">{label}</p>
-          <p className="text-3xl font-black text-white mt-1.5">
-            {loading ? (
-              <span className="inline-block w-16 h-7 rounded-md bg-white/10 animate-pulse" />
-            ) : (
-              <AnimatedNumber target={value} />
-            )}
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ad-text-3)', marginBottom: 6 }}>
+            {label}
+          </p>
+          <p style={{ fontSize: 28, fontWeight: 900, color: 'var(--ad-text)', lineHeight: 1 }}>
+            {loading
+              ? <span style={{ display: 'inline-block', width: 64, height: 28, borderRadius: 6, background: 'var(--ad-skeleton)' }} />
+              : <AnimatedNumber target={value} />
+            }
           </p>
         </div>
-        <span className="text-2xl opacity-50">{icon}</span>
+        <div style={{
+          width: 40, height: 40, borderRadius: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: `${accentColor}18`,
+          fontSize: 18,
+          transition: 'transform 0.2s',
+        }}>
+          {icon}
+        </div>
       </div>
-      {/* Accent line */}
-      <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: accent }} />
+      {/* Bottom accent bar */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
+        background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
+        transition: 'opacity 0.2s',
+      }}/>
     </motion.div>
   )
 }
@@ -81,48 +92,58 @@ function StatCard({ label, value, icon, accent, loading }) {
 function ClanRaceBar({ clan, maxCp, rank, delay }) {
   const info = CLANS[clan.id]
   const pct  = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
+  const rankEmoji = ['🥇', '🥈', '🥉', '4️⃣'][rank]
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10 }}
+      initial={{ opacity: 0, x: -12 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.3 }}
-      className="flex items-center gap-4"
+      style={{ display: 'flex', alignItems: 'center', gap: 12 }}
     >
-      {/* Rank + mascot */}
-      <div className="w-8 text-center">
-        <span className="text-lg">{['🥇','🥈','🥉','4️⃣'][rank]}</span>
-      </div>
-      <div className="w-8 text-center text-xl">{info?.emoji}</div>
-      <div className="w-20 shrink-0">
-        <p className="text-xs font-bold text-white">{clan.name}</p>
-        <p className="text-[10px] text-white/30">{clan.total_cp.toLocaleString()} CP</p>
+      <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>{rankEmoji}</span>
+      <span style={{ fontSize: 18, width: 24, textAlign: 'center', flexShrink: 0 }}>{info?.emoji}</span>
+      <div style={{ width: 80, flexShrink: 0 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--ad-text)', lineHeight: 1 }}>
+          {clan.name}
+          {clan.crown && (
+            <motion.span
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              style={{ marginLeft: 4 }}
+            >👑</motion.span>
+          )}
+        </p>
+        <p style={{ fontSize: 10, color: 'var(--ad-text-3)', marginTop: 2 }}>{clan.total_cp.toLocaleString()} CP</p>
       </div>
 
-      {/* Bar track */}
-      <div className="flex-1 h-8 rounded-full overflow-hidden relative"
-        style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div style={{
+        flex: 1, height: 32, borderRadius: 8, overflow: 'hidden',
+        background: 'var(--ad-surface)', position: 'relative',
+        border: '1px solid var(--ad-border)',
+      }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
-          transition={{ delay: delay + 0.15, duration: 0.9, type: 'spring', stiffness: 90, damping: 22 }}
-          className="absolute inset-y-0 left-0 rounded-full min-w-[2px] flex items-center"
+          transition={{ delay: delay + 0.2, duration: 1.0, type: 'spring', stiffness: 80, damping: 20 }}
           style={{
-            background: `linear-gradient(90deg, ${info?.colorAccent}cc, ${info?.colorAccent})`,
+            position: 'absolute', inset: '0 auto 0 0',
+            borderRadius: 7, minWidth: 4,
+            background: `linear-gradient(90deg, var(--ad-red) 0%, #ff6b35 100%)`,
+            boxShadow: `0 0 12px var(--ad-red-glow)`,
+            display: 'flex', alignItems: 'center',
           }}
         >
-          {pct > 18 && (
-            <span className="absolute right-3 text-white text-[11px] font-bold whitespace-nowrap">
+          {pct > 20 && (
+            <span style={{
+              position: 'absolute', right: 8,
+              fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
+            }}>
               {Math.round(pct)}%
             </span>
           )}
         </motion.div>
       </div>
-
-      {/* Crown */}
-      {clan.crown && (
-        <span className="text-base" title="Reigning champion">👑</span>
-      )}
     </motion.div>
   )
 }
@@ -136,31 +157,37 @@ function ActivityItem({ award, delay }) {
     <motion.div
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ delay, duration: 0.25 }}
-      className="flex items-center gap-3 py-2.5 border-b border-white/[0.04] last:border-0"
+      transition={{ delay, duration: 0.22 }}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '10px 0', borderBottom: '1px solid var(--ad-border-2)',
+      }}
     >
-      {/* Avatar */}
-      <div
-        className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
-        style={{ background: clanInfo?.colorAccent ?? '#555' }}
-      >
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 11, fontWeight: 700, color: '#fff',
+        background: clanInfo?.colorAccent ?? '#555',
+      }}>
         {initials}
       </div>
-
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-white/80 truncate">
-          <span className="font-semibold text-white">
-            {award.students?.full_name ?? 'Unknown'}
-          </span>
-          {' — '}
-          {formatReason(award.reason)}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 12, color: 'var(--ad-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontWeight: 600 }}>{award.students?.full_name ?? 'Unknown'}</span>
+          {' — '}{formatReason(award.reason)}
         </p>
-        <p className="text-[10px] text-white/30 mt-0.5 truncate">{award.note}</p>
+        <p style={{ fontSize: 10, color: 'var(--ad-text-3)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {award.note}
+        </p>
       </div>
-
-      <div className="shrink-0 text-right">
-        <p className="text-xs font-bold text-emerald-400">+{award.amount}</p>
-        <p className="text-[10px] text-white/25">{timeAgo(award.created_at)}</p>
+      <div style={{ flexShrink: 0, textAlign: 'right' }}>
+        <p style={{
+          fontSize: 12, fontWeight: 800, color: '#4ade80',
+          textShadow: '0 0 8px rgba(74,222,128,0.4)',
+        }}>
+          +{award.amount}
+        </p>
+        <p style={{ fontSize: 10, color: 'var(--ad-text-4)', marginTop: 1 }}>{timeAgo(award.created_at)}</p>
       </div>
     </motion.div>
   )
@@ -177,18 +204,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      const today = new Date()
+      const today      = new Date()
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
       const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString()
 
-      const [
-        studentsRes,
-        clansRes,
-        topRes,
-        eventsRes,
-        cpRes,
-        feedRes,
-      ] = await Promise.all([
+      const [studentsRes, clansRes, topRes, eventsRes, cpRes, feedRes] = await Promise.all([
         supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_active', true),
         supabase.from('clans').select('*').order('total_cp', { ascending: false }),
         supabase.from('students').select('full_name, cp, clan').eq('is_active', true).order('cp', { ascending: false }).limit(1),
@@ -196,16 +216,13 @@ export default function AdminDashboard() {
         supabase.from('cp_awards').select('amount').gte('created_at', todayStart),
         supabase.from('cp_awards')
           .select('id, amount, reason, note, created_at, students(full_name, clan)')
-          .order('created_at', { ascending: false })
-          .limit(10),
+          .order('created_at', { ascending: false }).limit(10),
       ])
-
-      const cpToday = (cpRes.data ?? []).reduce((s, a) => s + a.amount, 0)
 
       setStats({
         students: studentsRes.count ?? 0,
         events:   eventsRes.count ?? 0,
-        cpToday,
+        cpToday:  (cpRes.data ?? []).reduce((s, a) => s + a.amount, 0),
       })
       setClans(clansRes.data ?? [])
       setTop(topRes.data?.[0] ?? null)
@@ -216,129 +233,157 @@ export default function AdminDashboard() {
   }, [])
 
   const maxCp = Math.max(...clans.map(c => c.total_cp), 1)
-
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
   return (
-    <div className="p-8 space-y-8 max-w-[1200px]">
+    <div style={{ padding: 32, maxWidth: 1200, display: 'flex', flexDirection: 'column', gap: 28 }}>
 
-      {/* ── Header ───────────────────────────────────────── */}
-      <div className="flex items-start justify-between">
+      {/* ── Header ────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}
+      >
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Dashboard</h1>
-          <p className="text-sm text-white/35 mt-1">{today}</p>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: 'var(--ad-text)', letterSpacing: '-0.02em', margin: 0 }}>
+            Dashboard
+          </h1>
+          <p style={{ fontSize: 13, color: 'var(--ad-text-3)', marginTop: 4 }}>{today}</p>
         </div>
-        <div className="flex gap-3">
-          <Link
-            to="/admin/students"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
-            style={{ background: '#CC0000' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            Add Student
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Stats row ────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Active Students" value={stats.students} icon="🎓" accent="#CC0000" loading={loading} />
-        <StatCard label="Events This Month" value={stats.events}  icon="📅" accent="#C9A227" loading={loading} />
-        <StatCard label="CP Awarded Today"  value={stats.cpToday} icon="⭐" accent="#4A7C3F" loading={loading} />
-        <div
-          className="relative rounded-2xl p-5 overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+        <Link
+          to="/admin/students"
+          className="ad-btn-primary"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '9px 18px', borderRadius: 10, fontSize: 13,
+            textDecoration: 'none',
+          }}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/30">Top Student</p>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          Add Student
+        </Link>
+      </motion.div>
+
+      {/* ── Stat cards ──────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        <StatCard label="Active Students" value={stats.students} icon="🎓" accentColor="#e53e3e" loading={loading} delay={0.05} />
+        <StatCard label="Events This Month" value={stats.events}  icon="📅" accentColor="#C9A227" loading={loading} delay={0.1} />
+        <StatCard label="CP Awarded Today"  value={stats.cpToday} icon="⭐" accentColor="#4ade80" loading={loading} delay={0.15} />
+
+        {/* Top student card */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.35 }}
+          className="ad-surface rounded-2xl p-5 relative overflow-hidden"
+        >
+          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ad-text-3)', marginBottom: 6 }}>
+            Top Student
+          </p>
           {loading ? (
-            <div className="mt-2 space-y-1.5">
-              <div className="h-4 w-32 rounded bg-white/10 animate-pulse" />
-              <div className="h-3 w-20 rounded bg-white/10 animate-pulse" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+              <div style={{ height: 16, width: 128, borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
+              <div style={{ height: 12, width: 80,  borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
             </div>
           ) : top ? (
-            <div className="mt-1.5">
-              <p className="text-base font-bold text-white leading-tight truncate">{top.full_name}</p>
-              <p className="text-xs text-white/40 mt-0.5">
-                <span className="font-semibold text-emerald-400">{top.cp} CP</span>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--ad-text)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {top.full_name}
+              </p>
+              <p style={{ fontSize: 11, color: 'var(--ad-text-3)', marginTop: 4 }}>
+                <span style={{ fontWeight: 700, color: '#4ade80' }}>{top.cp.toLocaleString()} CP</span>
                 {' · '}
                 <span style={{ color: CLANS[top.clan]?.colorAccent }}>{CLANS[top.clan]?.name}</span>
               </p>
             </div>
           ) : (
-            <p className="text-sm text-white/30 mt-2">No data yet</p>
+            <p style={{ fontSize: 13, color: 'var(--ad-text-4)', marginTop: 4 }}>No data yet</p>
           )}
-          <div className="absolute bottom-0 left-0 right-0 h-[2px]" style={{ background: '#A0A0A0' }} />
-        </div>
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
+            background: 'linear-gradient(90deg, transparent, rgba(150,150,150,0.5), transparent)',
+          }}/>
+        </motion.div>
       </div>
 
-      {/* ── Bottom two columns ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      {/* ── Clan race + Activity feed ──────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16 }}>
 
-        {/* Clan race — 3 cols */}
-        <div
-          className="lg:col-span-3 rounded-2xl p-6 space-y-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+        {/* Clan race */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="ad-surface rounded-2xl p-6"
+          style={{ display: 'flex', flexDirection: 'column', gap: 20 }}
         >
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white">Clan Race</h2>
-            <Link to="/admin/rankings" className="text-[11px] text-white/30 hover:text-white/60 transition-colors">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--ad-text)', margin: 0 }}>Clan Race</h2>
+            <Link to="/admin/rankings" style={{ fontSize: 11, color: 'var(--ad-text-3)', textDecoration: 'none' }}
+              onMouseEnter={e => e.target.style.color = 'var(--ad-text)'}
+              onMouseLeave={e => e.target.style.color = 'var(--ad-text-3)'}
+            >
               View rankings →
             </Link>
           </div>
 
           {loading ? (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-8 h-5 rounded bg-white/10 animate-pulse" />
-                  <div className="w-8 h-5 rounded bg-white/10 animate-pulse" />
-                  <div className="w-20 h-5 rounded bg-white/10 animate-pulse" />
-                  <div className="flex-1 h-8 rounded-full bg-white/10 animate-pulse" />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  {[24, 24, 80, undefined, 72].map((w, j) => (
+                    <div key={j} style={{
+                      width: w, height: j === 3 ? 32 : 20,
+                      flex: j === 3 ? 1 : undefined,
+                      borderRadius: j === 3 ? 8 : 4,
+                      background: 'var(--ad-skeleton)',
+                    }}/>
+                  ))}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {clans.map((clan, i) => (
-                <ClanRaceBar
-                  key={clan.id} clan={clan} maxCp={maxCp}
-                  rank={i} delay={i * 0.08}
-                />
+                <ClanRaceBar key={clan.id} clan={clan} maxCp={maxCp} rank={i} delay={i * 0.08} />
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
-        {/* Activity feed — 2 cols */}
-        <div
-          className="lg:col-span-2 rounded-2xl p-6"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+        {/* Activity feed */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="ad-surface rounded-2xl p-6"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-white">Recent Activity</h2>
-            <Link to="/admin/cp" className="text-[11px] text-white/30 hover:text-white/60 transition-colors">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 14, fontWeight: 800, color: 'var(--ad-text)', margin: 0 }}>Recent Activity</h2>
+            <Link to="/admin/cp" style={{ fontSize: 11, color: 'var(--ad-text-3)', textDecoration: 'none' }}
+              onMouseEnter={e => e.target.style.color = 'var(--ad-text)'}
+              onMouseLeave={e => e.target.style.color = 'var(--ad-text-3)'}
+            >
               All awards →
             </Link>
           </div>
 
           {loading ? (
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex gap-3 py-1">
-                  <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse shrink-0" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 rounded bg-white/10 animate-pulse" />
-                    <div className="h-2.5 w-2/3 rounded bg-white/10 animate-pulse" />
+                <div key={i} style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--ad-skeleton)', flexShrink: 0 }}/>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ height: 12, borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
+                    <div style={{ height: 10, width: '60%', borderRadius: 4, background: 'var(--ad-skeleton)' }}/>
                   </div>
                 </div>
               ))}
             </div>
           ) : feed.length === 0 ? (
-            <p className="text-sm text-white/25 text-center py-8">No activity yet</p>
+            <p style={{ fontSize: 13, color: 'var(--ad-text-4)', textAlign: 'center', padding: '32px 0' }}>
+              No activity yet
+            </p>
           ) : (
             <div>
               {feed.map((award, i) => (
@@ -346,24 +391,53 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       {/* ── Quick links ──────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
         {[
-          { to: '/admin/students',   label: 'Manage Students', icon: '👥' },
-          { to: '/admin/events',     label: 'Create Event',    icon: '📅' },
-          { to: '/admin/cp',         label: 'Award CP',        icon: '⭐' },
-          { to: '/admin/reset',      label: 'Monthly Reset',   icon: '🔄' },
-        ].map(({ to, label, icon }) => (
-          <Link
-            key={to} to={to}
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/10 transition-all"
+          { to: '/admin/students', label: 'Manage Students', icon: '👥', color: '#e53e3e' },
+          { to: '/admin/events',   label: 'Create Event',    icon: '📅', color: '#C9A227' },
+          { to: '/admin/cp',       label: 'Award CP',        icon: '⭐', color: '#4ade80' },
+          { to: '/admin/reset',    label: 'Monthly Reset',   icon: '🔄', color: '#a78bfa' },
+        ].map(({ to, label, icon, color }, i) => (
+          <motion.div
+            key={to}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 + i * 0.05 }}
           >
-            <span className="text-lg">{icon}</span>
-            {label}
-          </Link>
+            <Link
+              to={to}
+              className="ad-surface"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '12px 14px', borderRadius: 12,
+                textDecoration: 'none',
+                color: 'var(--ad-text-2)',
+                fontSize: 13, fontWeight: 600,
+                transition: 'color 0.2s, box-shadow 0.2s, transform 0.15s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--ad-text)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--ad-text-2)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
+            >
+              <span style={{
+                fontSize: 18, width: 34, height: 34, borderRadius: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: `${color}14`, flexShrink: 0,
+              }}>
+                {icon}
+              </span>
+              {label}
+            </Link>
+          </motion.div>
         ))}
       </div>
     </div>

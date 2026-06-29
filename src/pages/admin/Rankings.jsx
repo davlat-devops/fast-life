@@ -111,7 +111,7 @@ function ClanSummaryCard({ clan, members, rank, delay }) {
       transition={{ delay, duration: 0.25 }}
       className="rounded-2xl p-5"
       style={{
-        background: '#161616',
+        background: 'var(--ad-surface)',
         border: `1px solid ${info?.colorAccent}28`,
       }}
     >
@@ -335,7 +335,7 @@ export default function Rankings() {
         {/* Main race bars */}
         <div
           className="rounded-2xl p-6 space-y-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           {loading ? (
             [...Array(4)].map((_, i) => (
@@ -445,7 +445,7 @@ export default function Rankings() {
         {/* Table */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <table className="w-full text-left">
             <thead>

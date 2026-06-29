@@ -93,7 +93,7 @@ function RankBadge({ rank }) {
 function Top5Card({ students, loading }) {
   return (
     <div className="rounded-2xl overflow-hidden"
-      style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
       <div className="px-5 py-4 border-b border-white/[0.05] flex items-center justify-between">
         <h2 className="text-sm font-bold text-white">Top 5 Overall</h2>
         <span className="text-xs text-white/30">by CP this month</span>
@@ -165,7 +165,7 @@ function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
       transition={{ delay, duration: 0.25 }}
       className="rounded-2xl p-5 space-y-4"
       style={{
-        background: '#161616',
+        background: 'var(--ad-surface)',
         border: `1px solid ${isWinner ? info?.colorAccent + '40' : 'rgba(255,255,255,0.06)'}`,
       }}
     >
@@ -239,7 +239,7 @@ function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
 function ActionList() {
   return (
     <div className="rounded-2xl overflow-hidden"
-      style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+      style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
       <div className="px-5 py-4 border-b border-white/[0.05]">
         <h2 className="text-sm font-bold text-white">What Will Happen</h2>
         <p className="text-xs text-white/30 mt-0.5">In this exact order, irreversibly</p>
@@ -443,7 +443,7 @@ function SuccessScreen({ snapshot, result }) {
       {/* Month's champions */}
       {top5.length > 0 && (
         <div className="rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
           <div className="px-5 py-4 border-b border-white/[0.05]">
             <h3 className="text-sm font-bold text-white">{month} — Final Rankings</h3>
             <p className="text-xs text-white/30 mt-0.5">Badges awarded before CP reset</p>
@@ -490,7 +490,7 @@ function SuccessScreen({ snapshot, result }) {
           transition={{ delay: 0.35 }}
           className="rounded-2xl p-5 flex items-center gap-4"
           style={{
-            background: '#161616',
+            background: 'var(--ad-surface)',
             border: `1px solid ${winnerInfo.colorAccent}33`,
           }}
         >
@@ -524,7 +524,7 @@ function SuccessScreen({ snapshot, result }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
           className="rounded-2xl p-5"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <h3 className="text-sm font-bold text-white mb-4">New Clan Assignments</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -550,7 +550,7 @@ function SuccessScreen({ snapshot, result }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45 }}
           className="flex items-center gap-3 px-5 py-4 rounded-2xl"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <span className="text-xl shrink-0">🔀</span>
           <p className="text-sm text-white/60">
@@ -741,7 +741,7 @@ export default function MonthlyReset() {
                 {loading
                   ? [...Array(4)].map((_, i) => (
                       <div key={i} className="rounded-2xl p-5 space-y-4"
-                        style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
                         <div className="flex items-center gap-3">
                           <Skeleton className="w-6 h-5 shrink-0" />
                           <Skeleton className="w-9 h-9 rounded-full shrink-0" />

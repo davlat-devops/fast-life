@@ -98,7 +98,7 @@ function CreateEventModal({ onClose, onCreated, adminUserId }) {
           exit={{   opacity: 0, y: 20, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 340, damping: 28 }}
           className="relative w-full max-w-md rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.09)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
@@ -320,7 +320,7 @@ export default function EventManagement() {
 
       {/* ── Table ──────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden"
-           style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-white/[0.06]">

@@ -406,7 +406,7 @@ export default function StudentManagement() {
 
       {/* ── Table ──────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-x-auto"
-        style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}>
+        style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}>
         <table className="w-full min-w-[900px] text-left">
           <thead>
             <tr className="border-b border-white/[0.06]">

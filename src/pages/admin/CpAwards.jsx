@@ -369,7 +369,7 @@ export default function CpAwards() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl p-6 space-y-5"
-        style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
       >
         <div className="flex items-center gap-2 mb-1">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -564,7 +564,7 @@ export default function CpAwards() {
         {/* Table */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.06)' }}
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
           <table className="w-full text-left">
             <thead>
