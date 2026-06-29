@@ -1,8 +1,8 @@
-import { NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
-import Logo from '@/components/ui/Logo'
+import logo from '@/assets/logo.png'
 
 // ── SVG nav icons ─────────────────────────────────────────────
 const Ic = ({ d, children, ...p }) => (
@@ -47,16 +47,13 @@ function Sidebar({ user, onSignOut }) {
       style={{ background: '#0f0f0f' }}>
 
       {/* Brand */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/[0.06]">
-        <Logo size={32} color="white" />
-        <div className="leading-none">
-          <div className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/30">
-            Fast Life
-          </div>
-          <div className="text-xs font-bold tracking-wider text-white/80 mt-0.5">
-            Admin Portal
-          </div>
-        </div>
+      <div className="flex items-center px-5 py-4 border-b border-white/[0.06]">
+        <img
+          src={logo}
+          alt="Fast Education"
+          className="h-12 w-auto object-contain"
+          style={{ filter: 'brightness(0) invert(1)' }}
+        />
       </div>
 
       {/* Nav */}
@@ -100,7 +97,8 @@ function Sidebar({ user, onSignOut }) {
 // ── Layout wrapper (also the auth guard for all /admin/* routes) ──
 export default function AdminLayout() {
   const { loading, session, isAdmin, user, signOut } = useAuth()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
   if (loading) return <FullPageLoader />
   if (!session || !isAdmin) return <Navigate to="/admin/login" replace />

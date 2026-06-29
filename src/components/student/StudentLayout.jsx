@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, NavLink, Outlet } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
@@ -148,7 +148,8 @@ const TABS = [
 
 function StudentLayoutInner() {
   const { loading, studentLoading, session, isStudent, studentRecord } = useAuth()
-  const { theme } = useTheme()
+  const { theme }  = useTheme()
+  const location   = useLocation()
 
   if (loading || studentLoading) return <FullPageLoader />
   if (!session || !isStudent)    return <Navigate to="/" replace />

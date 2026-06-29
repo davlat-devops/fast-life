@@ -78,7 +78,7 @@ function StatCard({ label, value, icon, accent, loading }) {
   )
 }
 
-function ClanRaceBar({ clan, totalCp, maxCp, rank, delay }) {
+function ClanRaceBar({ clan, maxCp, rank, delay }) {
   const info = CLANS[clan.id]
   const pct  = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
 

@@ -298,19 +298,6 @@ export default function CpAwards() {
         .eq('id', selectedStudent.id)
       if (studentErr) throw studentErr
 
-      // 3. Update clan total_cp (best-effort — may be maintained by DB trigger)
-      const { data: clanRow } = await supabase
-        .from('clans')
-        .select('total_cp')
-        .eq('id', fresh.clan)
-        .single()
-      if (clanRow) {
-        await supabase
-          .from('clans')
-          .update({ total_cp: clanRow.total_cp + parsedCp })
-          .eq('id', fresh.clan)
-      }
-
       toast({
         message: `Awarded ${parsedCp} CP to ${selectedStudent.full_name}`,
         type: 'success',

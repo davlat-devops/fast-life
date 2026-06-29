@@ -20,16 +20,6 @@ const CAT_STYLE = {
 
 // ── Helpers ───────────────────────────────────────────────────
 
-function formatDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric',
-  })
-}
-
-function Skeleton({ className }) {
-  return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
-}
-
 // ── Field wrapper ─────────────────────────────────────────────
 
 const inputCls = `w-full px-3.5 py-2.5 rounded-lg text-sm text-white placeholder:text-white/20

@@ -113,7 +113,6 @@ export default function AttendanceRegister() {
   const [loading,       setLoading]       = useState(true)
   const [toggling,      setToggling]      = useState(new Set())
   const [search,        setSearch]        = useState('')
-  const [finalising,    setFinalising]    = useState(false)
   const [confirmStep,   setConfirmStep]   = useState(0) // 0=idle, 1=confirm, 2=finalising
 
   // ── Load ────────────────────────────────────────────────────
@@ -228,7 +227,6 @@ export default function AttendanceRegister() {
   // ── Finalise ─────────────────────────────────────────────────
 
   async function finalise() {
-    setFinalising(true)
     setConfirmStep(2)
 
     try {
@@ -271,7 +269,6 @@ export default function AttendanceRegister() {
     } catch (err) {
       toast({ message: err.message ?? 'Finalisation failed', type: 'error' })
     } finally {
-      setFinalising(false)
       setConfirmStep(0)
     }
   }

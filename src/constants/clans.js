@@ -34,6 +34,3 @@ export const CLANS = {
 }
 
 export const CLAN_NAMES = Object.keys(CLANS)
-
-export const getRandomClan = () =>
-  CLAN_NAMES[Math.floor(Math.random() * CLAN_NAMES.length)]

@@ -99,7 +99,3 @@ export const LEVEL_THRESHOLDS = [
   { key: 'ambassador', label: 'Ambassador', min: 500 },
 ]
 
-export const getLevelForCP = (cp) => {
-  const sorted = [...LEVEL_THRESHOLDS].sort((a, b) => b.min - a.min)
-  return sorted.find((l) => cp >= l.min) || LEVEL_THRESHOLDS[0]
-}
