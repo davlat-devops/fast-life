@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { supabase, adminSupabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
@@ -178,9 +178,218 @@ function CreateEventModal({ onClose, onCreated, adminUserId }) {
   )
 }
 
+// ── Edit Event Modal ──────────────────────────────────────────
+
+function EditEventModal({ event, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    title:      event.title ?? '',
+    category:   event.category ?? 'English',
+    event_date: event.event_date ?? '',
+    event_time: event.event_time ?? '',
+    room:       event.room ?? '',
+    cp_value:   event.cp_value ?? DEFAULT_EVENT_CP,
+  })
+  const [errors, setErrors] = useState({})
+  const [busy, setBusy] = useState(false)
+  const { toast } = useToast()
+
+  function set(key, val) {
+    setForm(f => {
+      const next = { ...f, [key]: val }
+      if (key === 'category') next.cp_value = CP_FOR_CATEGORY[val] ?? DEFAULT_EVENT_CP
+      return next
+    })
+    setErrors(e => ({ ...e, [key]: '' }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const errs = {}
+    if (!form.title.trim())    errs.title      = 'Title is required'
+    if (!form.event_date)      errs.event_date = 'Date is required'
+    if (form.cp_value === '' || Number(form.cp_value) < 0) errs.cp_value = 'CP must be 0 or more'
+    if (Object.keys(errs).length) { setErrors(errs); return }
+
+    setBusy(true)
+    const { data, error } = await adminSupabase.from('events').update({
+      title:      form.title.trim(),
+      category:   form.category,
+      event_date: form.event_date,
+      event_time: form.event_time || null,
+      room:       form.room.trim() || null,
+      cp_value:   Number(form.cp_value),
+    }).eq('id', event.id).select().single()
+
+    setBusy(false)
+    if (error) { toast({ message: error.message, type: 'error' }); return }
+    onSaved(data)
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0,  scale: 1 }}
+          exit={{   opacity: 0, y: 20, scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+          className="relative w-full max-w-md rounded-2xl overflow-hidden"
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
+            <div>
+              <h2 className="text-base font-bold text-white">Edit Event</h2>
+              <p className="text-xs text-white/35 mt-0.5">Changes apply immediately after saving</p>
+            </div>
+            <button onClick={onClose} className="text-white/30 hover:text-white/70 transition-colors">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+            <Field label="Title *" id="edit-title" error={errors.title}>
+              <input id="edit-title" className={inputCls} placeholder="e.g. IELTS Mock Test #4"
+                value={form.title} onChange={e => set('title', e.target.value)} autoFocus />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Category *" id="edit-category">
+                <select id="edit-category" className={inputCls + ' cursor-pointer'}
+                  value={form.category} onChange={e => set('category', e.target.value)}>
+                  {EVENT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Field>
+
+              <Field label="CP Value *" id="edit-cp_value" error={errors.cp_value}>
+                <input id="edit-cp_value" type="number" min="0" className={inputCls}
+                  value={form.cp_value} onChange={e => set('cp_value', e.target.value)} />
+              </Field>
+            </div>
+
+            <Field label="Date *" id="edit-event_date" error={errors.event_date}>
+              <input id="edit-event_date" type="date" className={inputCls}
+                value={form.event_date} onChange={e => set('event_date', e.target.value)} />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Time (optional)" id="edit-event_time">
+                <input id="edit-event_time" type="time" className={inputCls}
+                  value={form.event_time} onChange={e => set('event_time', e.target.value)} />
+              </Field>
+
+              <Field label="Room (optional)" id="edit-room">
+                <input id="edit-room" className={inputCls} placeholder="e.g. Room 3"
+                  value={form.room} onChange={e => set('room', e.target.value)} />
+              </Field>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={onClose}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white/70
+                  border border-white/[0.08] hover:bg-white/[0.04] transition-all">
+                Cancel
+              </button>
+              <motion.button type="submit" disabled={busy}
+                whileHover={busy ? {} : { scale: 1.02 }}
+                whileTap={busy  ? {} : { scale: 0.97 }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white
+                  flex items-center justify-center gap-2 transition-colors"
+                style={{ background: busy ? '#7a0000' : '#CC0000' }}>
+                {busy && (
+                  <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  </svg>
+                )}
+                {busy ? 'Saving…' : 'Save Changes'}
+              </motion.button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  )
+}
+
+// ── Delete Confirmation Modal ──────────────────────────────────
+
+function DeleteConfirmModal({ eventTitle, onConfirm, onClose, busy }) {
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{   opacity: 0, scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="relative w-full max-w-sm rounded-2xl p-6 space-y-4"
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}
+        >
+          {/* Icon */}
+          <div className="flex items-center justify-center w-11 h-11 rounded-full mx-auto"
+               style={{ background: 'rgba(229,62,62,0.12)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f87171"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </div>
+
+          <div className="text-center">
+            <h3 className="text-base font-bold text-white">Delete Event?</h3>
+            <p className="text-sm text-white/40 mt-1">
+              Are you sure you want to delete <span className="text-white/70 font-medium">"{eventTitle}"</span>?
+              This cannot be undone.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-1">
+            <button onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white/70
+                border border-white/[0.08] hover:bg-white/[0.04] transition-all">
+              Cancel
+            </button>
+            <motion.button
+              onClick={onConfirm}
+              disabled={busy}
+              whileHover={busy ? {} : { scale: 1.02 }}
+              whileTap={busy  ? {} : { scale: 0.97 }}
+              className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white
+                flex items-center justify-center gap-2 transition-colors"
+              style={{ background: busy ? '#7a0000' : '#DC2626' }}>
+              {busy && (
+                <svg className="animate-spin" width="13" height="13" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+              )}
+              {busy ? 'Deleting…' : 'Delete'}
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  )
+}
+
 // ── Event row ─────────────────────────────────────────────────
 
-function EventRow({ event, onTakeAttendance, delay }) {
+function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
   const cat  = CAT_STYLE[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.12)' }
   const date = new Date(event.event_date + 'T00:00:00')
 
@@ -238,16 +447,67 @@ function EventRow({ event, onTakeAttendance, delay }) {
 
       {/* Action */}
       <td className="px-4 py-3">
-        <motion.button
-          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-          onClick={() => onTakeAttendance(event.id)}
-          className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
-          style={event.finalised
-            ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
-            : { background: '#CC0000', color: '#fff' }}
-        >
-          {event.finalised ? 'View' : 'Take Attendance'}
-        </motion.button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Attendance / View */}
+          <motion.button
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={() => onTakeAttendance(event.id)}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+            style={event.finalised
+              ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }
+              : { background: '#CC0000', color: '#fff' }}
+          >
+            {event.finalised ? 'View' : 'Take Attendance'}
+          </motion.button>
+
+          {/* Edit */}
+          <motion.button
+            whileHover={{ scale: 1.08, background: 'rgba(255,255,255,0.1)' }}
+            whileTap={{ scale: 0.93 }}
+            onClick={() => onEdit(event)}
+            title="Edit event"
+            style={{
+              width: 30, height: 30, borderRadius: 8, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: 'rgba(255,255,255,0.5)',
+              cursor: 'pointer', flexShrink: 0,
+              transition: 'background 0.15s, color 0.15s',
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </motion.button>
+
+          {/* Delete */}
+          <motion.button
+            whileHover={{ scale: 1.08, background: 'rgba(239,68,68,0.15)' }}
+            whileTap={{ scale: 0.93 }}
+            onClick={() => onDelete(event)}
+            title="Delete event"
+            style={{
+              width: 30, height: 30, borderRadius: 8, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              color: '#f87171',
+              cursor: 'pointer', flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </motion.button>
+        </div>
       </td>
     </motion.tr>
   )
@@ -260,9 +520,12 @@ export default function EventManagement() {
   const { toast } = useToast()
   const navigate = useNavigate()
 
-  const [events,      setEvents]      = useState([])
-  const [loading,     setLoading]     = useState(true)
-  const [showCreate,  setShowCreate]  = useState(false)
+  const [events,        setEvents]        = useState([])
+  const [loading,       setLoading]       = useState(true)
+  const [showCreate,    setShowCreate]    = useState(false)
+  const [editingEvent,  setEditingEvent]  = useState(null)
+  const [deletingEvent, setDeletingEvent] = useState(null)
+  const [deleteBusy,    setDeleteBusy]    = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -281,6 +544,23 @@ export default function EventManagement() {
     setEvents(prev => [event, ...prev])
     setShowCreate(false)
     toast({ message: `"${event.title}" created`, type: 'success' })
+  }
+
+  function handleSaved(updated) {
+    setEvents(prev => prev.map(e => e.id === updated.id ? updated : e))
+    setEditingEvent(null)
+    toast({ message: `"${updated.title}" updated`, type: 'success' })
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deletingEvent) return
+    setDeleteBusy(true)
+    const { error } = await adminSupabase.from('events').delete().eq('id', deletingEvent.id)
+    setDeleteBusy(false)
+    if (error) { toast({ message: error.message, type: 'error' }); return }
+    setEvents(prev => prev.filter(e => e.id !== deletingEvent.id))
+    toast({ message: `"${deletingEvent.title}" deleted`, type: 'success' })
+    setDeletingEvent(null)
   }
 
   const thisMonth = new Date().getMonth()
@@ -357,6 +637,8 @@ export default function EventManagement() {
                     key={event.id}
                     event={event}
                     onTakeAttendance={id => navigate(`/admin/attendance/${id}`)}
+                    onEdit={setEditingEvent}
+                    onDelete={setDeletingEvent}
                     delay={i * 0.025}
                   />
                 ))}
@@ -372,6 +654,25 @@ export default function EventManagement() {
           onClose={() => setShowCreate(false)}
           onCreated={handleCreated}
           adminUserId={user?.id}
+        />
+      )}
+
+      {/* ── Edit modal ─────────────────────────────────────── */}
+      {editingEvent && (
+        <EditEventModal
+          event={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {/* ── Delete confirmation ────────────────────────────── */}
+      {deletingEvent && (
+        <DeleteConfirmModal
+          eventTitle={deletingEvent.title}
+          onConfirm={handleDeleteConfirm}
+          onClose={() => setDeletingEvent(null)}
+          busy={deleteBusy}
         />
       )}
     </div>
