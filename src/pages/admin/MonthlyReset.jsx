@@ -32,7 +32,7 @@ const WHAT_HAPPENS = [
   {
     icon: '🏆',
     title: 'Winning Clan — all members',
-    detail: `Clan Champion badge  ·  +${CP_RULES.WINNING_CLAN_HEADSTART} CP headstart`,
+    detail: 'Clan Champion badge awarded to all winning-clan members',
     color: '#4ade80',
   },
   {
@@ -191,7 +191,7 @@ function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
         </div>
         {isWinner && (
           <span className="text-[10px] text-emerald-400 font-semibold">
-            +{CP_RULES.WINNING_CLAN_HEADSTART} CP headstart
+            Clan Champion badge
           </span>
         )}
       </div>
@@ -527,8 +527,8 @@ function SuccessScreen({ snapshot, result }) {
               </span>
             </div>
             <p className="text-xs text-white/40 mt-0.5">
-              All members received the Clan Champion badge
-              and +{CP_RULES.WINNING_CLAN_HEADSTART} CP headstart
+              All members received the Clan Champion badge.
+              Everyone starts the new month at 0 CP.
             </p>
           </div>
           <div className="text-right shrink-0">
