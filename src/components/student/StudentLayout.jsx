@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
@@ -6,26 +5,21 @@ import FullPageLoader from '@/components/ui/FullPageLoader'
 import { CLANS } from '@/constants/clans'
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 
-// ── Clan image with emoji fallback ────────────────────────────
+// ── Clan letter badge for top bar ────────────────────────────
 
-function ClanImg({ clanId, size = 24 }) {
-  const [err, setErr] = useState(false)
-  if (err || !clanId) {
-    return (
-      <span style={{ fontSize: size * 0.75, display: 'block', lineHeight: 1 }}>
-        {CLANS[clanId]?.emoji ?? '⚔️'}
-      </span>
-    )
-  }
+function ClanLetterBadge({ clanId, accent, size = 28 }) {
+  const letter = CLANS[clanId]?.name[0]?.toUpperCase() ?? '?'
+  const radius = Math.round(size * 0.32)
   return (
-    <img
-      src={`/clans/${clanId.toLowerCase()}.png`}
-      width={size}
-      height={size}
-      alt=""
-      style={{ borderRadius: '50%', objectFit: 'cover', display: 'block' }}
-      onError={() => setErr(true)}
-    />
+    <div style={{
+      width: size, height: size, borderRadius: radius, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: Math.round(size * 0.48), fontWeight: 900, color: accent,
+      background: accent + '18',
+      border: `1.5px solid ${accent}40`,
+    }}>
+      {letter}
+    </div>
   )
 }
 
@@ -179,7 +173,7 @@ function StudentLayoutInner() {
         }}
       >
         <div className="flex items-center gap-2.5">
-          {studentRecord?.clan && <ClanImg clanId={studentRecord.clan} size={26} />}
+          {studentRecord?.clan && <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={28} />}
           <span style={{ color: 'var(--fl-text)', fontSize: 13, fontWeight: 700 }}>
             {firstName}
           </span>
@@ -230,7 +224,7 @@ function StudentLayoutInner() {
             key={to}
             to={to}
             className="flex-1 flex flex-col items-center justify-center gap-1 relative"
-            style={{ minHeight: 72 }}
+            style={{ minHeight: 76 }}
           >
             {({ isActive }) => (
               <>
@@ -239,10 +233,11 @@ function StudentLayoutInner() {
                     layoutId="tab-indicator"
                     className="absolute top-0 rounded-b-full"
                     style={{
-                      background: accentColor,
-                      height:     3,
-                      left:       '20%',
-                      right:      '20%',
+                      background: 'linear-gradient(90deg, transparent, #CC0000 25%, #e53e3e 50%, #CC0000 75%, transparent)',
+                      boxShadow:  '0 0 12px rgba(204,0,0,0.55)',
+                      height:     3.5,
+                      left:       '8%',
+                      right:      '8%',
                     }}
                     transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                   />
@@ -254,7 +249,7 @@ function StudentLayoutInner() {
                 <span
                   style={{
                     fontSize:      10,
-                    fontWeight:    600,
+                    fontWeight:    isActive ? 700 : 600,
                     letterSpacing: '0.04em',
                     color:         isActive ? accentColor : 'var(--fl-text-3)',
                     transition:    'color 0.2s',
