@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 import { MANUAL_CP_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -9,9 +10,9 @@ import { useToast } from '@/contexts/ToastContext'
 const REASON_LABELS = {
   attendance:             'Attendance',
   volunteer:              'Volunteer',
-  competition_1st:        '🥇 1st Place',
-  competition_2nd:        '🥈 2nd Place',
-  competition_3rd:        '🥉 3rd Place',
+  competition_1st:        '1st Place',
+  competition_2nd:        '2nd Place',
+  competition_3rd:        '3rd Place',
   referral:               'Referral',
   peer_spotlight:         'Peer Spotlight',
   end_of_month_1st:       '#1 of Month',
@@ -86,8 +87,8 @@ function StudentPicker({ allStudents, selected, onSelect }) {
             focus:border-brand-red/40 transition-colors"
         />
         {selected && clanInfo && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-lg pointer-events-none">
-            {clanInfo.emoji}
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <ClanIcon clanId={selected.clan} size={20} />
           </span>
         )}
       </div>
@@ -123,7 +124,7 @@ function StudentPicker({ allStudents, selected, onSelect }) {
                     <div className="min-w-0">
                       <p className="text-sm text-white font-medium truncate">{s.full_name}</p>
                       <p className="text-[10px] text-white/35">
-                        {info?.emoji} {info?.name}
+                        <ClanIcon clanId={s.clan} size={12} /> {info?.name}
                         <span className="text-white/20 mx-1">·</span>
                         {s.cp.toLocaleString()} CP
                       </p>
@@ -177,7 +178,7 @@ function AuditRow({ award, delay }) {
               {student?.full_name ?? 'Unknown'}
             </p>
             <p className="text-[10px] text-white/30">
-              {clanInfo?.emoji} {clanInfo?.name}
+              <ClanIcon clanId={student?.clan} size={12} /> {clanInfo?.name}
             </p>
           </div>
         </div>

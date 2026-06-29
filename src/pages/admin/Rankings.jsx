@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Flag, Trophy, Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon, RankBadge } from '@/components/ui/ClanIcons'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
@@ -16,9 +18,8 @@ const PER_PAGE = 25
 // ── Clan Race Bar ──────────────────────────────────────────────
 
 function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
-  const info   = CLANS[clan.id]
-  const pct    = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
-  const medals = ['🥇', '🥈', '🥉', '4️⃣']
+  const info = CLANS[clan.id]
+  const pct  = maxCp > 0 ? (clan.total_cp / maxCp) * 100 : 0
 
   return (
     <motion.div
@@ -27,23 +28,27 @@ function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
       transition={{ delay, duration: 0.3 }}
       className="flex items-center gap-4 group"
     >
-      {/* Rank medal */}
-      <div className="w-8 shrink-0 text-center">
-        <span className="text-xl">{medals[rank]}</span>
+      {/* Rank badge */}
+      <div className="w-8 shrink-0 flex justify-center">
+        <RankBadge rank={rank + 1} size={24} />
       </div>
 
-      {/* Clan emoji */}
-      <div className="w-9 shrink-0 text-center">
-        <span className="text-2xl">{info?.emoji}</span>
+      {/* Clan icon */}
+      <div className="w-9 shrink-0 flex justify-center">
+        <ClanIcon clanId={clan.id} size={28} />
       </div>
 
       {/* Clan name + member count */}
       <div className="w-28 shrink-0">
         <p className="text-sm font-bold text-white leading-tight">{clan.name}</p>
-        <p className="text-[10px] text-white/30 mt-0.5">
-          {memberCount} member{memberCount !== 1 ? 's' : ''}
-          {clan.crown && <span className="ml-1.5 text-amber-400">👑</span>}
-        </p>
+        <div className="flex items-center gap-1 mt-0.5">
+          <p className="text-[10px] text-white/30">
+            {memberCount} member{memberCount !== 1 ? 's' : ''}
+          </p>
+          {clan.crown && (
+            <Crown size={9} className="text-amber-400 shrink-0" />
+          )}
+        </div>
       </div>
 
       {/* Bar track */}
@@ -54,17 +59,9 @@ function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
-          transition={{
-            delay: delay + 0.2,
-            duration: 1.2,
-            type: 'spring',
-            stiffness: 70,
-            damping: 18,
-          }}
+          transition={{ delay: delay + 0.2, duration: 1.2, type: 'spring', stiffness: 70, damping: 18 }}
           className="absolute inset-y-0 left-0 rounded-xl min-w-[6px] flex items-center"
-          style={{
-            background: `linear-gradient(90deg, ${info?.colorAccent}88, ${info?.colorAccent})`,
-          }}
+          style={{ background: `linear-gradient(90deg, ${info?.colorAccent}88, ${info?.colorAccent})` }}
         >
           {pct > 22 && (
             <span className="absolute right-3 text-white text-[11px] font-bold whitespace-nowrap drop-shadow">
@@ -72,7 +69,6 @@ function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
             </span>
           )}
         </motion.div>
-
         {pct <= 22 && pct > 0 && (
           <span
             className="absolute left-[calc(max(4px,_var(--bar-pct))_+_8px)] top-1/2 -translate-y-1/2
@@ -95,14 +91,11 @@ function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
   )
 }
 
-// ── Clan summary card (below the bars) ────────────────────────
+// ── Clan summary card ──────────────────────────────────────────
 
 function ClanSummaryCard({ clan, members, rank, delay }) {
-  const info   = CLANS[clan.id]
-  const medals = ['🥇', '🥈', '🥉', '4️⃣']
-  const top3   = [...members]
-    .sort((a, b) => b.cp - a.cp)
-    .slice(0, 3)
+  const info = CLANS[clan.id]
+  const top3 = [...members].sort((a, b) => b.cp - a.cp).slice(0, 3)
 
   return (
     <motion.div
@@ -110,22 +103,24 @@ function ClanSummaryCard({ clan, members, rank, delay }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.25 }}
       className="rounded-2xl p-5"
-      style={{
-        background: 'var(--ad-surface)',
-        border: `1px solid ${info?.colorAccent}28`,
-      }}
+      style={{ background: 'var(--ad-surface)', border: `1px solid ${info?.colorAccent}28` }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <span className="text-lg">{medals[rank]}</span>
-          <span className="text-2xl">{info?.emoji}</span>
+          <RankBadge rank={rank + 1} size={22} />
+          <ClanIcon clanId={clan.id} size={26} />
           <div>
             <h3 className="text-sm font-black text-white">{clan.name}</h3>
-            <p className="text-[10px] text-white/30">
-              {members.length} members
-              {clan.crown && <span className="ml-1.5 text-amber-400">👑 Reigning</span>}
-            </p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <p className="text-[10px] text-white/30">{members.length} members</p>
+              {clan.crown && (
+                <>
+                  <Crown size={9} className="text-amber-400 shrink-0" />
+                  <span className="text-[10px] text-amber-400">Reigning</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
         <div className="text-right">
@@ -142,10 +137,9 @@ function ClanSummaryCard({ clan, members, rank, delay }) {
           <p className="text-[10px] text-white/25 uppercase tracking-widest mb-2">Top Members</p>
           {top3.map((s, i) => {
             const initials = s.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-            const podMedals = ['🥇', '🥈', '🥉']
             return (
               <div key={s.id} className="flex items-center gap-2.5">
-                <span className="text-xs w-5 text-center">{podMedals[i]}</span>
+                <RankBadge rank={i + 1} size={18} />
                 <div
                   className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
                   style={{ background: info?.colorAccent ?? '#555' }}
@@ -168,7 +162,6 @@ function ClanSummaryCard({ clan, members, rank, delay }) {
 function StudentRow({ student, rank, delay }) {
   const clanInfo = CLANS[student.clan]
   const initials = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-  const medals   = { 1: '🥇', 2: '🥈', 3: '🥉' }
 
   return (
     <motion.tr
@@ -178,18 +171,15 @@ function StudentRow({ student, rank, delay }) {
       className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group"
     >
       {/* Rank */}
-      <td className="px-4 py-3 w-14 shrink-0">
-        {medals[rank]
-          ? <span className="text-base">{medals[rank]}</span>
-          : <span className="text-sm font-bold text-white/25">#{rank}</span>}
+      <td className="px-4 py-3 w-14">
+        <RankBadge rank={rank} size={22} />
       </td>
 
       {/* Student */}
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center
-              text-[11px] font-bold text-white"
+            className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
             style={{ background: clanInfo?.colorAccent ?? '#555' }}
           >
             {initials}
@@ -208,7 +198,7 @@ function StudentRow({ student, rank, delay }) {
             className="inline-flex items-center gap-1.5 text-[11px] font-medium"
             style={{ color: clanInfo.colorAccent }}
           >
-            <span>{clanInfo.emoji}</span>
+            <ClanIcon clanId={student.clan} size={14} />
             {clanInfo.name}
           </span>
         )}
@@ -269,8 +259,6 @@ export default function Rankings() {
     load()
   }, [])
 
-  // ── Derived data ─────────────────────────────────────────────
-
   const maxCp = useMemo(() => Math.max(...clans.map(c => c.total_cp), 1), [clans])
 
   const membersByClid = useMemo(() => {
@@ -328,11 +316,10 @@ export default function Rankings() {
       {/* ── Clan Race ──────────────────────────────────────── */}
       <section className="space-y-6">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🏁</span>
+          <Flag size={16} className="text-white/50" />
           <h2 className="text-base font-black text-white">Clan Race</h2>
         </div>
 
-        {/* Main race bars */}
         <div
           className="rounded-2xl p-6 space-y-5"
           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
@@ -386,11 +373,9 @@ export default function Rankings() {
       {/* ── Individual Leaderboard ─────────────────────────── */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <span className="text-lg">🏆</span>
+          <Trophy size={16} className="text-white/50" />
           <h2 className="text-base font-black text-white">Individual Leaderboard</h2>
-          <span className="text-xs text-white/30 ml-auto">
-            {filteredRanked.length} students
-          </span>
+          <span className="text-xs text-white/30 ml-auto">{filteredRanked.length} students</span>
         </div>
 
         {/* Filters */}
@@ -417,7 +402,7 @@ export default function Rankings() {
           >
             <option value="">All Clans</option>
             {Object.values(CLANS).map(c => (
-              <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
 
@@ -451,8 +436,7 @@ export default function Rankings() {
             <thead>
               <tr className="border-b border-white/[0.06]">
                 {['Rank', 'Student', 'Clan', 'Level', 'CP', 'Class'].map(h => (
-                  <th key={h}
-                    className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">
+                  <th key={h} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">
                     {h}
                   </th>
                 ))}
@@ -472,20 +456,13 @@ export default function Rankings() {
               ) : visible.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-sm text-white/25">
-                    {students.length === 0
-                      ? 'No active students yet'
-                      : 'No students match your filters'}
+                    {students.length === 0 ? 'No active students yet' : 'No students match your filters'}
                   </td>
                 </tr>
               ) : (
                 <AnimatePresence initial={false}>
                   {visible.map((s, i) => (
-                    <StudentRow
-                      key={s.id}
-                      student={s}
-                      rank={s.rank}
-                      delay={i * 0.018}
-                    />
+                    <StudentRow key={s.id} student={s} rank={s.rank} delay={i * 0.018} />
                   ))}
                 </AnimatePresence>
               )}
@@ -520,9 +497,7 @@ export default function Rankings() {
                   </button>
                 ))}
                 {totalPages > 7 && (
-                  <span className="text-xs text-white/30 px-2">
-                    {page + 1} / {totalPages}
-                  </span>
+                  <span className="text-xs text-white/30 px-2">{page + 1} / {totalPages}</span>
                 )}
                 <button
                   disabled={page === totalPages - 1}

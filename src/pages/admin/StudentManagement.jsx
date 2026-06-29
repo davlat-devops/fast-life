@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { adminSupabase, supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
+import { ClanIcon } from '@/components/ui/ClanIcons'
 import { useToast } from '@/contexts/ToastContext'
 import CreateStudentModal from '@/components/admin/CreateStudentModal'
 import CredentialsModal  from '@/components/admin/CredentialsModal'
@@ -56,7 +57,7 @@ function ClanChip({ clanId }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-[11px] font-medium whitespace-nowrap"
       style={{ color: info.colorAccent }}>
-      <span>{info.emoji}</span>
+      <ClanIcon clanId={clanId} size={14} />
       {info.name}
     </span>
   )
@@ -442,7 +443,7 @@ function FilterBar({ search, setSearch, filters, setFilters }) {
       >
         <option value="">All Clans</option>
         {Object.values(CLANS).map(c => (
-          <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
+          <option key={c.id} value={c.id}>{c.name}</option>
         ))}
       </select>
 

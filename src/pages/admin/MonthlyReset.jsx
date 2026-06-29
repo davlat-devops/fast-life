@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Crown, Gem, Swords, Trophy, BookOpen, Shuffle, RefreshCw, CheckCircle,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { CLANS, CLAN_NAMES } from '@/constants/clans'
 import { CP_RULES } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
+import { ClanIcon, RankBadge } from '@/components/ui/ClanIcons'
 
 // ── Constants ─────────────────────────────────────────────────
 
@@ -12,46 +16,46 @@ const MONTH_LABEL = new Date().toLocaleDateString('en-US', { month: 'long', year
 
 const WHAT_HAPPENS = [
   {
-    icon: '👑',
-    title: '#1 Student of the Month',
+    Icon:   Crown,
+    title:  '#1 Student of the Month',
     detail: `Monthly Legend badge  ·  +${CP_RULES.END_OF_MONTH_1ST} CP bonus`,
-    color: '#C9A227',
+    color:  '#C9A227',
   },
   {
-    icon: '💎',
-    title: 'Top 5 Overall',
+    Icon:   Gem,
+    title:  'Top 5 Overall',
     detail: `Fast Life Elite badge  ·  +${CP_RULES.END_OF_MONTH_TOP5} CP bonus each`,
-    color: '#60a5fa',
+    color:  '#60a5fa',
   },
   {
-    icon: '⚔️',
-    title: 'Top 5 per Clan  (4 × 5 = up to 20 students)',
+    Icon:   Swords,
+    title:  'Top 5 per Clan  (4 × 5 = up to 20 students)',
     detail: `Clan Warrior badge  ·  +${CP_RULES.END_OF_MONTH_TOP5_PER_CLAN} CP bonus each`,
-    color: '#f87171',
+    color:  '#f87171',
   },
   {
-    icon: '🏆',
-    title: 'Winning Clan — all members',
+    Icon:   Trophy,
+    title:  'Winning Clan — all members',
     detail: 'Clan Champion badge awarded to all winning-clan members',
-    color: '#4ade80',
+    color:  '#4ade80',
   },
   {
-    icon: '📖',
-    title: 'Hall of Fame entry',
+    Icon:   BookOpen,
+    title:  'Hall of Fame entry',
     detail: `${MONTH_LABEL} results archived permanently`,
-    color: '#a78bfa',
+    color:  '#a78bfa',
   },
   {
-    icon: '🔀',
-    title: 'Clan reshuffle',
+    Icon:   Shuffle,
+    title:  'Clan reshuffle',
     detail: 'All students randomly redistributed across all 4 clans',
-    color: '#fb923c',
+    color:  '#fb923c',
   },
   {
-    icon: '🔄',
-    title: 'CP reset to zero',
+    Icon:   RefreshCw,
+    title:  'CP reset to zero',
     detail: 'Everyone starts the new month at 0 CP',
-    color: '#94a3b8',
+    color:  '#94a3b8',
   },
 ]
 
@@ -65,8 +69,6 @@ function Skeleton({ className }) {
   return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
 }
 
-// ── Sub-components ─────────────────────────────────────────────
-
 function Avatar({ name, clan, size = 8 }) {
   const accent = CLANS[clan]?.colorAccent ?? '#555'
   return (
@@ -77,14 +79,6 @@ function Avatar({ name, clan, size = 8 }) {
     >
       {initials(name)}
     </div>
-  )
-}
-
-function RankBadge({ rank }) {
-  const medals = { 1: '🥇', 2: '🥈', 3: '🥉' }
-  if (medals[rank]) return <span className="text-lg shrink-0">{medals[rank]}</span>
-  return (
-    <span className="text-sm font-bold text-white/30 w-6 text-center shrink-0">#{rank}</span>
   )
 }
 
@@ -114,9 +108,9 @@ function Top5Card({ students, loading }) {
             ))
           : students.map((s, i) => {
               const clanInfo = CLANS[s.clan]
-              const badges = i === 0
-                ? [{ icon: '👑', label: 'Monthly Legend' }]
-                : [{ icon: '💎', label: 'Fast Life Elite' }]
+              const BadgeIcon = i === 0 ? Crown : Gem
+              const badgeLabel = i === 0 ? 'Monthly Legend' : 'Fast Life Elite'
+              const badgeColor = i === 0 ? '#C9A227' : '#60a5fa'
 
               return (
                 <motion.div
@@ -124,21 +118,18 @@ function Top5Card({ students, loading }) {
                   initial={{ opacity: 0, x: -6 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className={`flex items-center gap-3 px-5 py-3
-                    ${i === 0 ? 'bg-amber-950/20' : ''}`}
+                  className={`flex items-center gap-3 px-5 py-3 ${i === 0 ? 'bg-amber-950/20' : ''}`}
                 >
-                  <RankBadge rank={i + 1} />
+                  <RankBadge rank={i + 1} size={22} />
                   <Avatar name={s.full_name} clan={s.clan} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white truncate">{s.full_name}</p>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-[10px]">{clanInfo?.emoji}</span>
+                      <ClanIcon clanId={s.clan} size={12} />
                       <span className="text-[10px] text-white/30">{clanInfo?.name}</span>
-                      {badges.map(b => (
-                        <span key={b.label} className="text-[10px] text-white/25">
-                          · {b.icon} {b.label}
-                        </span>
-                      ))}
+                      <span className="text-white/20 text-[10px]">·</span>
+                      <BadgeIcon size={10} style={{ color: badgeColor }} />
+                      <span className="text-[10px] text-white/25">{badgeLabel}</span>
                     </div>
                   </div>
                   <span className="text-sm font-black text-white shrink-0">
@@ -152,11 +143,10 @@ function Top5Card({ students, loading }) {
   )
 }
 
-// ── Preview: clan standings ────────────────────────────────────
+// ── Preview: clan cards ────────────────────────────────────────
 
 function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
   const info = CLANS[clan.id]
-  const medals = ['🥇', '🥈', '🥉', '4️⃣']
 
   return (
     <motion.div
@@ -166,21 +156,24 @@ function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
       className="rounded-2xl p-5 space-y-4"
       style={{
         background: 'var(--ad-surface)',
-        border: `1px solid ${isWinner ? info?.colorAccent + '40' : 'rgba(255,255,255,0.06)'}`,
+        border: `1px solid ${isWinner ? (info?.colorAccent + '40') : 'rgba(255,255,255,0.06)'}`,
       }}
     >
       {/* Clan header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="text-lg">{medals[rank]}</span>
-          <span className="text-2xl">{info?.emoji}</span>
+          <RankBadge rank={rank + 1} size={22} />
+          <ClanIcon clanId={clan.id} size={28} />
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-black text-white">{clan.name}</h3>
               {isWinner && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold text-amber-300"
-                  style={{ background: 'rgba(201,162,39,0.15)' }}>
-                  👑 WINNER
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold text-amber-300"
+                  style={{ background: 'rgba(201,162,39,0.15)' }}
+                >
+                  <Crown size={9} />
+                  WINNER
                 </span>
               )}
             </div>
@@ -212,20 +205,15 @@ function ClanCard({ clan, topMembers, rank, isWinner, loading, delay }) {
             ? <p className="text-xs text-white/20 py-1">No members</p>
             : topMembers.map((s, i) => (
                 <div key={s.id} className="flex items-center gap-2.5">
-                  <span className="text-sm w-5 text-center shrink-0">
-                    {['🥇', '🥈', '🥉'][i]}
-                  </span>
+                  <RankBadge rank={i + 1} size={18} />
                   <div
-                    className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center
-                      text-[9px] font-bold text-white"
+                    className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white"
                     style={{ background: info?.colorAccent ?? '#555' }}
                   >
                     {initials(s.full_name)}
                   </div>
                   <span className="text-xs text-white/70 flex-1 truncate">{s.full_name}</span>
-                  <span className="text-xs font-bold text-white/50 shrink-0">
-                    {s.cp.toLocaleString()}
-                  </span>
+                  <span className="text-xs font-bold text-white/50 shrink-0">{s.cp.toLocaleString()}</span>
                 </div>
               ))
         }
@@ -245,26 +233,29 @@ function ActionList() {
         <p className="text-xs text-white/30 mt-0.5">In this exact order, irreversibly</p>
       </div>
       <div className="divide-y divide-white/[0.04]">
-        {WHAT_HAPPENS.map((item, i) => (
-          <div key={i} className="flex items-center gap-4 px-5 py-3.5">
-            <div
-              className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-base"
-              style={{ background: `${item.color}18` }}
-            >
-              {item.icon}
+        {WHAT_HAPPENS.map((item, i) => {
+          const { Icon } = item
+          return (
+            <div key={i} className="flex items-center gap-4 px-5 py-3.5">
+              <div
+                className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center"
+                style={{ background: `${item.color}18` }}
+              >
+                <Icon size={16} style={{ color: item.color }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white">{item.title}</p>
+                <p className="text-[11px] text-white/35 mt-0.5">{item.detail}</p>
+              </div>
+              <span
+                className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
+                style={{ background: `${item.color}15`, color: item.color }}
+              >
+                Step {i + 1}
+              </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">{item.title}</p>
-              <p className="text-[11px] text-white/35 mt-0.5">{item.detail}</p>
-            </div>
-            <span
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
-              style={{ background: `${item.color}15`, color: item.color }}
-            >
-              Step {i + 1}
-            </span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )
@@ -281,13 +272,8 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
       className="rounded-2xl p-6 space-y-5"
-      style={{
-        background: 'var(--ad-red-dim)',
-        border: '1px solid rgba(204,0,0,0.3)',
-        backdropFilter: 'blur(12px)',
-      }}
+      style={{ background: 'var(--ad-red-dim)', border: '1px solid rgba(204,0,0,0.3)', backdropFilter: 'blur(12px)' }}
     >
-      {/* Warning */}
       <div className="flex items-start gap-3">
         <svg className="shrink-0 mt-0.5" width="18" height="18"
           viewBox="0 0 24 24" fill="none" stroke="var(--ad-red)" strokeWidth="2" strokeLinecap="round">
@@ -308,7 +294,6 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
         </div>
       </div>
 
-      {/* Confirmation input */}
       <div>
         <label style={{
           display: 'block', fontSize: 11, fontWeight: 600,
@@ -331,9 +316,7 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
             fontSize: 14, fontFamily: 'monospace', fontWeight: 700,
             letterSpacing: '0.15em',
             background: 'var(--ad-input-bg)',
-            border: ready
-              ? '1px solid rgba(204,0,0,0.7)'
-              : '1px solid var(--ad-input-border)',
+            border: ready ? '1px solid rgba(204,0,0,0.7)' : '1px solid var(--ad-input-border)',
             color: ready ? 'var(--ad-red)' : 'var(--ad-text)',
             outline: 'none',
             boxShadow: ready ? '0 0 0 3px rgba(204,0,0,0.15)' : 'none',
@@ -342,7 +325,6 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
         />
       </div>
 
-      {/* Execute button */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <motion.button
           whileHover={ready && !disabled ? { scale: 1.02, boxShadow: '0 0 20px rgba(204,0,0,0.4)' } : {}}
@@ -371,11 +353,8 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
           </svg>
           Execute Monthly Reset
         </motion.button>
-
         {!ready && (
-          <p style={{ fontSize: 12, color: 'var(--ad-text-4)' }}>
-            Type RESET above to unlock
-          </p>
+          <p style={{ fontSize: 12, color: 'var(--ad-text-4)' }}>Type RESET above to unlock</p>
         )}
       </div>
     </motion.div>
@@ -391,12 +370,10 @@ function ExecutingScreen() {
       animate={{ opacity: 1 }}
       className="flex flex-col items-center justify-center py-32 space-y-6"
     >
-      <div className="relative">
-        <svg className="animate-spin text-brand-red" width="48" height="48"
-          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-        </svg>
-      </div>
+      <svg className="animate-spin text-brand-red" width="48" height="48"
+        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+      </svg>
       <div className="text-center">
         <p className="text-lg font-bold text-white">Executing Reset…</p>
         <p className="text-sm text-white/35 mt-1">Awarding badges, shuffling clans, resetting CP</p>
@@ -410,7 +387,6 @@ function ExecutingScreen() {
 function SuccessScreen({ snapshot, result }) {
   const { top5, winningClan, clans, studentCount, month } = snapshot
 
-  // RPC may return structured data or be null
   const rpcData       = result && typeof result === 'object' ? result : {}
   const badgesAwarded = rpcData.badges_awarded ?? null
   const newAssign     = rpcData.new_clan_assignments ?? {}
@@ -434,9 +410,9 @@ function SuccessScreen({ snapshot, result }) {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
           className="w-16 h-16 rounded-full bg-emerald-500/15 border border-emerald-500/30
-            flex items-center justify-center text-3xl mx-auto"
+            flex items-center justify-center mx-auto"
         >
-          ✓
+          <CheckCircle size={32} className="text-emerald-400" />
         </motion.div>
 
         <div>
@@ -473,10 +449,10 @@ function SuccessScreen({ snapshot, result }) {
           </div>
           <div className="divide-y divide-white/[0.04]">
             {top5.map((s, i) => {
-              const clanInfo = CLANS[s.clan]
-              const badge    = i === 0
-                ? { icon: '👑', label: 'Monthly Legend' }
-                : { icon: '💎', label: 'Fast Life Elite' }
+              const clanInfo  = CLANS[s.clan]
+              const BadgeIcon = i === 0 ? Crown : Gem
+              const badgeLabel = i === 0 ? 'Monthly Legend' : 'Fast Life Elite'
+              const badgeColor = i === 0 ? '#C9A227' : '#60a5fa'
               return (
                 <motion.div
                   key={s.id}
@@ -485,15 +461,17 @@ function SuccessScreen({ snapshot, result }) {
                   transition={{ delay: 0.1 + i * 0.04 }}
                   className={`flex items-center gap-3 px-5 py-3 ${i === 0 ? 'bg-amber-950/20' : ''}`}
                 >
-                  <RankBadge rank={i + 1} />
+                  <RankBadge rank={i + 1} size={22} />
                   <Avatar name={s.full_name} clan={s.clan} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-white truncate">{s.full_name}</p>
-                    <p className="text-[10px] text-white/30 mt-0.5">
-                      {clanInfo?.emoji} {clanInfo?.name}
-                      <span className="ml-2 text-white/20">·</span>
-                      <span className="ml-2">{badge.icon} {badge.label}</span>
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <ClanIcon clanId={s.clan} size={12} />
+                      <span className="text-[10px] text-white/30">{clanInfo?.name}</span>
+                      <span className="text-white/20 text-[10px] mx-1">·</span>
+                      <BadgeIcon size={10} style={{ color: badgeColor }} />
+                      <span className="text-[10px] text-white/25">{badgeLabel}</span>
+                    </div>
                   </div>
                   <span className="text-sm font-black text-white/50 shrink-0">
                     {s.cp.toLocaleString()} CP
@@ -512,18 +490,18 @@ function SuccessScreen({ snapshot, result }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
           className="rounded-2xl p-5 flex items-center gap-4"
-          style={{
-            background: 'var(--ad-surface)',
-            border: `1px solid ${winnerInfo.colorAccent}33`,
-          }}
+          style={{ background: 'var(--ad-surface)', border: `1px solid ${winnerInfo.colorAccent}33` }}
         >
-          <span className="text-4xl">{winnerInfo.emoji}</span>
+          <ClanIcon clanId={winningClan} size={44} />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-base font-black text-white">{winnerInfo.name}</h3>
-              <span className="text-xs px-2 py-0.5 rounded font-bold text-amber-300"
-                style={{ background: 'rgba(201,162,39,0.15)' }}>
-                👑 Winning Clan
+              <span
+                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded font-bold text-amber-300"
+                style={{ background: 'rgba(201,162,39,0.15)' }}
+              >
+                <Crown size={10} />
+                Winning Clan
               </span>
             </div>
             <p className="text-xs text-white/40 mt-0.5">
@@ -540,7 +518,7 @@ function SuccessScreen({ snapshot, result }) {
         </motion.div>
       )}
 
-      {/* New clan assignments (if RPC returned them) */}
+      {/* New clan assignments */}
       {Object.keys(newAssign).length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -556,7 +534,9 @@ function SuccessScreen({ snapshot, result }) {
               return (
                 <div key={clanId} className="text-center p-3 rounded-xl"
                   style={{ background: `${info?.colorAccent ?? '#555'}10` }}>
-                  <div className="text-2xl mb-1">{info?.emoji ?? '?'}</div>
+                  <div className="flex justify-center mb-2">
+                    <ClanIcon clanId={clanId} size={32} />
+                  </div>
                   <p className="text-sm font-black text-white">{count}</p>
                   <p className="text-[10px] text-white/35">{info?.name ?? clanId}</p>
                 </div>
@@ -566,7 +546,7 @@ function SuccessScreen({ snapshot, result }) {
         </motion.div>
       )}
 
-      {/* Reshuffle note (if RPC didn't return assignments) */}
+      {/* Reshuffle note */}
       {Object.keys(newAssign).length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -575,7 +555,7 @@ function SuccessScreen({ snapshot, result }) {
           className="flex items-center gap-3 px-5 py-4 rounded-2xl"
           style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
         >
-          <span className="text-xl shrink-0">🔀</span>
+          <Shuffle size={20} className="text-white/40 shrink-0" />
           <p className="text-sm text-white/60">
             All <span className="text-white font-semibold">{studentCount} students</span> have
             been randomly reshuffled into new clans. CP reset to zero.
@@ -609,22 +589,18 @@ function SuccessScreen({ snapshot, result }) {
 export default function MonthlyReset() {
   const { toast } = useToast()
 
-  // Phase: 'preview' | 'executing' | 'done'
   const [phase,        setPhase]        = useState('preview')
   const [loading,      setLoading]      = useState(true)
   const [confirm,      setConfirm]      = useState('')
 
-  // Preview data
   const [top5,         setTop5]         = useState([])
   const [topByClan,    setTopByClan]    = useState({})
   const [clans,        setClans]        = useState([])
   const [studentCount, setStudentCount] = useState(0)
 
-  // Snapshot captured just before executing (used in success screen)
   const [snapshot,     setSnapshot]     = useState(null)
   const [result,       setResult]       = useState(null)
 
-  // ── Load preview data ─────────────────────────────────────
   useEffect(() => {
     async function load() {
       const [studentsRes, clansRes, countRes] = await Promise.all([
@@ -653,7 +629,6 @@ export default function MonthlyReset() {
         byClan[clanId] = students.filter(s => s.clan === clanId).slice(0, 3)
       }
       setTopByClan(byClan)
-
       setLoading(false)
     }
     load()
@@ -661,11 +636,9 @@ export default function MonthlyReset() {
 
   const winningClanId = clans[0]?.id ?? null
 
-  // ── Execute reset ─────────────────────────────────────────
   async function executeReset() {
     if (confirm !== 'RESET' || phase !== 'preview') return
 
-    // Snapshot the current state before it's wiped
     setSnapshot({
       top5:         [...top5],
       winningClan:  winningClanId,
@@ -680,7 +653,7 @@ export default function MonthlyReset() {
     try {
       const now = new Date()
       const { data, error } = await supabase.rpc('monthly_reset', {
-        p_month: now.getMonth() + 1,   // 1–12, matches function parameter name
+        p_month: now.getMonth() + 1,
         p_year:  now.getFullYear(),
       })
       if (error) throw error
@@ -692,7 +665,6 @@ export default function MonthlyReset() {
     }
   }
 
-  // ── Render ────────────────────────────────────────────────
   return (
     <div className="p-8 space-y-8 max-w-[1000px]">
 
@@ -718,9 +690,12 @@ export default function MonthlyReset() {
                   </div>
                   <div>
                     <p className="text-xs text-white/25 uppercase tracking-widest">Winning Clan</p>
-                    <p className="text-lg font-black text-white">
-                      {CLANS[winningClanId]?.emoji} {CLANS[winningClanId]?.name ?? '—'}
-                    </p>
+                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                      <ClanIcon clanId={winningClanId} size={18} />
+                      <p className="text-lg font-black text-white">
+                        {CLANS[winningClanId]?.name ?? '—'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -731,17 +706,14 @@ export default function MonthlyReset() {
 
       {/* ── Content by phase ───────────────────────────────── */}
       <AnimatePresence mode="wait">
-
         {phase === 'executing' && (
-          <motion.div key="executing"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div key="executing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <ExecutingScreen />
           </motion.div>
         )}
 
         {phase === 'done' && snapshot && (
-          <motion.div key="done"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <SuccessScreen snapshot={snapshot} result={result} />
           </motion.div>
         )}
@@ -752,14 +724,11 @@ export default function MonthlyReset() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="space-y-8"
           >
-            {/* ── Champions + clan cards ──────────────────── */}
             <section className="space-y-4">
               <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">
                 This Month's Standings
               </h2>
-
               <Top5Card students={top5} loading={loading} />
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {loading
                   ? [...Array(4)].map((_, i) => (
@@ -800,19 +769,13 @@ export default function MonthlyReset() {
               </div>
             </section>
 
-            {/* ── What will happen ───────────────────────── */}
             <section className="space-y-4">
-              <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">
-                Consequences
-              </h2>
+              <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">Consequences</h2>
               <ActionList />
             </section>
 
-            {/* ── Danger zone ────────────────────────────── */}
             <section className="space-y-4">
-              <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">
-                Execute
-              </h2>
+              <h2 className="text-sm font-bold text-white/60 uppercase tracking-widest">Execute</h2>
               <DangerZone
                 studentCount={studentCount}
                 confirm={confirm}
