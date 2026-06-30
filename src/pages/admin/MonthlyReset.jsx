@@ -2,13 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Crown, Gem, Swords, Trophy, BookOpen, Shuffle, RefreshCw, CheckCircle,
+  Crown, Gem, Trophy, BookOpen, Shuffle, RefreshCw, CheckCircle,
 } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
 import { logAudit } from '@/lib/auditLog'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CLANS, CLAN_NAMES } from '@/constants/clans'
-import { CP_RULES } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
 import { ClanIcon, RankBadge } from '@/components/ui/ClanIcons'
 
@@ -20,20 +19,14 @@ const WHAT_HAPPENS = [
   {
     Icon:   Crown,
     title:  '#1 Student of the Month',
-    detail: `Monthly Legend badge  ·  +${CP_RULES.END_OF_MONTH_1ST} CP bonus`,
+    detail: 'Monthly Legend badge awarded',
     color:  '#C9A227',
   },
   {
     Icon:   Gem,
     title:  'Top 5 Overall',
-    detail: `Fast Life Elite badge  ·  +${CP_RULES.END_OF_MONTH_TOP5} CP bonus each`,
+    detail: 'Fast Life Elite badge awarded to each',
     color:  '#60a5fa',
-  },
-  {
-    Icon:   Swords,
-    title:  'Top 5 per Clan  (4 × 5 = up to 20 students)',
-    detail: `Clan Warrior badge  ·  +${CP_RULES.END_OF_MONTH_TOP5_PER_CLAN} CP bonus each`,
-    color:  '#f87171',
   },
   {
     Icon:   Trophy,
