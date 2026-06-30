@@ -497,6 +497,15 @@ export default function StudentManagement() {
   // ── Data loading ──────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
     setLoading(true)
+
+    const { data: { session } } = await supabaseAdminAuth.auth.getSession()
+    if (!session) {
+      toast({ message: 'Session lost — please log out and log back in', type: 'error' })
+      setStudents([])
+      setLoading(false)
+      return
+    }
+
     let q = supabaseAdminAuth.from('students').select('*').order('created_at', { ascending: false })
 
     if (filters.clan)   q = q.eq('clan', filters.clan)
@@ -505,7 +514,7 @@ export default function StudentManagement() {
     if (filters.status === 'inactive') q = q.eq('is_active', false)
 
     const { data, error } = await q
-    if (error) toast({ message: 'Failed to load students', type: 'error' })
+    if (error) toast({ message: `Failed to load students: ${error.message} (${error.code})`, type: 'error' })
     setStudents(data ?? [])
     setLoading(false)
   }, [filters, toast])
