@@ -6,7 +6,8 @@ import {
   CalendarPlus, RefreshCw, Crown,
   Zap, Award, Heart, BookOpen, Globe,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
 
@@ -183,7 +184,7 @@ function ClanRaceBar({ clan, maxCp, rank, delay }) {
               position: 'absolute', right: 8,
               fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap',
             }}>
-              {Math.round(pct)}%
+              {clan.total_cp.toLocaleString()}
             </span>
           )}
         </motion.div>
@@ -252,6 +253,7 @@ const QUICK_LINKS = [
 // ── Page ──────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
+  const { session } = useAdminAuth()
   const [loading, setLoading] = useState(true)
   const [stats,   setStats]   = useState({ students: 0, events: 0, cpToday: 0 })
   const [clans,   setClans]   = useState([])
@@ -259,18 +261,28 @@ export default function AdminDashboard() {
   const [feed,    setFeed]    = useState([])
 
   useEffect(() => {
+    if (!session?.access_token) return
+
     async function load() {
+      const { data: { session: clientSession } } = await supabaseAdminAuth.auth.getSession()
+      if (!clientSession || clientSession.access_token !== session.access_token) {
+        await supabaseAdminAuth.auth.setSession({
+          access_token:  session.access_token,
+          refresh_token: session.refresh_token,
+        })
+      }
+
       const today      = new Date()
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
       const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString()
 
       const [studentsRes, clansRes, topRes, eventsRes, cpRes, feedRes] = await Promise.all([
-        supabase.from('students').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('clans').select('*').order('total_cp', { ascending: false }),
-        supabase.from('students').select('full_name, cp, clan').eq('is_active', true).order('cp', { ascending: false }).limit(1),
-        supabase.from('events').select('*', { count: 'exact', head: true }).gte('event_date', monthStart.slice(0, 10)),
-        supabase.from('cp_awards').select('amount').gte('created_at', todayStart),
-        supabase.from('cp_awards')
+        supabaseAdminAuth.from('students').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabaseAdminAuth.from('clans').select('*').order('total_cp', { ascending: false }),
+        supabaseAdminAuth.from('students').select('full_name, cp, clan').eq('is_active', true).order('cp', { ascending: false }).limit(1),
+        supabaseAdminAuth.from('events').select('*', { count: 'exact', head: true }).gte('event_date', monthStart.slice(0, 10)),
+        supabaseAdminAuth.from('cp_awards').select('amount').gte('created_at', todayStart),
+        supabaseAdminAuth.from('cp_awards')
           .select('id, amount, reason, note, created_at, students(full_name, clan)')
           .order('created_at', { ascending: false }).limit(10),
       ])
@@ -286,7 +298,7 @@ export default function AdminDashboard() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [session])
 
   const maxCp = Math.max(...clans.map(c => c.total_cp), 1)
   const today = new Date().toLocaleDateString('en-US', {
