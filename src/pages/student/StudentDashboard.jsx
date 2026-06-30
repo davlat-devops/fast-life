@@ -346,7 +346,10 @@ export default function StudentDashboard() {
       {/* ════════════════════════════════════════════════
           HERO
           ════════════════════════════════════════════════ */}
-      <div style={{ position: 'relative', minHeight: 'clamp(220px, 45vh, 300px)', overflow: 'hidden' }}>
+      <div
+        className="md:mx-6 md:mt-5 md:rounded-2xl md:ring-1 md:ring-white/10"
+        style={{ position: 'relative', minHeight: 'clamp(200px, 38vh, 260px)', overflow: 'hidden' }}
+      >
 
         <SlideBackground overlay="rgba(0,0,0,0.52)" bottomFade />
 
@@ -476,14 +479,14 @@ export default function StudentDashboard() {
       {/* ════════════════════════════════════════════════
           STAT CARDS
           ════════════════════════════════════════════════ */}
-      <div style={{ padding: '10px 12px 0', display: 'flex', gap: 8 }}>
-        <StatCard iconFn={Icons.trendUp} label="Rank"   value={dataReady ? `#${rank}` : null}       accent={accent}    delay={0.12} />
-        <StatCard iconFn={Icons.shield}  label="Clan"   value={clanInfo?.name ?? '—'}                accent={accent}    delay={0.18} />
-        <StatCard iconFn={Icons.calendar} label="Events" value={dataReady ? eventsCount : null}       accent="#60a5fa"   delay={0.24} />
-        <StatCard iconFn={Icons.award}   label="Badges" value={dataReady ? badgeCount : null}        accent="#fbbf24"   delay={0.30} />
+      <div className="px-3 md:px-7 pt-2.5" style={{ display: 'flex', gap: 8 }}>
+        <StatCard iconFn={Icons.trendUp}  label="Rank"   value={dataReady ? `#${rank}` : null}  accent={accent}   delay={0.12} />
+        <StatCard iconFn={Icons.shield}   label="Clan"   value={clanInfo?.name ?? '—'}           accent={accent}   delay={0.18} />
+        <StatCard iconFn={Icons.calendar} label="Events" value={dataReady ? eventsCount : null}  accent="#60a5fa"  delay={0.24} />
+        <StatCard iconFn={Icons.award}    label="Badges" value={dataReady ? badgeCount : null}   accent="#fbbf24"  delay={0.30} />
       </div>
 
-      <div style={{ padding: '10px 12px 16px' }}>
+      <div className="px-3 md:px-7 pt-2.5 pb-4">
 
         {/* ════════════════════════════════════════════════
             RECENT ACTIVITY

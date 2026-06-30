@@ -5,7 +5,7 @@ import FullPageLoader from '@/components/ui/FullPageLoader'
 import { CLANS } from '@/constants/clans'
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
 
-// ── Clan letter badge for top bar ────────────────────────────
+// ── Clan letter badge ─────────────────────────────────────────
 
 function ClanLetterBadge({ clanId, accent, size = 24 }) {
   const letter = CLANS[clanId]?.name[0]?.toUpperCase() ?? '?'
@@ -65,6 +65,7 @@ function ThemeToggle() {
         cursor:         'pointer',
         color:          'var(--fl-text-2)',
         transition:     'background 0.2s',
+        flexShrink:     0,
       }}
     >
       {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -72,7 +73,7 @@ function ThemeToggle() {
   )
 }
 
-// ── Tab icons ─────────────────────────────────────────────────
+// ── Tab icons (mobile bottom nav) ─────────────────────────────
 
 const Ic = (props) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -138,12 +139,12 @@ const TABS = [
   },
 ]
 
-// ── Inner layout (needs theme context) ────────────────────────
+// ── Inner layout ──────────────────────────────────────────────
 
 function StudentLayoutInner() {
   const { loading, studentLoading, session, isStudent, studentRecord } = useAuth()
-  const { theme }  = useTheme()
-  const location   = useLocation()
+  const { theme } = useTheme()
+  const location  = useLocation()
 
   if (loading || studentLoading) return <FullPageLoader />
   if (!session || !isStudent)    return <Navigate to="/" replace />
@@ -160,43 +161,109 @@ function StudentLayoutInner() {
       data-theme={theme}
       style={{ background: 'var(--fl-bg)' }}
     >
-      {/* ── Top bar ──────────────────────────────────── */}
+      {/* ── Desktop top nav (md+) ─────────────────────────── */}
       <div
-        className="flex items-center justify-between px-3.5 shrink-0"
+        className="hidden md:flex items-center shrink-0 px-6"
         style={{
-          background:    'var(--fl-nav-bg)',
-          borderBottom:  '1px solid var(--fl-border)',
-          backdropFilter: 'blur(20px)',
+          height:               52,
+          background:           'var(--fl-nav-bg)',
+          borderBottom:         '1px solid var(--fl-border)',
+          backdropFilter:       'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          paddingTop:    'max(env(safe-area-inset-top, 0px), 8px)',
-          paddingBottom: 7,
+        }}
+      >
+        <div className="flex items-center w-full gap-3" style={{ maxWidth: 1100, margin: '0 auto' }}>
+          {/* User info */}
+          <div className="flex items-center gap-2 shrink-0">
+            {studentRecord?.clan && (
+              <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={26} />
+            )}
+            <span style={{ color: 'var(--fl-text)', fontSize: 13, fontWeight: 700 }}>
+              {firstName}
+            </span>
+            <span style={{
+              background:    accentColor + '18',
+              color:         accentColor,
+              border:        `1px solid ${accentColor}38`,
+              borderRadius:  999,
+              fontSize:      10,
+              fontWeight:    700,
+              padding:       '2px 9px',
+              letterSpacing: '0.02em',
+            }}>
+              {(studentRecord?.cp ?? 0).toLocaleString()} CP
+            </span>
+          </div>
+
+          {/* Divider */}
+          <div style={{ width: 1, height: 18, background: 'var(--fl-border)', flexShrink: 0 }} />
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-0.5 flex-1">
+            {TABS.map(({ to, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'text-white'
+                      : 'hover:bg-[var(--fl-card-alt)] hover:text-[var(--fl-text-2)]'
+                  }`
+                }
+                style={({ isActive }) => ({
+                  color:           isActive ? '#fff' : 'var(--fl-text-3)',
+                  background:      isActive ? accentColor : undefined,
+                  boxShadow:       isActive ? `0 2px 8px ${accentColor}40` : undefined,
+                  textDecoration:  'none',
+                })}
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <ThemeToggle />
+        </div>
+      </div>
+
+      {/* ── Mobile top bar (< md) ─────────────────────────── */}
+      <div
+        className="md:hidden flex items-center justify-between px-3.5 shrink-0"
+        style={{
+          background:           'var(--fl-nav-bg)',
+          borderBottom:         '1px solid var(--fl-border)',
+          backdropFilter:       'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          paddingTop:           'max(env(safe-area-inset-top, 0px), 8px)',
+          paddingBottom:        7,
         }}
       >
         <div className="flex items-center gap-2">
-          {studentRecord?.clan && <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={24} />}
+          {studentRecord?.clan && (
+            <ClanLetterBadge clanId={studentRecord.clan} accent={accentColor} size={24} />
+          )}
           <span style={{ color: 'var(--fl-text)', fontSize: 12, fontWeight: 700 }}>
             {firstName}
           </span>
-          <span
-            style={{
-              background:   accentColor + '18',
-              color:        accentColor,
-              border:       `1px solid ${accentColor}38`,
-              borderRadius: 999,
-              fontSize:     9,
-              fontWeight:   700,
-              padding:      '2px 7px',
-              letterSpacing: '0.02em',
-            }}
-          >
+          <span style={{
+            background:    accentColor + '18',
+            color:         accentColor,
+            border:        `1px solid ${accentColor}38`,
+            borderRadius:  999,
+            fontSize:      9,
+            fontWeight:    700,
+            padding:       '2px 7px',
+            letterSpacing: '0.02em',
+          }}>
             {(studentRecord?.cp ?? 0).toLocaleString()} CP
           </span>
         </div>
         <ThemeToggle />
       </div>
 
-      {/* ── Page content ─────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto scrollbar-hide pb-[56px]">
+      {/* ── Page content ─────────────────────────────────── */}
+      <main className="flex-1 overflow-y-auto scrollbar-hide pb-[56px] md:pb-0">
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0, y: 10 }}
@@ -204,19 +271,21 @@ function StudentLayoutInner() {
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="min-h-full"
         >
-          <Outlet />
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <Outlet />
+          </div>
         </motion.div>
       </main>
 
-      {/* ── Bottom tab bar ──────────────────────────── */}
+      {/* ── Mobile bottom tab bar (< md) ──────────────────── */}
       <nav
-        className="fixed bottom-0 inset-x-0 z-30 flex items-stretch justify-around"
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 flex items-stretch justify-around"
         style={{
-          background:    'var(--fl-nav-bg)',
-          borderTop:     '1px solid var(--fl-border)',
-          backdropFilter: 'blur(20px)',
+          background:           'var(--fl-nav-bg)',
+          borderTop:            '1px solid var(--fl-border)',
+          backdropFilter:       'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom:        'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {TABS.map(({ to, label, icon }) => (
@@ -242,19 +311,16 @@ function StudentLayoutInner() {
                     transition={{ type: 'spring', stiffness: 500, damping: 38 }}
                   />
                 )}
-
                 <span style={{ color: isActive ? accentColor : 'var(--fl-icon-dim)', transition: 'color 0.2s' }}>
                   {icon}
                 </span>
-                <span
-                  style={{
-                    fontSize:      9,
-                    fontWeight:    isActive ? 700 : 500,
-                    letterSpacing: '0.03em',
-                    color:         isActive ? accentColor : 'var(--fl-text-3)',
-                    transition:    'color 0.2s',
-                  }}
-                >
+                <span style={{
+                  fontSize:      9,
+                  fontWeight:    isActive ? 700 : 500,
+                  letterSpacing: '0.03em',
+                  color:         isActive ? accentColor : 'var(--fl-text-3)',
+                  transition:    'color 0.2s',
+                }}>
                   {label}
                 </span>
               </>

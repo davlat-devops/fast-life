@@ -201,7 +201,7 @@ export default function LeaderboardPage() {
     <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ minHeight: 120 }}>
+      <div className="relative overflow-hidden md:mx-6 md:mt-5 md:rounded-2xl md:ring-1 md:ring-white/10" style={{ minHeight: 110 }}>
         <SlideBackground overlay="rgba(0,0,0,0.60)" bottomFade />
         <div className="relative z-10 px-5 pt-5 pb-5">
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -219,7 +219,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* ── Tabs (premium pill) ─────────────────────────── */}
-      <div className="px-5 mb-5">
+      <div className="px-5 md:px-8 mb-5">
         <div
           className="flex rounded-2xl overflow-hidden p-1 gap-1"
           style={{
@@ -267,7 +267,7 @@ export default function LeaderboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.05 }}
-              className="px-6 mb-8"
+              className="px-6 md:px-10 mb-8"
             >
               <div className="flex items-end gap-2">
                 {PODIUM_ORDER.map(idx => (
@@ -284,7 +284,7 @@ export default function LeaderboardPage() {
           )}
 
           {/* ── Ranked list ──────────────────────────── */}
-          <div className="px-5 pb-6 space-y-2">
+          <div className="px-5 md:px-8 pb-6 space-y-2">
             {(tab === 'overall' ? rest : ranked).map((s, i) => (
               <LeaderRow
                 key={s.id}

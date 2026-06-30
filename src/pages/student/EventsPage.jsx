@@ -196,7 +196,7 @@ export default function EventsPage() {
     <div className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
 
       {/* ── Hero ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden" style={{ minHeight: 110 }}>
+      <div className="relative overflow-hidden md:mx-6 md:mt-5 md:rounded-2xl md:ring-1 md:ring-white/10" style={{ minHeight: 100 }}>
         <SlideBackground overlay="rgba(0,0,0,0.60)" bottomFade />
         <div className="relative z-10 px-5 pt-5 pb-5">
           <motion.div
@@ -211,7 +211,7 @@ export default function EventsPage() {
       </div>
 
       {/* ── Upcoming / Past tabs (premium pill) ─────────── */}
-      <div className="px-5 mb-4">
+      <div className="px-5 md:px-8 mb-4">
         <div
           className="flex rounded-2xl overflow-hidden p-1 gap-1"
           style={{
@@ -241,7 +241,7 @@ export default function EventsPage() {
       </div>
 
       {/* ── Category pills ──────────────────────────────── */}
-      <div className="px-5 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+      <div className="px-5 md:px-8 mb-4 flex gap-2 overflow-x-auto scrollbar-hide pb-1">
         {CATEGORIES.map(cat => {
           const meta   = CAT_META[cat]
           const active = category === cat
@@ -274,7 +274,7 @@ export default function EventsPage() {
       </div>
 
       {/* ── Event list ──────────────────────────────────── */}
-      <div className="px-5 pb-6 space-y-3">
+      <div className="px-5 md:px-8 pb-6 space-y-3">
         {loading ? (
           [...Array(5)].map((_, i) => <Skeleton key={i} className="h-[76px] w-full rounded-2xl" />)
         ) : sorted.length === 0 ? (

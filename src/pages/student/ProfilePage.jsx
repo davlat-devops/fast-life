@@ -224,8 +224,8 @@ export default function ProfilePage() {
 
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
-        className="relative overflow-hidden"
-        style={{ minHeight: 200 }}
+        className="relative overflow-hidden md:mx-6 md:mt-5 md:rounded-2xl md:ring-1 md:ring-white/10"
+        style={{ minHeight: 190 }}
       >
         <SlideBackground
           image={CLAN_IMAGES[studentRecord?.clan]}
@@ -331,7 +331,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="px-5 pt-4 pb-6 space-y-4">
+      <div className="px-5 md:px-8 pt-4 pb-6 space-y-4">
 
         {/* ── Badge gallery ────────────────────────────────── */}
         <motion.div
@@ -353,13 +353,13 @@ export default function ProfilePage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
               {[...Array(15)].map((_, i) => (
                 <Skeleton key={i} className="aspect-square rounded-xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
               {allBadges.map((badge, i) => {
                 const earned    = earnedKeys.has(badge.key)
                 const BadgeIcon = BADGE_ICONS[badge.key] ?? Award

@@ -74,8 +74,8 @@ export default function ClanPage() {
 
       {/* ── Hero ─────────────────────────────────────────── */}
       <div
-        className="relative overflow-hidden"
-        style={{ minHeight: 220 }}
+        className="relative overflow-hidden md:mx-6 md:mt-5 md:rounded-2xl md:ring-1 md:ring-white/10"
+        style={{ minHeight: 190 }}
       >
         <SlideBackground
           image={CLAN_IMAGES[studentRecord?.clan]}
@@ -106,7 +106,7 @@ export default function ClanPage() {
         </div>
       </div>
 
-      <div className="px-5 pt-4 pb-6 space-y-4">
+      <div className="px-5 md:px-8 pt-4 pb-6 space-y-4">
 
         {/* ── Stat chips ──────────────────────────────────── */}
         <motion.div
