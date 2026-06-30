@@ -5,7 +5,7 @@ import { supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { logAudit } from '@/lib/auditLog'
-import { BADGES } from '@/constants/badges'
+import { BADGES, BADGE_ICONS } from '@/constants/badges'
 
 const ADMIN_BADGES = Object.values(BADGES).filter(b => b.adminOnly)
 
@@ -23,13 +23,14 @@ function syncSession(session) {
 // ── Badge chip ────────────────────────────────────────────────
 
 function BadgeChip({ badge }) {
+  const Icon = BADGE_ICONS[badge.key] ?? Award
   return (
     <span
       title={badge.description}
       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
       style={{ background: 'var(--ad-red-faint, rgba(204,0,0,0.12))', color: 'var(--ad-red, #CC0000)', border: '1px solid rgba(204,0,0,0.2)' }}
     >
-      <span>{badge.icon}</span>
+      <Icon size={10} strokeWidth={2} />
       {badge.label}
     </span>
   )
@@ -86,6 +87,7 @@ function AwardModal({ student, earnedKeys, onAward, onClose, busy }) {
             {ADMIN_BADGES.map(badge => {
               const earned   = earnedKeys.has(badge.key)
               const isActive = selected?.key === badge.key
+              const Icon     = BADGE_ICONS[badge.key] ?? Award
 
               return (
                 <button
@@ -107,7 +109,11 @@ function AwardModal({ student, earnedKeys, onAward, onClose, busy }) {
                     cursor:  earned ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  <span className="text-lg leading-none">{badge.icon}</span>
+                  <Icon
+                    size={16}
+                    strokeWidth={1.8}
+                    style={{ color: isActive ? 'var(--ad-red, #CC0000)' : 'var(--ad-text-3)' }}
+                  />
                   <span
                     className="text-[9px] font-semibold leading-tight"
                     style={{ color: isActive ? 'var(--ad-red, #CC0000)' : 'var(--ad-text-2)' }}
@@ -226,6 +232,7 @@ function StudentRow({ student, studentBadges, onAward, busy }) {
               <div className="flex flex-wrap gap-2">
                 {ADMIN_BADGES.map(badge => {
                   const earned = earnedKeys.has(badge.key)
+                  const Icon   = BADGE_ICONS[badge.key] ?? Award
                   return (
                     <button
                       key={badge.key}
@@ -235,7 +242,7 @@ function StudentRow({ student, studentBadges, onAward, busy }) {
                       className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
                       style={{
                         background: earned ? 'var(--ad-hover)' : 'var(--ad-bg)',
-                        border:     earned ? '1px solid var(--ad-border)' : '1px solid var(--ad-border)',
+                        border:     '1px solid var(--ad-border)',
                         color:      earned ? 'var(--ad-text-4)' : 'var(--ad-text-2)',
                         opacity:    earned ? 0.6 : 1,
                         cursor:     earned || busy ? 'not-allowed' : 'pointer',
@@ -251,7 +258,7 @@ function StudentRow({ student, studentBadges, onAward, busy }) {
                         e.currentTarget.style.color = earned ? 'var(--ad-text-4)' : 'var(--ad-text-2)'
                       }}
                     >
-                      <span className="text-sm leading-none">{badge.icon}</span>
+                      <Icon size={12} strokeWidth={1.8} style={{ flexShrink: 0 }} />
                       {badge.label}
                       {earned && <Check size={10} />}
                     </button>
@@ -373,17 +380,20 @@ export default function BadgeManagement() {
           Admin-only badges
         </p>
         <div className="flex flex-wrap gap-2">
-          {ADMIN_BADGES.map(b => (
-            <span
-              key={b.key}
-              title={b.description}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]"
-              style={{ background: 'var(--ad-bg)', border: '1px solid var(--ad-border)', color: 'var(--ad-text-2)' }}
-            >
-              <span>{b.icon}</span>
-              {b.label}
-            </span>
-          ))}
+          {ADMIN_BADGES.map(b => {
+            const Icon = BADGE_ICONS[b.key] ?? Award
+            return (
+              <span
+                key={b.key}
+                title={b.description}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px]"
+                style={{ background: 'var(--ad-bg)', border: '1px solid var(--ad-border)', color: 'var(--ad-text-2)' }}
+              >
+                <Icon size={12} strokeWidth={1.8} style={{ color: 'var(--ad-text-3)', flexShrink: 0 }} />
+                {b.label}
+              </span>
+            )
+          })}
         </div>
       </div>
 

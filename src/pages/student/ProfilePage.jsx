@@ -1,45 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Star, CheckCircle, Zap, Calendar, Heart, Award, Trophy, Crown,
-  Shield, Lock, Flame, Users, FileText, BookOpen, Mic, GraduationCap,
-  PenLine, Headphones,
+  Star, Calendar, Award, Trophy, Crown, Lock, Users, FileText,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
 import SlideBackground, { CLAN_IMAGES } from '@/components/ui/SlideBackground'
-import { BADGES, LEVEL_THRESHOLDS } from '@/constants/badges'
-
-// ── Badge icon map ────────────────────────────────────────────
-
-const BADGE_ICONS = {
-  // automatic
-  clan:          Users,
-  first:         Award,
-  fast:          Flame,
-  perfect:       CheckCircle,
-  competition:   Trophy,
-  champion:      Crown,
-  regular:       Calendar,
-  dedicated:     Star,
-  event_machine: Zap,
-  // admin-only
-  clan_legend:   Flame,
-  mvp:           Award,
-  clan_warrior:  Shield,
-  volunteer:     Heart,
-  listener:      Headphones,
-  reader:        BookOpen,
-  writer:        PenLine,
-  speaker:       Mic,
-  ielts:         GraduationCap,
-  // monthly reset
-  clan_champion:   Shield,
-  monthly_legend:  Crown,
-  fast_life_elite: Crown,
-}
+import { BADGES, BADGE_ICONS, LEVEL_THRESHOLDS } from '@/constants/badges'
 
 // ── CP history icon map ───────────────────────────────────────
 
