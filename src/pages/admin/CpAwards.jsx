@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdminAuth as supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
 import imgWolfrin from '@/assets/clans/wolfrin.png'
@@ -14,7 +14,7 @@ const CLAN_IMG_MAP = {
   CRODON:  imgCrodon,
   VIPERON: imgViperon,
 }
-import { MANUAL_CP_REASONS } from '@/constants/cp'
+import { MANUAL_CP_REASONS, DEDUCTION_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
 import { logAudit } from '@/lib/auditLog'
 
@@ -249,6 +249,21 @@ export default function CpAwards() {
   const [awSearch,      setAwSearch]      = useState('')
   const [awReasonFilt,  setAwReasonFilt]  = useState('')
 
+  // ── Deduct form ──────────────────────────────────────────────
+  const [dedStudent,  setDedStudent]  = useState(null)
+  const [dedReason,   setDedReason]   = useState('')
+  const [dedCustom,   setDedCustom]   = useState('')
+  const [dedAmount,   setDedAmount]   = useState('')
+  const [dedNote,     setDedNote]     = useState('')
+  const [dedBusy,     setDedBusy]     = useState(false)
+
+  // ── Deduction log ────────────────────────────────────────────
+  const [deductions, setDeductions] = useState([])
+  const [dedLoading, setDedLoading] = useState(true)
+  const [dedPage,    setDedPage]    = useState(0)
+  const [dedSearch,  setDedSearch]  = useState('')
+  const [dedRFilt,   setDedRFilt]   = useState('')
+
   // ── Load students ───────────────────────────────────────────
   useEffect(() => {
     supabase
@@ -272,6 +287,20 @@ export default function CpAwards() {
   }, [])
 
   useEffect(() => { loadAwards() }, [loadAwards])
+
+  // ── Load deductions ─────────────────────────────────────────
+  const loadDeductions = useCallback(async () => {
+    setDedLoading(true)
+    const { data, error } = await supabase
+      .from('cp_deductions')
+      .select('id, amount, reason, note, created_at, students(id, full_name, clan)')
+      .order('created_at', { ascending: false })
+      .limit(500)
+    if (!error) setDeductions(data ?? [])
+    setDedLoading(false)
+  }, [])
+
+  useEffect(() => { loadDeductions() }, [loadDeductions])
 
   // ── Auto-fill CP from reason ────────────────────────────────
   const selectedReasonObj = MANUAL_CP_REASONS.find(r => r.value === reason)
@@ -356,7 +385,96 @@ export default function CpAwards() {
     }
   }
 
-  // ── Audit log filters (client-side) ─────────────────────────
+  // ── Deduction computed values ───────────────────────────────
+  const parsedDed      = parseInt(dedAmount, 10)
+  const dedReasonFinal = dedReason === 'other' ? dedCustom.trim() : dedReason
+  const dedNewCp       = dedStudent ? Math.max(0, dedStudent.cp - (parsedDed || 0)) : 0
+  const dedWouldClamp  = dedStudent && parsedDed > 0 && parsedDed > dedStudent.cp
+  const dedClanInfo    = dedStudent ? CLANS[dedStudent.clan] : null
+  const dedCanSubmit   = (
+    dedStudent !== null &&
+    dedReason.length > 0 &&
+    (dedReason !== 'other' || dedCustom.trim().length > 0) &&
+    parsedDed >= 1 && parsedDed <= 500 &&
+    dedNote.trim().length > 0
+  )
+
+  // ── Submit deduction ─────────────────────────────────────────
+  async function submitDeduction() {
+    if (!dedCanSubmit || dedBusy) return
+    setDedBusy(true)
+    try {
+      const { data: fresh, error: readErr } = await supabase
+        .from('students').select('cp').eq('id', dedStudent.id).single()
+      if (readErr) throw readErr
+
+      const newCp = Math.max(0, fresh.cp - parsedDed)
+
+      const { error: insertErr } = await supabase.from('cp_deductions').insert({
+        student_id: dedStudent.id,
+        amount:     parsedDed,
+        reason:     dedReasonFinal,
+        note:       dedNote.trim(),
+      })
+      if (insertErr) throw insertErr
+
+      const { error: updateErr } = await supabase
+        .from('students').update({ cp: newCp }).eq('id', dedStudent.id)
+      if (updateErr) throw updateErr
+
+      toast({ message: `Deducted ${parsedDed} CP from ${dedStudent.full_name}`, type: 'success' })
+
+      logAudit('cp_deducted', {
+        student: dedStudent.full_name,
+        amount:  parsedDed,
+        reason:  dedReasonFinal,
+        note:    dedNote.trim(),
+      })
+
+      setDedStudent(null)
+      setDedReason('')
+      setDedCustom('')
+      setDedAmount('')
+      setDedNote('')
+
+      supabase
+        .from('students').select('id, full_name, username, clan, cp')
+        .eq('is_active', true).order('full_name')
+        .then(({ data }) => setAllStudents(data ?? []))
+
+      loadDeductions()
+    } catch (err) {
+      toast({ message: err.message ?? 'Deduction failed', type: 'error' })
+    } finally {
+      setDedBusy(false)
+    }
+  }
+
+  // ── Deduction log filters (client-side) ──────────────────────
+  const filteredDeds = useMemo(() => {
+    let list = deductions
+    if (dedRFilt) list = list.filter(d => d.reason === dedRFilt)
+    if (dedSearch.trim()) {
+      const q = dedSearch.toLowerCase()
+      list = list.filter(d =>
+        d.students?.full_name?.toLowerCase().includes(q) ||
+        (d.note ?? '').toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [deductions, dedRFilt, dedSearch])
+
+  useEffect(() => { setDedPage(0) }, [dedSearch, dedRFilt])
+
+  const dedTotalPages = Math.ceil(filteredDeds.length / AW_PER_PAGE)
+  const dedVisible    = filteredDeds.slice(dedPage * AW_PER_PAGE, (dedPage + 1) * AW_PER_PAGE)
+
+  const dedLogReasons = useMemo(() => {
+    const seen = new Set(deductions.map(d => d.reason))
+    return [...seen].sort()
+  }, [deductions])
+
+  // ── Award log filters (client-side) ─────────────────────────
   const filteredAwards = useMemo(() => {
     let list = awards
     if (awReasonFilt) list = list.filter(a => a.reason === awReasonFilt)
@@ -562,6 +680,376 @@ export default function CpAwards() {
           </motion.button>
         </div>
       </motion.div>
+
+      {/* ── Deduct Form ────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl p-6 space-y-5"
+        style={{ background: 'var(--ad-surface)', border: '1px solid rgba(248,113,113,0.18)', backdropFilter: 'blur(12px)' }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+            stroke="#f87171" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M5 12h14"/>
+          </svg>
+          <h2 className="text-sm font-bold text-white">Deduct CP Manually</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Student picker */}
+          <StudentPicker
+            allStudents={allStudents}
+            selected={dedStudent}
+            onSelect={setDedStudent}
+          />
+
+          {/* Reason */}
+          <div className="space-y-2">
+            <div>
+              <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5">
+                Reason
+              </label>
+              <select
+                value={dedReason}
+                onChange={e => { setDedReason(e.target.value); setDedCustom('') }}
+                className="w-full px-3.5 py-2.5 rounded-xl text-sm text-white
+                  bg-white/[0.04] border border-white/[0.08] outline-none
+                  focus:border-red-500/40 transition-colors cursor-pointer appearance-none"
+              >
+                <option value="">Select a reason…</option>
+                {DEDUCTION_REASONS.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            {dedReason === 'other' && (
+              <input
+                value={dedCustom}
+                onChange={e => setDedCustom(e.target.value)}
+                placeholder="Describe the reason…"
+                className="w-full px-3.5 py-2.5 rounded-xl text-sm text-white
+                  bg-white/[0.04] border border-white/[0.08] outline-none
+                  focus:border-red-500/40 transition-colors"
+              />
+            )}
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5">
+              CP Amount
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="500"
+              value={dedAmount}
+              onChange={e => setDedAmount(e.target.value)}
+              placeholder="e.g. 50"
+              className="w-full px-3.5 py-2.5 rounded-xl text-sm text-white
+                bg-white/[0.04] border border-white/[0.08] outline-none
+                focus:border-red-500/40 transition-colors"
+            />
+            {dedWouldClamp && parsedDed > 0 && (
+              <p className="text-[10px] text-amber-500/70 mt-1.5">
+                Exceeds balance — will be set to 0 CP
+              </p>
+            )}
+          </div>
+
+          {/* Note */}
+          <div>
+            <label className="block text-[11px] font-semibold text-white/40 uppercase tracking-widest mb-1.5">
+              Note
+              <span className="ml-1 text-red-500/80 normal-case tracking-normal font-normal">
+                (required)
+              </span>
+            </label>
+            <textarea
+              value={dedNote}
+              onChange={e => setDedNote(e.target.value)}
+              placeholder="Context for this deduction — will appear in the audit log"
+              rows={2}
+              className="w-full px-3.5 py-2.5 rounded-xl text-sm text-white resize-none
+                bg-white/[0.04] border border-white/[0.08] outline-none
+                focus:border-red-500/40 transition-colors"
+            />
+          </div>
+        </div>
+
+        {/* Submit row */}
+        <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
+          <div className="h-8 flex items-center">
+            <AnimatePresence mode="wait">
+              {dedStudent && (
+                <motion.div
+                  key={dedStudent.id}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2.5"
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                    style={{ background: dedClanInfo?.colorAccent ?? '#555' }}
+                  >
+                    {dedStudent.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <span className="text-sm text-white/70 font-medium">{dedStudent.full_name}</span>
+                  <span className="text-white/20">·</span>
+                  <span className="text-xs text-white/35">{dedStudent.cp.toLocaleString()} CP now</span>
+                  {parsedDed > 0 && (
+                    <>
+                      <span className="text-white/20">→</span>
+                      <span className={`text-xs font-bold ${dedWouldClamp ? 'text-amber-400' : 'text-red-400'}`}>
+                        {dedNewCp.toLocaleString()} CP
+                      </span>
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <motion.button
+            whileHover={dedCanSubmit && !dedBusy ? { scale: 1.02, boxShadow: '0 6px 24px rgba(239,68,68,0.45)' } : {}}
+            whileTap={dedCanSubmit && !dedBusy ? { scale: 0.97 } : {}}
+            onClick={submitDeduction}
+            disabled={!dedCanSubmit || dedBusy}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
+            style={dedCanSubmit && !dedBusy ? {
+              background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+              color:      '#fff',
+              cursor:     'pointer',
+              boxShadow:  '0 4px 16px rgba(220,38,38,0.35)',
+            } : {
+              background: 'var(--ad-input-bg)',
+              color:      'var(--ad-text-3)',
+              cursor:     'not-allowed',
+              boxShadow:  'none',
+              border:     '1px solid var(--ad-border)',
+            }}
+          >
+            {dedBusy ? (
+              <>
+                <svg className="animate-spin shrink-0" width="13" height="13" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                Deducting…
+              </>
+            ) : (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M5 12h14"/>
+                </svg>
+                Deduct{parsedDed > 0 ? ` ${parsedDed} CP` : ' CP'}
+              </>
+            )}
+          </motion.button>
+        </div>
+      </motion.div>
+
+      {/* ── Deduction History ───────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-white">Deduction History</h2>
+          <span className="text-xs text-white/30">
+            {filteredDeds.length !== deductions.length
+              ? `${filteredDeds.length} of ${deductions.length}`
+              : `${deductions.length} records`}
+          </span>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-3">
+          <div className="relative flex-1 min-w-44">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" width="13" height="13"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              value={dedSearch}
+              onChange={e => setDedSearch(e.target.value)}
+              placeholder="Search student or note…"
+              className="w-full pl-8 pr-4 py-2 rounded-xl text-sm text-white placeholder:text-white/25
+                bg-white/[0.04] border border-white/[0.07] outline-none focus:border-red-500/50 transition-colors"
+            />
+          </div>
+          <select
+            value={dedRFilt}
+            onChange={e => setDedRFilt(e.target.value)}
+            className="px-3 py-2 rounded-xl text-sm text-white/60 bg-white/[0.04]
+              border border-white/[0.07] outline-none cursor-pointer"
+          >
+            <option value="">All Reasons</option>
+            {dedLogReasons.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Table — desktop */}
+        <div
+          className="hidden md:block rounded-2xl overflow-hidden"
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', backdropFilter: 'blur(12px)' }}
+        >
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-white/[0.06]">
+                {['When', 'Student', 'Reason', 'CP', 'Note'].map(h => (
+                  <th key={h} className="px-4 py-3 text-[11px] font-semibold uppercase tracking-widest text-white/25">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dedLoading ? (
+                [...Array(4)].map((_, i) => (
+                  <tr key={i} className="border-b border-white/[0.04]">
+                    {[40, 140, 100, 30, 160].map((w, j) => (
+                      <td key={j} className="px-4 py-3">
+                        <div className="h-4 rounded bg-white/[0.06] animate-pulse" style={{ width: w }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : dedVisible.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-16 text-center text-sm text-white/25">
+                    {deductions.length === 0 ? 'No deductions recorded yet.' : 'No records match your filters'}
+                  </td>
+                </tr>
+              ) : (
+                <AnimatePresence initial={false}>
+                  {dedVisible.map((d, i) => {
+                    const student  = d.students
+                    const clanInfo = CLANS[student?.clan]
+                    const initials = (student?.full_name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                    return (
+                      <motion.tr
+                        key={d.id}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02, duration: 0.15 }}
+                        className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <p className="text-xs text-white/50">
+                            {new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </p>
+                          <p className="text-[10px] text-white/25 mt-0.5">{timeAgo(d.created_at)}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+                              style={{ background: clanInfo?.colorAccent ?? '#555' }}>
+                              {initials}
+                            </div>
+                            <p className="text-sm text-white font-medium truncate">{student?.full_name ?? 'Unknown'}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-white/55">{d.reason}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-black text-red-400">−{d.amount}</span>
+                        </td>
+                        <td className="px-4 py-3 max-w-[240px]">
+                          <span className="text-xs text-white/40 truncate block">{d.note || '—'}</span>
+                        </td>
+                      </motion.tr>
+                    )
+                  })}
+                </AnimatePresence>
+              )}
+            </tbody>
+          </table>
+          {dedTotalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/[0.06]">
+              <p className="text-xs text-white/30">
+                {dedPage * AW_PER_PAGE + 1}–{Math.min((dedPage + 1) * AW_PER_PAGE, filteredDeds.length)} of {filteredDeds.length}
+              </p>
+              <div className="flex gap-2">
+                <button disabled={dedPage === 0} onClick={() => setDedPage(p => p - 1)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  ← Prev
+                </button>
+                {dedTotalPages <= 7 && [...Array(dedTotalPages)].map((_, i) => (
+                  <button key={i} onClick={() => setDedPage(i)}
+                    className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${i === dedPage ? 'bg-red-700 text-white' : 'text-white/40 hover:text-white hover:bg-white/[0.06]'}`}>
+                    {i + 1}
+                  </button>
+                ))}
+                <button disabled={dedPage === dedTotalPages - 1} onClick={() => setDedPage(p => p + 1)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-white/50 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Cards — mobile */}
+        <div className="md:hidden space-y-3">
+          {dedLoading ? (
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="rounded-2xl p-4 animate-pulse space-y-2"
+                style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                <div className="h-4 rounded" style={{ background: 'var(--ad-skeleton)', width: '50%' }} />
+                <div className="h-3 rounded" style={{ background: 'var(--ad-skeleton)', width: '70%' }} />
+              </div>
+            ))
+          ) : dedVisible.length === 0 ? (
+            <p className="text-center py-12 text-sm text-white/25">
+              {deductions.length === 0 ? 'No deductions recorded yet.' : 'No records match your filters'}
+            </p>
+          ) : (
+            dedVisible.map((d, i) => {
+              const student  = d.students
+              const clanInfo = CLANS[student?.clan]
+              const initials = (student?.full_name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+              const date     = new Date(d.created_at)
+              return (
+                <motion.div key={d.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.025 }}
+                  className="rounded-2xl p-4 space-y-2.5"
+                  style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ background: clanInfo?.colorAccent ?? '#555' }}>
+                        {initials}
+                      </div>
+                      <p className="text-sm font-semibold text-white truncate">{student?.full_name ?? 'Unknown'}</p>
+                    </div>
+                    <span className="text-base font-black text-red-400 shrink-0">−{d.amount}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/[0.05]">
+                    <span className="text-xs text-white/50 truncate">{d.reason}</span>
+                    <span className="text-[10px] text-white/25 shrink-0">
+                      {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
+                  {d.note && <p className="text-[11px] text-white/35 truncate">{d.note}</p>}
+                </motion.div>
+              )
+            })
+          )}
+          {dedTotalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <button disabled={dedPage === 0} onClick={() => setDedPage(p => p - 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                ← Prev
+              </button>
+              <span className="text-xs text-white/30">{dedPage + 1} / {dedTotalPages}</span>
+              <button disabled={dedPage === dedTotalPages - 1} onClick={() => setDedPage(p => p + 1)}
+                className="px-4 py-2.5 rounded-xl text-sm text-white/50 border border-white/[0.07] disabled:opacity-30 min-h-[44px]">
+                Next →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* ── Audit Log ──────────────────────────────────────── */}
       <div className="space-y-4">

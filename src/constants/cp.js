@@ -38,3 +38,10 @@ export const CP_FOR_CATEGORY = {
   IELTS: CP_RULES.IELTS_MOCK,
 }
 export const DEFAULT_EVENT_CP = CP_RULES.STANDARD_EVENT
+
+export const DEDUCTION_REASONS = [
+  { value: 'rule_violation',   label: 'Rule Violation' },
+  { value: 'absence_penalty',  label: 'Absence Penalty' },
+  { value: 'admin_correction', label: 'Admin Correction' },
+  { value: 'other',            label: 'Other' },
+]
