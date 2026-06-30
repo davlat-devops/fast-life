@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
-import { supabase, supabaseAdminAuth } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import { adminEdge } from '@/lib/adminEdge'
 import { logAudit } from '@/lib/auditLog'
 import { CLANS } from '@/constants/clans'
@@ -497,7 +497,7 @@ export default function StudentManagement() {
   // ── Data loading ──────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
     setLoading(true)
-    let q = supabase.from('students').select('*').order('created_at', { ascending: false })
+    let q = supabaseAdminAuth.from('students').select('*').order('created_at', { ascending: false })
 
     if (filters.clan)   q = q.eq('clan', filters.clan)
     if (filters.level)  q = q.eq('level', filters.level)
@@ -531,7 +531,7 @@ export default function StudentManagement() {
   // ── Handlers ──────────────────────────────────────────────
   async function toggleActive(student) {
     const next = !student.is_active
-    const { error } = await supabase
+    const { error } = await supabaseAdminAuth
       .from('students')
       .update({ is_active: next })
       .eq('id', student.id)
@@ -563,7 +563,7 @@ export default function StudentManagement() {
       await adminEdge.resetPassword(student.auth_user_id, newPw)
 
       // 2. Save plain-text to students table
-      const { error: dbErr } = await supabase
+      const { error: dbErr } = await supabaseAdminAuth
         .from('students')
         .update({ password_plain: newPw })
         .eq('id', student.id)
