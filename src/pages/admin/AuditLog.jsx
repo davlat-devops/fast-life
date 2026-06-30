@@ -15,6 +15,7 @@ const ACTION_LABELS = {
   event_deleted:         'Event Deleted',
   attendance_finalised:  'Attendance Finalised',
   monthly_reset:         'Monthly Reset',
+  badge_awarded:         'Badge Awarded',
 }
 
 const ACTION_COLORS = {
@@ -28,6 +29,7 @@ const ACTION_COLORS = {
   event_deleted:         '#f87171',
   attendance_finalised:  '#a78bfa',
   monthly_reset:         '#f87171',
+  badge_awarded:         '#C9A227',
 }
 
 const PER_PAGE = 30

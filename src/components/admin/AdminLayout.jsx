@@ -3,7 +3,7 @@ import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-route
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, Calendar, Star, BarChart3,
-  RefreshCw, Shield, Sun, Moon, LogOut, Menu, X, ScrollText,
+  RefreshCw, Shield, Sun, Moon, LogOut, Menu, X, ScrollText, Award,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext'
@@ -23,6 +23,7 @@ const NAV = [
   { to: '/admin/reset',     label: 'Monthly Reset',Icon: RefreshCw       },
   { to: '/admin/admins',    label: 'Admins',       Icon: Shield          },
   { to: '/admin/audit-log',label: 'Audit Log',    Icon: ScrollText      },
+  { to: '/admin/badges',   label: 'Badges',       Icon: Award           },
 ]
 
 function ThemeToggle() {

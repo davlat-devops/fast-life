@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Star, CheckCircle, Zap, Calendar, Heart, Award, Trophy, Crown,
-  Shield, Lock, Flame, Users, FileText,
+  Shield, Lock, Flame, Users, FileText, BookOpen, Mic, GraduationCap,
+  PenLine, Headphones,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -14,21 +15,30 @@ import { BADGES, LEVEL_THRESHOLDS } from '@/constants/badges'
 // ── Badge icon map ────────────────────────────────────────────
 
 const BADGE_ICONS = {
-  first_step:          Star,
-  regular:             CheckCircle,
-  dedicated:           Zap,
-  event_machine:       Calendar,
-  volunteer_heart:     Heart,
-  super_volunteer:     Award,
-  competition_rookie:  Trophy,
-  champion:            Crown,
-  clan_warrior:        Shield,
-  mvp:                 Award,
-  perfect_month:       CheckCircle,
-  clan_legend:         Flame,
-  fast_life_elite:     Crown,
-  monthly_legend:      Crown,
-  clan_champion:       Shield,
+  // automatic
+  clan:          Users,
+  first:         Award,
+  fast:          Flame,
+  perfect:       CheckCircle,
+  competition:   Trophy,
+  champion:      Crown,
+  regular:       Calendar,
+  dedicated:     Star,
+  event_machine: Zap,
+  // admin-only
+  clan_legend:   Flame,
+  mvp:           Award,
+  clan_warrior:  Shield,
+  volunteer:     Heart,
+  listener:      Headphones,
+  reader:        BookOpen,
+  writer:        PenLine,
+  speaker:       Mic,
+  ielts:         GraduationCap,
+  // monthly reset
+  clan_champion:   Shield,
+  monthly_legend:  Crown,
+  fast_life_elite: Crown,
 }
 
 // ── CP history icon map ───────────────────────────────────────
@@ -354,7 +364,7 @@ export default function ProfilePage() {
 
           {loading ? (
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-1.5">
-              {[...Array(15)].map((_, i) => (
+              {[...Array(21)].map((_, i) => (
                 <Skeleton key={i} className="aspect-square rounded-xl" />
               ))}
             </div>
