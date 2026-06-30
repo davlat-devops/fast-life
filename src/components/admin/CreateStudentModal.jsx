@@ -98,7 +98,7 @@ export default function CreateStudentModal({ onClose, onCreated }) {
           exit={{ opacity: 0, y: 24, scale: 0.96 }}
           transition={{ type: 'spring', stiffness: 340, damping: 28 }}
           className="relative w-full max-w-md rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.09)' }}
+          style={{ background: 'var(--ad-surface-solid)', border: '1px solid var(--ad-border)' }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">

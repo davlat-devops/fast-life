@@ -69,7 +69,7 @@ export default function CredentialsModal({ credentials, studentName, onClose, mo
           exit={{ opacity: 0, scale: 0.92, y: 16 }}
           transition={{ type: 'spring', stiffness: 380, damping: 30 }}
           className="relative w-full max-w-sm rounded-2xl overflow-hidden"
-          style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.1)' }}
+          style={{ background: 'var(--ad-surface-solid)', border: '1px solid var(--ad-border)' }}
         >
           {/* Clan colour header stripe */}
           <div
