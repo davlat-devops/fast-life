@@ -762,16 +762,40 @@ export default function EventManagement() {
             {loading ? '…' : `${stats.total} total · ${stats.thisMonth} this month · ${stats.finalised} finalised`}
           </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-          style={{ background: '#CC0000' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          New Event
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {/* TEMP DEBUG — remove after investigating */}
+          <button
+            onClick={async () => {
+              const { data: { session } } = await supabaseAdminAuth.auth.getSession()
+              console.log('=== ADMIN SESSION DEBUG ===')
+              console.log('session exists:', !!session)
+              console.log('user_metadata:', session?.user?.user_metadata)
+              console.log('email:', session?.user?.email)
+              console.log('access_token (first 40 chars):', session?.access_token?.slice(0, 40))
+              console.log('token expires_at:', session?.expires_at)
+
+              console.log('--- Testing edge function ---')
+              const { data: res, error } = await supabaseAdminAuth.functions.invoke('admin-operations', {
+                body: { action: 'list_admin_users' },
+              })
+              console.log('Edge fn error:', error)
+              console.log('Edge fn response:', res)
+            }}
+            className="px-3 py-2 rounded-lg text-xs font-bold text-yellow-300 border border-yellow-500/40 bg-yellow-500/10"
+          >
+            Debug Session
+          </button>
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+            style={{ background: '#CC0000' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            New Event
+          </motion.button>
+        </div>
       </div>
 
       {/* ── Table — desktop ──────────────────────────────────── */}
