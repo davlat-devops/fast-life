@@ -14,6 +14,7 @@ import CpAwards             from '@/pages/admin/CpAwards'
 import Rankings             from '@/pages/admin/Rankings'
 import MonthlyReset         from '@/pages/admin/MonthlyReset'
 import AdminManagement      from '@/pages/admin/AdminManagement'
+import AuditLog            from '@/pages/admin/AuditLog'
 
 import StudentLogin       from '@/pages/student/StudentLogin'
 import StudentLayout      from '@/components/student/StudentLayout'
@@ -67,6 +68,7 @@ export default function App() {
                 <Route path="rankings"            element={<Rankings />} />
                 <Route path="reset"               element={<MonthlyReset />} />
                 <Route path="admins"              element={<AdminManagement />} />
+                <Route path="audit-log"           element={<AuditLog />} />
                 <Route path="*"                   element={<Navigate to="dashboard" replace />} />
               </Route>
 

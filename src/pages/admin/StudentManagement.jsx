@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { supabase, supabaseAdminAuth } from '@/lib/supabase'
 import { adminEdge } from '@/lib/adminEdge'
+import { logAudit } from '@/lib/auditLog'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
 import { useToast } from '@/contexts/ToastContext'
@@ -540,6 +541,7 @@ export default function StudentManagement() {
     } else {
       setStudents(prev => prev.map(s => s.id === student.id ? { ...s, is_active: next } : s))
       toast({ message: `${student.full_name} ${next ? 'activated' : 'deactivated'}`, type: 'success' })
+      logAudit(next ? 'student_activated' : 'student_deactivated', { name: student.full_name, username: student.username })
     }
   }
 
@@ -550,6 +552,7 @@ export default function StudentManagement() {
     setCredentials(creds)
     fetchStudents()
     toast({ message: `${student.full_name} created and assigned to ${creds.clan}`, type: 'success' })
+    logAudit('student_created', { name: student.full_name, username: creds.username, clan: creds.clan })
   }
 
   async function handleResetPassword(student) {
@@ -595,9 +598,11 @@ export default function StudentManagement() {
     if (!deletingStudent) return
     setDeleteStudentBusy(true)
     try {
+      const name = deletingStudent.full_name
       await deleteStudentData(deletingStudent)
       setStudents(prev => prev.filter(s => s.id !== deletingStudent.id))
       toast({ message: 'Student deleted successfully', type: 'success' })
+      logAudit('student_deleted', { name, username: deletingStudent.username })
     } catch (err) {
       toast({ message: 'Delete failed: ' + err.message, type: 'error' })
     }
