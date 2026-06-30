@@ -456,7 +456,7 @@ export default function Rankings() {
               ) : visible.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-sm text-white/25">
-                    {students.length === 0 ? 'No active students yet' : 'No students match your filters'}
+                    {students.length === 0 ? 'No active students to rank.' : 'No students match your filters'}
                   </td>
                 </tr>
               ) : (
@@ -530,7 +530,7 @@ export default function Rankings() {
             ))
           ) : visible.length === 0 ? (
             <p className="text-center py-12 text-sm text-white/25">
-              {students.length === 0 ? 'No active students yet' : 'No students match your filters'}
+              {students.length === 0 ? 'No active students to rank.' : 'No students match your filters'}
             </p>
           ) : (
             visible.map((s, i) => {

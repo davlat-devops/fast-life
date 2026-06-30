@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Trash2, UserPlus, Loader2, Mail, Lock, AlertTriangle } from 'lucide-react'
-import { adminSupabase } from '@/lib/supabase'
+import { adminEdge } from '@/lib/adminEdge'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 
@@ -204,14 +204,13 @@ export default function AdminManagement() {
 
   async function loadAdmins() {
     setLoading(true)
-    const { data, error } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 })
-    if (error) {
-      toast('Failed to load admins: ' + error.message, 'error')
-    } else {
+    try {
+      const data = await adminEdge.listAdminUsers()
       const adminUsers = (data?.users ?? [])
-        .filter(u => u.user_metadata?.role === 'admin')
         .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
       setAdmins(adminUsers)
+    } catch (err) {
+      toast({ message: 'Failed to load admins: ' + err.message, type: 'error' })
     }
     setLoading(false)
   }
@@ -222,12 +221,12 @@ export default function AdminManagement() {
 
   async function handleDelete(userId) {
     setDeleting(userId)
-    const { error } = await adminSupabase.auth.admin.deleteUser(userId)
-    if (error) {
-      toast('Delete failed: ' + error.message, 'error')
-    } else {
+    try {
+      await adminEdge.deleteAdminUser(userId)
       setAdmins(prev => prev.filter(a => a.id !== userId))
-      toast('Admin removed.', 'success')
+      toast({ message: 'Admin removed.', type: 'success' })
+    } catch (err) {
+      toast({ message: 'Delete failed: ' + err.message, type: 'error' })
     }
     setDeleting(null)
   }
@@ -239,23 +238,15 @@ export default function AdminManagement() {
     setAddError('')
     setAdding(true)
 
-    const { data, error } = await adminSupabase.auth.admin.createUser({
-      email:         email.trim().toLowerCase(),
-      password:      password,
-      user_metadata: { role: 'admin' },
-      email_confirm: true,
-    })
-
-    if (error) {
-      setAddError(error.message || 'Failed to create admin.')
-      setAdding(false)
-      return
+    try {
+      const data = await adminEdge.createAdminUser(email.trim().toLowerCase(), password)
+      setAdmins(prev => [...prev, data.user])
+      setEmail('')
+      setPassword('')
+      toast({ message: `Admin ${data.user.email} added.`, type: 'success' })
+    } catch (err) {
+      setAddError(err.message || 'Failed to create admin.')
     }
-
-    setAdmins(prev => [...prev, data.user])
-    setEmail('')
-    setPassword('')
-    toast(`Admin ${data.user.email} added.`, 'success')
     setAdding(false)
   }
 

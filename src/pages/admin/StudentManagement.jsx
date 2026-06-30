@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
-import { adminSupabase, supabase } from '@/lib/supabase'
+import { supabase, supabaseAdminAuth } from '@/lib/supabase'
+import { adminEdge } from '@/lib/adminEdge'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
 import { useToast } from '@/contexts/ToastContext'
@@ -554,46 +555,40 @@ export default function StudentManagement() {
   async function handleResetPassword(student) {
     const newPw = generatePassword(8)
 
-    // 1. Update Supabase Auth password
-    const { error: authErr } = await adminSupabase.auth.admin.updateUserById(
-      student.auth_user_id,
-      { password: newPw }
-    )
-    if (authErr) {
-      toast({ message: `Auth reset failed: ${authErr.message}`, type: 'error' })
-      return
+    try {
+      // 1. Update Supabase Auth password via Edge Function
+      await adminEdge.resetPassword(student.auth_user_id, newPw)
+
+      // 2. Save plain-text to students table
+      const { error: dbErr } = await supabase
+        .from('students')
+        .update({ password_plain: newPw })
+        .eq('id', student.id)
+      if (dbErr) throw dbErr
+
+      // 3. Update local state so the row shows the new password immediately
+      setStudents(prev =>
+        prev.map(s => s.id === student.id ? { ...s, password_plain: newPw } : s)
+      )
+
+      // 4. Show credentials modal
+      setNewStudentName(student.full_name)
+      setCredentialMode('reset')
+      setCredentials({ username: student.username, password: newPw, clan: student.clan })
+    } catch (err) {
+      toast({ message: `Password reset failed: ${err.message}`, type: 'error' })
     }
-
-    // 2. Save plain-text to students table
-    const { error: dbErr } = await supabase
-      .from('students')
-      .update({ password_plain: newPw })
-      .eq('id', student.id)
-    if (dbErr) {
-      toast({ message: `DB update failed: ${dbErr.message}`, type: 'error' })
-      return
-    }
-
-    // 3. Update local state so the row shows the new password immediately
-    setStudents(prev =>
-      prev.map(s => s.id === student.id ? { ...s, password_plain: newPw } : s)
-    )
-
-    // 4. Show credentials modal
-    setNewStudentName(student.full_name)
-    setCredentialMode('reset')
-    setCredentials({ username: student.username, password: newPw, clan: student.clan })
   }
 
   async function deleteStudentData(student) {
     const id     = student.id
     const authId = student.auth_user_id
-    await adminSupabase.from('cp_awards').delete().eq('student_id', id)
-    await adminSupabase.from('attendance').delete().eq('student_id', id)
-    await adminSupabase.from('badges').delete().eq('student_id', id)
-    await adminSupabase.from('monthly_snapshots').delete().eq('student_id', id)
-    await adminSupabase.from('students').delete().eq('id', id)
-    if (authId) await adminSupabase.auth.admin.deleteUser(authId)
+    await supabaseAdminAuth.from('cp_awards').delete().eq('student_id', id)
+    await supabaseAdminAuth.from('attendance').delete().eq('student_id', id)
+    await supabaseAdminAuth.from('badges').delete().eq('student_id', id)
+    await supabaseAdminAuth.from('monthly_snapshots').delete().eq('student_id', id)
+    await supabaseAdminAuth.from('students').delete().eq('id', id)
+    if (authId) await adminEdge.deleteAuthUser(authId)
   }
 
   async function handleDeleteStudent() {
@@ -688,7 +683,7 @@ export default function StudentManagement() {
                 <td colSpan={9} className="px-4 py-16 text-center text-sm text-white/25">
                   {search || filters.clan || filters.level
                     ? 'No students match your filters'
-                    : 'No students yet — add one above'}
+                    : 'No students yet. Click Add Student to get started.'}
                 </td>
               </tr>
             ) : (
@@ -751,7 +746,7 @@ export default function StudentManagement() {
           ))
         ) : visible.length === 0 ? (
           <p className="text-center py-12 text-sm text-white/25">
-            {search || filters.clan || filters.level ? 'No students match your filters' : 'No students yet'}
+            {search || filters.clan || filters.level ? 'No students match your filters' : 'No students yet. Click Add Student to get started.'}
           </p>
         ) : (
           visible.map((s, i) => {

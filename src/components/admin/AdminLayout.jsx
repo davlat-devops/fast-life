@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -7,8 +7,12 @@ import {
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext'
+import { useToast } from '@/contexts/ToastContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
 import logo from '@/assets/logo.png'
+
+const IDLE_WARN_MS  = 25 * 60 * 1000  // 25 minutes
+const IDLE_LIMIT_MS = 30 * 60 * 1000  // 30 minutes
 
 const NAV = [
   { to: '/admin/dashboard', label: 'Dashboard',    Icon: LayoutDashboard },
@@ -168,9 +172,39 @@ function Sidebar({ user, onSignOut, onClose }) {
 function AdminLayoutInner() {
   const { loading, session, isAdmin, user, signOut } = useAdminAuth()
   const { theme } = useAdminTheme()
+  const { toast } = useToast()
   const navigate      = useNavigate()
   const location      = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const lastActivityRef = useRef(Date.now())
+  const warnedRef       = useRef(false)
+
+  useEffect(() => {
+    if (!session) return
+
+    function resetTimer() { lastActivityRef.current = Date.now(); warnedRef.current = false }
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll']
+    events.forEach(ev => window.addEventListener(ev, resetTimer, { passive: true }))
+
+    const interval = setInterval(async () => {
+      const idle = Date.now() - lastActivityRef.current
+      if (idle >= IDLE_LIMIT_MS) {
+        clearInterval(interval)
+        await signOut()
+        navigate('/admin/login', { replace: true })
+      } else if (idle >= IDLE_WARN_MS && !warnedRef.current) {
+        warnedRef.current = true
+        toast({ message: 'You will be signed out in 5 minutes due to inactivity.', type: 'warning', duration: 8000 })
+      }
+    }, 30_000)
+
+    return () => {
+      events.forEach(ev => window.removeEventListener(ev, resetTimer))
+      clearInterval(interval)
+    }
+  }, [session])
 
   if (loading) return <FullPageLoader />
   if (!session || !isAdmin) return <Navigate to="/admin/login" replace />

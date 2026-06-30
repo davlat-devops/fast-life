@@ -288,7 +288,7 @@ export default function CpAwards() {
   const canSubmit  = (
     selectedStudent !== null &&
     reason.length > 0 &&
-    parsedCp > 0 &&
+    parsedCp >= 1 && parsedCp <= 500 &&
     note.trim().length > 0
   )
 
@@ -621,7 +621,7 @@ export default function CpAwards() {
               ) : awVisible.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-16 text-center text-sm text-white/25">
-                    {awards.length === 0 ? 'No CP awards yet — use the form above to make the first one' : 'No records match your filters'}
+                    {awards.length === 0 ? 'No CP awarded yet this month.' : 'No records match your filters'}
                   </td>
                 </tr>
               ) : (
@@ -670,7 +670,7 @@ export default function CpAwards() {
             ))
           ) : awVisible.length === 0 ? (
             <p className="text-center py-12 text-sm text-white/25">
-              {awards.length === 0 ? 'No CP awards yet' : 'No records match your filters'}
+              {awards.length === 0 ? 'No CP awarded yet this month.' : 'No records match your filters'}
             </p>
           ) : (
             awVisible.map((award, i) => {

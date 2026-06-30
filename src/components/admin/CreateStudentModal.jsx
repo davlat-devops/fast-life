@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { adminSupabase } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import { useToast } from '@/contexts/ToastContext'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -21,6 +21,8 @@ const inputCls = `w-full px-3.5 py-2.5 rounded-lg text-sm text-white placeholder
   bg-white/[0.04] border border-white/[0.08] outline-none
   focus:border-brand-red/60 focus:ring-1 focus:ring-brand-red/20 transition-all`
 
+const USERNAME_RE = /^[a-z0-9_]+$/
+
 export default function CreateStudentModal({ onClose, onCreated }) {
   const { toast } = useToast()
 
@@ -37,9 +39,13 @@ export default function CreateStudentModal({ onClose, onCreated }) {
 
   function validate() {
     const e = {}
-    if (!form.full_name.trim()) e.full_name = 'Full name is required'
+    const name = form.full_name.trim()
+    if (!name) e.full_name = 'Full name is required'
+    else if (name.length < 2) e.full_name = 'Name must be at least 2 characters'
+
     const age = Number(form.age)
     if (!form.age || isNaN(age) || age < 5 || age > 80) e.age = 'Enter a valid age (5–80)'
+
     if (!form.phone.trim()) e.phone = 'Phone number is required'
     if (!form.class_group.trim()) e.class_group = 'Class group is required'
     return e
@@ -53,50 +59,21 @@ export default function CreateStudentModal({ onClose, onCreated }) {
     setBusy(true)
 
     try {
-      // 1. Generate unique username + temp password via DB function
-      const { data: creds, error: credsErr } = await adminSupabase
-        .rpc('generate_student_credentials', { p_full_name: form.full_name.trim() })
-      if (credsErr) throw new Error(`Credentials: ${credsErr.message}`)
-
-      const { username, password } = creds
-
-      // 2. Random clan assignment
-      const CLANS = ['VIPERON', 'CRODON', 'AVERON', 'WOLFRIN']
-      const clan = CLANS[Math.floor(Math.random() * CLANS.length)]
-
-      // 3. Create auth user
-      const { data: authData, error: authErr } = await adminSupabase.auth.admin.createUser({
-        email: `${username}@fastlife.internal`,
-        password,
-        email_confirm: true,
-        user_metadata: { role: 'student', username },
+      const { data, error } = await supabaseAdminAuth.functions.invoke('create-student', {
+        body: {
+          full_name:   form.full_name.trim(),
+          age:         Number(form.age),
+          level:       form.level,
+          phone:       form.phone.trim(),
+          class_group: form.class_group.trim(),
+        },
       })
-      if (authErr) throw new Error(`Auth: ${authErr.message}`)
 
-      // 4. Insert students row
-      const { data: student, error: studentErr } = await adminSupabase
-        .from('students')
-        .insert({
-          auth_user_id:   authData.user.id,
-          full_name:      form.full_name.trim(),
-          age:            Number(form.age),
-          level:          form.level,
-          phone:          form.phone.trim(),
-          class_group:    form.class_group.trim(),
-          clan,
-          username,
-          password_plain: password,
-        })
-        .select()
-        .single()
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
 
-      if (studentErr) {
-        // Rollback: remove orphaned auth user
-        await adminSupabase.auth.admin.deleteUser(authData.user.id)
-        throw new Error(`DB: ${studentErr.message}`)
-      }
-
-      onCreated(student, { username, password, clan })
+      const { student, credentials } = data
+      onCreated(student, credentials)
     } catch (err) {
       toast({ message: err.message ?? 'Failed to create student', type: 'error' })
     } finally {

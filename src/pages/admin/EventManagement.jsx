@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase, adminSupabase } from '@/lib/supabase'
+import { supabase, supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
@@ -63,9 +63,16 @@ function CreateEventModal({ onClose, onCreated, adminUserId }) {
   async function handleSubmit(e) {
     e.preventDefault()
     const errs = {}
-    if (!form.title.trim())    errs.title      = 'Title is required'
-    if (!form.event_date)      errs.event_date = 'Date is required'
-    if (form.cp_value === '' || Number(form.cp_value) < 0) errs.cp_value = 'CP must be 0 or more'
+    if (!form.title.trim())    errs.title = 'Title is required'
+    if (!form.event_date) {
+      errs.event_date = 'Date is required'
+    } else {
+      const oneYearAgo = new Date()
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+      if (new Date(form.event_date) < oneYearAgo) errs.event_date = 'Date cannot be more than 1 year in the past'
+    }
+    const cpNum = Number(form.cp_value)
+    if (form.cp_value === '' || isNaN(cpNum) || cpNum < 1 || cpNum > 500) errs.cp_value = 'CP must be between 1 and 500'
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setBusy(true)
@@ -205,13 +212,20 @@ function EditEventModal({ event, onClose, onSaved }) {
   async function handleSubmit(e) {
     e.preventDefault()
     const errs = {}
-    if (!form.title.trim())    errs.title      = 'Title is required'
-    if (!form.event_date)      errs.event_date = 'Date is required'
-    if (form.cp_value === '' || Number(form.cp_value) < 0) errs.cp_value = 'CP must be 0 or more'
+    if (!form.title.trim())    errs.title = 'Title is required'
+    if (!form.event_date) {
+      errs.event_date = 'Date is required'
+    } else {
+      const oneYearAgo = new Date()
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+      if (new Date(form.event_date) < oneYearAgo) errs.event_date = 'Date cannot be more than 1 year in the past'
+    }
+    const cpNum = Number(form.cp_value)
+    if (form.cp_value === '' || isNaN(cpNum) || cpNum < 1 || cpNum > 500) errs.cp_value = 'CP must be between 1 and 500'
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setBusy(true)
-    const { data, error } = await adminSupabase.from('events').update({
+    const { data, error } = await supabaseAdminAuth.from('events').update({
       title:      form.title.trim(),
       category:   form.category,
       event_date: form.event_date,
@@ -555,7 +569,7 @@ export default function EventManagement() {
   async function handleDeleteConfirm() {
     if (!deletingEvent) return
     setDeleteBusy(true)
-    const { error } = await adminSupabase.from('events').delete().eq('id', deletingEvent.id)
+    const { error } = await supabaseAdminAuth.from('events').delete().eq('id', deletingEvent.id)
     setDeleteBusy(false)
     if (error) { toast({ message: error.message, type: 'error' }); return }
     setEvents(prev => prev.filter(e => e.id !== deletingEvent.id))
@@ -625,7 +639,7 @@ export default function EventManagement() {
             ) : events.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-16 text-center text-sm text-white/25">
-                  No events yet — create one above
+                  No events this month. Click New Event to create one.
                 </td>
               </tr>
             ) : (
@@ -652,7 +666,7 @@ export default function EventManagement() {
             </div>
           ))
         ) : events.length === 0 ? (
-          <p className="text-center py-12 text-sm text-white/25">No events yet — create one above</p>
+          <p className="text-center py-12 text-sm text-white/25">No events this month. Click New Event to create one.</p>
         ) : (
           events.map((event, i) => {
             const cat  = CAT_STYLE[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.12)' }
