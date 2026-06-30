@@ -16,6 +16,7 @@ const CLAN_IMG_MAP = {
 }
 import { MANUAL_CP_REASONS, DEDUCTION_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { logAudit } from '@/lib/auditLog'
 
 // ── Reason label map (includes system reasons for full audit) ──
@@ -231,6 +232,7 @@ function AuditRow({ award, delay }) {
 
 export default function CpAwards() {
   const { toast } = useToast()
+  const { session } = useAdminAuth()
 
   // ── Students for picker ─────────────────────────────────────
   const [allStudents, setAllStudents] = useState([])
@@ -328,6 +330,10 @@ export default function CpAwards() {
     setSubmitting(true)
 
     try {
+      if (session?.access_token) {
+        await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token })
+      }
+
       // 1. Insert cp_award record
       const { error: insertErr } = await supabase.from('cp_awards').insert({
         student_id: selectedStudent.id,
@@ -404,6 +410,10 @@ export default function CpAwards() {
     if (!dedCanSubmit || dedBusy) return
     setDedBusy(true)
     try {
+      if (session?.access_token) {
+        await supabase.auth.setSession({ access_token: session.access_token, refresh_token: session.refresh_token })
+      }
+
       const { data: fresh, error: readErr } = await supabase
         .from('students').select('cp').eq('id', dedStudent.id).single()
       if (readErr) throw readErr

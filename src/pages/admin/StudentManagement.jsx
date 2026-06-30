@@ -7,6 +7,7 @@ import { logAudit } from '@/lib/auditLog'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
 import { useToast } from '@/contexts/ToastContext'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import CreateStudentModal from '@/components/admin/CreateStudentModal'
 import CredentialsModal  from '@/components/admin/CredentialsModal'
 
@@ -477,6 +478,7 @@ function FilterBar({ search, setSearch, filters, setFilters }) {
 
 export default function StudentManagement() {
   const { toast } = useToast()
+  const { session } = useAdminAuth()
 
   const [students, setStudents]     = useState([])
   const [loading,  setLoading]      = useState(true)
@@ -498,13 +500,19 @@ export default function StudentManagement() {
   const fetchStudents = useCallback(async () => {
     setLoading(true)
 
-    const { data: { session } } = await supabaseAdminAuth.auth.getSession()
-    if (!session) {
+    if (!session?.access_token) {
       toast({ message: 'Session lost — please log out and log back in', type: 'error' })
       setStudents([])
       setLoading(false)
       return
     }
+
+    // Sync AdminAuthContext session into the Supabase client in case
+    // the client's internal state was cleared (storageKey race condition).
+    await supabaseAdminAuth.auth.setSession({
+      access_token:  session.access_token,
+      refresh_token: session.refresh_token,
+    })
 
     let q = supabaseAdminAuth.from('students').select('*').order('created_at', { ascending: false })
 
@@ -517,7 +525,7 @@ export default function StudentManagement() {
     if (error) toast({ message: `Failed to load students: ${error.message} (${error.code})`, type: 'error' })
     setStudents(data ?? [])
     setLoading(false)
-  }, [filters, toast])
+  }, [filters, session, toast])
 
   useEffect(() => { fetchStudents() }, [fetchStudents])
   useEffect(() => { setPage(0) }, [search, filters])
