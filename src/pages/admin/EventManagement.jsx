@@ -5,6 +5,7 @@ import { supabase, supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
+import { logAudit } from '@/lib/auditLog'
 
 // ── Category style map ────────────────────────────────────────
 
@@ -558,6 +559,7 @@ export default function EventManagement() {
     setEvents(prev => [event, ...prev])
     setShowCreate(false)
     toast({ message: `"${event.title}" created`, type: 'success' })
+    logAudit('event_created', { title: event.title, category: event.category, cp_value: event.cp_value })
   }
 
   function handleSaved(updated) {
@@ -574,6 +576,7 @@ export default function EventManagement() {
     if (error) { toast({ message: error.message, type: 'error' }); return }
     setEvents(prev => prev.filter(e => e.id !== deletingEvent.id))
     toast({ message: `"${deletingEvent.title}" deleted`, type: 'success' })
+    logAudit('event_deleted', { title: deletingEvent.title })
     setDeletingEvent(null)
   }
 

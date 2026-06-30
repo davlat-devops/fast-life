@@ -5,6 +5,7 @@ import {
   Crown, Gem, Swords, Trophy, BookOpen, Shuffle, RefreshCw, CheckCircle,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { logAudit } from '@/lib/auditLog'
 import { CLANS, CLAN_NAMES } from '@/constants/clans'
 import { CP_RULES } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
@@ -659,6 +660,7 @@ export default function MonthlyReset() {
       if (error) throw error
       setResult(data)
       setPhase('done')
+      logAudit('monthly_reset', { month: MONTH_LABEL, students: studentCount })
     } catch (err) {
       toast({ message: err.message ?? 'Reset failed — check Supabase logs', type: 'error' })
       setPhase('preview')

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shield } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/contexts/ToastContext'
+import { logAudit } from '@/lib/auditLog'
 import { CLANS } from '@/constants/clans'
 
 // ── Category style map ────────────────────────────────────────
@@ -267,6 +268,7 @@ export default function AttendanceRegister() {
         message: `Attendance finalised — CP awarded to ${presentCount} student${presentCount !== 1 ? 's' : ''}`,
         type: 'success',
       })
+      logAudit('attendance_finalised', { event: event?.title, present: presentCount })
     } catch (err) {
       toast({ message: err.message ?? 'Finalisation failed', type: 'error' })
     } finally {

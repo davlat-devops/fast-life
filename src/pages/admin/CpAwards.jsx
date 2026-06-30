@@ -16,6 +16,7 @@ const CLAN_IMG_MAP = {
 }
 import { MANUAL_CP_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
+import { logAudit } from '@/lib/auditLog'
 
 // ── Reason label map (includes system reasons for full audit) ──
 const REASON_LABELS = {
@@ -324,6 +325,13 @@ export default function CpAwards() {
       toast({
         message: `Awarded ${parsedCp} CP to ${selectedStudent.full_name}`,
         type: 'success',
+      })
+
+      logAudit('cp_awarded', {
+        student: selectedStudent.full_name,
+        amount: parsedCp,
+        reason,
+        note: note.trim(),
       })
 
       // Reset form
