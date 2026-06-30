@@ -5,7 +5,7 @@
  * The frontend calls this instead of using the service role key directly.
  *
  * Actions: delete_auth_user | reset_password | list_admin_users |
- *          create_admin_user | delete_admin_user
+ *          create_admin_user | delete_admin_user | create_event
  *
  * Deploy: npx supabase functions deploy admin-operations
  * Secret: npx supabase secrets set SERVICE_ROLE_KEY=<your-service-role-key>
@@ -100,6 +100,24 @@ Deno.serve(async (req: Request) => {
       const { error } = await adminClient.auth.admin.deleteUser(user_id)
       if (error) throw error
       return json({ success: true })
+    }
+
+    if (action === 'create_event') {
+      const { title, category, event_date, event_time, room, cp_value, created_by } =
+        body as {
+          title: string; category: string; event_date: string;
+          event_time?: string; room?: string; cp_value: number; created_by?: string
+        }
+      if (!title || !category || !event_date || cp_value == null) {
+        return json({ error: 'title, category, event_date, and cp_value are required' }, 400)
+      }
+      const { data, error } = await adminClient
+        .from('events')
+        .insert({ title, category, event_date, event_time: event_time || null, room: room || null, cp_value, created_by })
+        .select()
+        .single()
+      if (error) throw error
+      return json({ event: data }, 201)
     }
 
     return json({ error: `Unknown action: ${action}` }, 400)

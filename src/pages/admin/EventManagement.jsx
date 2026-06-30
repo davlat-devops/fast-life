@@ -78,19 +78,25 @@ function CreateEventModal({ onClose, onCreated, adminUserId }) {
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setBusy(true)
-    const { data, error } = await supabaseAdminAuth.from('events').insert({
-      title:      form.title.trim(),
-      category:   form.category,
-      event_date: form.event_date,
-      event_time: form.event_time || null,
-      room:       form.room.trim() || null,
-      cp_value:   Number(form.cp_value),
-      created_by: adminUserId,
-    }).select().single()
+    const { data: res, error } = await supabaseAdminAuth.functions.invoke('admin-operations', {
+      body: {
+        action:     'create_event',
+        title:      form.title.trim(),
+        category:   form.category,
+        event_date: form.event_date,
+        event_time: form.event_time || null,
+        room:       form.room.trim() || null,
+        cp_value:   Number(form.cp_value),
+        created_by: adminUserId,
+      },
+    })
 
     setBusy(false)
-    if (error) { toast({ message: error.message, type: 'error' }); return }
-    onCreated(data)
+    if (error || res?.error) {
+      toast({ message: res?.error ?? error?.message ?? 'Failed to create event', type: 'error' })
+      return
+    }
+    onCreated(res.event)
   }
 
   return (
