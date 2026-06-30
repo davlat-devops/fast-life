@@ -78,7 +78,7 @@ function CreateEventModal({ onClose, onCreated, adminUserId }) {
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setBusy(true)
-    const { data, error } = await supabase.from('events').insert({
+    const { data, error } = await supabaseAdminAuth.from('events').insert({
       title:      form.title.trim(),
       category:   form.category,
       event_date: form.event_date,
