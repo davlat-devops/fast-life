@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Crown, Gem, Swords, Trophy, BookOpen, Shuffle, RefreshCw, CheckCircle,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import { logAudit } from '@/lib/auditLog'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CLANS, CLAN_NAMES } from '@/constants/clans'
 import { CP_RULES } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
@@ -385,7 +386,7 @@ function ExecutingScreen() {
 
 // ── Success screen ─────────────────────────────────────────────
 
-function SuccessScreen({ snapshot, result }) {
+function SuccessScreen({ snapshot, result, onRunAgain }) {
   const { top5, winningClan, clans, studentCount, month } = snapshot
 
   const rpcData       = result && typeof result === 'object' ? result : {}
@@ -565,11 +566,18 @@ function SuccessScreen({ snapshot, result }) {
       )}
 
       {/* Navigation */}
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-wrap gap-3 pt-2">
+        <button
+          onClick={onRunAgain}
+          className="flex-1 py-3 rounded-xl text-sm font-bold text-white text-center transition-colors hover:opacity-90"
+          style={{ background: '#CC0000' }}
+        >
+          Run Another Reset
+        </button>
         <Link
           to="/admin/dashboard"
-          className="flex-1 py-3 rounded-xl text-sm font-bold text-white text-center transition-colors"
-          style={{ background: '#CC0000' }}
+          className="flex-1 py-3 rounded-xl text-sm font-semibold text-white/60 text-center
+            border border-white/[0.08] hover:bg-white/[0.04] hover:text-white/80 transition-all"
         >
           Back to Dashboard
         </Link>
@@ -589,6 +597,7 @@ function SuccessScreen({ snapshot, result }) {
 
 export default function MonthlyReset() {
   const { toast } = useToast()
+  const { session } = useAdminAuth()
 
   const [phase,        setPhase]        = useState('preview')
   const [loading,      setLoading]      = useState(true)
@@ -602,69 +611,85 @@ export default function MonthlyReset() {
   const [snapshot,     setSnapshot]     = useState(null)
   const [result,       setResult]       = useState(null)
 
-  useEffect(() => {
-    async function load() {
-      const [studentsRes, clansRes, countRes] = await Promise.all([
-        supabase
-          .from('students')
-          .select('id, full_name, cp, clan, level')
-          .eq('is_active', true)
-          .order('cp', { ascending: false })
-          .limit(50),
-        supabase.from('clans').select('*').order('total_cp', { ascending: false }),
-        supabase
-          .from('students')
-          .select('*', { count: 'exact', head: true })
-          .eq('is_active', true),
-      ])
+  const load = useCallback(async () => {
+    setLoading(true)
+    const [studentsRes, clansRes, countRes] = await Promise.all([
+      supabaseAdminAuth
+        .from('students')
+        .select('id, full_name, cp, clan, level')
+        .eq('is_active', true)
+        .order('cp', { ascending: false })
+        .limit(50),
+      supabaseAdminAuth.from('clans').select('*').order('total_cp', { ascending: false }),
+      supabaseAdminAuth
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true),
+    ])
 
-      const students = studentsRes.data ?? []
-      const clanData = clansRes.data ?? []
+    const students = studentsRes.data ?? []
+    const clanData = clansRes.data ?? []
 
-      setTop5(students.slice(0, 5))
-      setClans(clanData)
-      setStudentCount(countRes.count ?? 0)
+    setTop5(students.slice(0, 5))
+    setClans(clanData)
+    setStudentCount(countRes.count ?? 0)
 
-      const byClan = {}
-      for (const clanId of CLAN_NAMES) {
-        byClan[clanId] = students.filter(s => s.clan === clanId).slice(0, 3)
-      }
-      setTopByClan(byClan)
-      setLoading(false)
+    const byClan = {}
+    for (const clanId of CLAN_NAMES) {
+      byClan[clanId] = students.filter(s => s.clan === clanId).slice(0, 3)
     }
-    load()
+    setTopByClan(byClan)
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   const winningClanId = clans[0]?.id ?? null
 
   async function executeReset() {
-    if (confirm !== 'RESET' || phase !== 'preview') return
+    if (confirm !== 'RESET') return
+
+    const now = new Date()
+    const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
     setSnapshot({
       top5:         [...top5],
       winningClan:  winningClanId,
       clans:        [...clans],
       studentCount,
-      month:        MONTH_LABEL,
+      month:        monthLabel,
     })
 
     setPhase('executing')
     setConfirm('')
 
     try {
-      const now = new Date()
-      const { data, error } = await supabase.rpc('monthly_reset', {
+      if (session?.access_token) {
+        await supabaseAdminAuth.auth.setSession({
+          access_token:  session.access_token,
+          refresh_token: session.refresh_token,
+        })
+      }
+      const { data, error } = await supabaseAdminAuth.rpc('monthly_reset', {
         p_month: now.getMonth() + 1,
         p_year:  now.getFullYear(),
       })
       if (error) throw error
       setResult(data)
       setPhase('done')
-      logAudit('monthly_reset', { month: MONTH_LABEL, students: studentCount })
+      logAudit('monthly_reset', { month: monthLabel, students: studentCount })
     } catch (err) {
       toast({ message: err.message ?? 'Reset failed — check Supabase logs', type: 'error' })
       setPhase('preview')
     }
+  }
+
+  function handleRunAgain() {
+    setPhase('preview')
+    setConfirm('')
+    setResult(null)
+    setSnapshot(null)
+    load()
   }
 
   return (
@@ -716,7 +741,7 @@ export default function MonthlyReset() {
 
         {phase === 'done' && snapshot && (
           <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <SuccessScreen snapshot={snapshot} result={result} />
+            <SuccessScreen snapshot={snapshot} result={result} onRunAgain={handleRunAgain} />
           </motion.div>
         )}
 

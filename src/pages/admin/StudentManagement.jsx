@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
@@ -478,7 +479,8 @@ function FilterBar({ search, setSearch, filters, setFilters }) {
 
 export default function StudentManagement() {
   const { toast } = useToast()
-  const { session } = useAdminAuth()
+  const { session, signOut } = useAdminAuth()
+  const navigate = useNavigate()
 
   const [students, setStudents]     = useState([])
   const [loading,  setLoading]      = useState(true)
@@ -496,36 +498,60 @@ export default function StudentManagement() {
   const [showDeleteAll, setShowDeleteAll] = useState(false)
   const [deleteAllBusy, setDeleteAllBusy] = useState(false)
 
+  // ── Auth guard — redirect to login when session is lost ──
+  useEffect(() => {
+    if (session === null) {
+      signOut().then(() => navigate('/admin/login'))
+    }
+  }, [session, signOut, navigate])
+
   // ── Data loading ──────────────────────────────────────────
   const fetchStudents = useCallback(async () => {
     setLoading(true)
 
     if (!session?.access_token) {
-      toast({ message: 'Session lost — please log out and log back in', type: 'error' })
       setStudents([])
       setLoading(false)
       return
     }
 
-    // Sync AdminAuthContext session into the Supabase client in case
-    // the client's internal state was cleared (storageKey race condition).
-    await supabaseAdminAuth.auth.setSession({
-      access_token:  session.access_token,
-      refresh_token: session.refresh_token,
-    })
+    try {
+      // Only call setSession when the client's internal token differs from the
+      // context session. Calling it unconditionally fires onAuthStateChange every
+      // time, which updates AdminAuthContext, which recreates this callback,
+      // which triggers the useEffect again → infinite loading loop.
+      const { data: { session: clientSession } } = await supabaseAdminAuth.auth.getSession()
+      if (!clientSession || clientSession.access_token !== session.access_token) {
+        await supabaseAdminAuth.auth.setSession({
+          access_token:  session.access_token,
+          refresh_token: session.refresh_token,
+        })
+      }
 
-    let q = supabaseAdminAuth.from('students').select('*').order('created_at', { ascending: false })
+      let q = supabaseAdminAuth.from('students').select('*').order('created_at', { ascending: false })
 
-    if (filters.clan)   q = q.eq('clan', filters.clan)
-    if (filters.level)  q = q.eq('level', filters.level)
-    if (filters.status === 'active')   q = q.eq('is_active', true)
-    if (filters.status === 'inactive') q = q.eq('is_active', false)
+      if (filters.clan)   q = q.eq('clan', filters.clan)
+      if (filters.level)  q = q.eq('level', filters.level)
+      if (filters.status === 'active')   q = q.eq('is_active', true)
+      if (filters.status === 'inactive') q = q.eq('is_active', false)
 
-    const { data, error } = await q
-    if (error) toast({ message: `Failed to load students: ${error.message} (${error.code})`, type: 'error' })
-    setStudents(data ?? [])
-    setLoading(false)
-  }, [filters, session, toast])
+      const { data, error } = await q
+      if (error) {
+        if (error.status === 401 || error.code === 'PGRST301') {
+          await signOut()
+          navigate('/admin/login')
+          return
+        }
+        throw new Error(`${error.message} (${error.code})`)
+      }
+      setStudents(data ?? [])
+    } catch (err) {
+      toast({ message: `Failed to load students: ${err.message}`, type: 'error' })
+      setStudents([])
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, session, toast, signOut, navigate])
 
   useEffect(() => { fetchStudents() }, [fetchStudents])
   useEffect(() => { setPage(0) }, [search, filters])
@@ -604,6 +630,7 @@ export default function StudentManagement() {
     const id     = student.id
     const authId = student.auth_user_id
     await supabaseAdminAuth.from('cp_awards').delete().eq('student_id', id)
+    await supabaseAdminAuth.from('cp_deductions').delete().eq('student_id', id)
     await supabaseAdminAuth.from('attendance').delete().eq('student_id', id)
     await supabaseAdminAuth.from('badges').delete().eq('student_id', id)
     await supabaseAdminAuth.from('monthly_snapshots').delete().eq('student_id', id)
