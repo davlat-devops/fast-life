@@ -5,6 +5,7 @@ import { supabase, supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
+import { CLANS } from '@/constants/clans'
 import { logAudit } from '@/lib/auditLog'
 
 // ── Category style map ────────────────────────────────────────
@@ -402,9 +403,138 @@ function DeleteConfirmModal({ eventTitle, onConfirm, onClose, busy }) {
   )
 }
 
+// ── Participants Modal ────────────────────────────────────────
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
+function ParticipantsModal({ event, onClose }) {
+  const [participants, setParticipants] = useState([])
+  const [loading,      setLoading]      = useState(true)
+
+  useEffect(() => {
+    supabaseAdminAuth
+      .from('event_rsvps')
+      .select('id, created_at, students(full_name, username, clan)')
+      .eq('event_id', event.id)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        setParticipants(data ?? [])
+        setLoading(false)
+      })
+  }, [event.id])
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0,  scale: 1 }}
+          exit={{   opacity: 0, y: 20, scale: 0.97 }}
+          transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+          className="relative w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)', maxHeight: '80vh' }}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between px-6 py-5 border-b border-white/[0.06] shrink-0">
+            <div className="min-w-0 flex-1 pr-4">
+              <h2 className="text-base font-bold text-white truncate">{event.title}</h2>
+              <p className="text-xs text-white/40 mt-0.5">
+                {loading ? '…' : `${participants.length} participant${participants.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+            <button onClick={onClose} className="text-white/30 hover:text-white/70 transition-colors shrink-0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          {/* List */}
+          <div className="overflow-y-auto flex-1">
+            {loading ? (
+              <div className="p-5 space-y-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-white/[0.06] animate-pulse shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 rounded bg-white/[0.06] animate-pulse w-40" />
+                      <div className="h-3 rounded bg-white/[0.06] animate-pulse w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : participants.length === 0 ? (
+              <div className="text-center py-12">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="1.5" strokeLinecap="round" className="mx-auto mb-3 text-white/15">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <p className="text-sm text-white/25">No participants yet</p>
+              </div>
+            ) : (
+              participants.map((p, i) => {
+                const student    = p.students
+                const clanAccent = CLANS[student?.clan]?.colorAccent ?? '#555'
+                const clanName   = CLANS[student?.clan]?.name ?? student?.clan ?? '—'
+                const initials   = (student?.full_name ?? '?').split(' ')
+                  .map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 px-6 py-3"
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                  >
+                    {/* Index */}
+                    <span className="text-[11px] font-bold w-5 text-center shrink-0 text-white/25">
+                      {i + 1}
+                    </span>
+
+                    {/* Avatar */}
+                    <div
+                      className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
+                      style={{ background: clanAccent }}
+                    >
+                      {initials}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{student?.full_name ?? '—'}</p>
+                      <p className="text-[10px] text-white/35">
+                        @{student?.username ?? '—'} · {clanName}
+                      </p>
+                    </div>
+
+                    {/* Signed up */}
+                    <p className="text-[10px] text-white/25 shrink-0">{timeAgo(p.created_at)}</p>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  )
+}
+
 // ── Event row ─────────────────────────────────────────────────
 
-function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
+function EventRow({ event, onTakeAttendance, onEdit, onDelete, onShowParticipants, rsvpCount, delay }) {
   const cat  = CAT_STYLE[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.12)' }
   const date = new Date(event.event_date + 'T00:00:00')
 
@@ -444,20 +574,38 @@ function EventRow({ event, onTakeAttendance, onEdit, onDelete, delay }) {
         <span className="text-[10px] text-white/30 ml-1">CP</span>
       </td>
 
-      {/* Status */}
+      {/* Status + participant count */}
       <td className="px-4 py-3">
-        {event.finalised ? (
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <div className="space-y-1.5">
+          {event.finalised ? (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2.5" strokeLinecap="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Finalised
+            </span>
+          ) : (
+            <span className="text-[11px] font-bold text-white/35">Open</span>
+          )}
+          <button
+            onClick={() => onShowParticipants(event)}
+            className="flex items-center gap-1 text-[10px] font-semibold transition-colors hover:text-blue-300"
+            style={{
+              color: rsvpCount > 0 ? '#60a5fa' : 'var(--ad-text-4)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="2.5" strokeLinecap="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
-            Finalised
-          </span>
-        ) : (
-          <span className="text-[11px] font-bold text-white/35">Open</span>
-        )}
+            {rsvpCount} going
+          </button>
+        </div>
       </td>
 
       {/* Action */}
@@ -540,16 +688,21 @@ export default function EventManagement() {
   const [showCreate,    setShowCreate]    = useState(false)
   const [editingEvent,  setEditingEvent]  = useState(null)
   const [deletingEvent, setDeletingEvent] = useState(null)
-  const [deleteBusy,    setDeleteBusy]    = useState(false)
+  const [deleteBusy,        setDeleteBusy]        = useState(false)
+  const [rsvpCounts,        setRsvpCounts]        = useState({})
+  const [participantsEvent, setParticipantsEvent] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .order('event_date', { ascending: false })
-    if (error) toast({ message: 'Failed to load events', type: 'error' })
-    setEvents(data ?? [])
+    const [eventsRes, rsvpRes] = await Promise.all([
+      supabase.from('events').select('*').order('event_date', { ascending: false }),
+      supabaseAdminAuth.from('event_rsvps').select('event_id'),
+    ])
+    if (eventsRes.error) toast({ message: 'Failed to load events', type: 'error' })
+    setEvents(eventsRes.data ?? [])
+    const counts = {}
+    for (const r of rsvpRes.data ?? []) counts[r.event_id] = (counts[r.event_id] ?? 0) + 1
+    setRsvpCounts(counts)
     setLoading(false)
   }, [toast])
 
@@ -650,7 +803,9 @@ export default function EventManagement() {
                 {events.map((event, i) => (
                   <EventRow key={event.id} event={event}
                     onTakeAttendance={id => navigate(`/admin/attendance/${id}`)}
-                    onEdit={setEditingEvent} onDelete={setDeletingEvent} delay={i * 0.025} />
+                    onEdit={setEditingEvent} onDelete={setDeletingEvent} delay={i * 0.025}
+                    rsvpCount={rsvpCounts[event.id] ?? 0}
+                    onShowParticipants={setParticipantsEvent} />
                 ))}
               </AnimatePresence>
             )}
@@ -698,10 +853,28 @@ export default function EventManagement() {
                 <div className="flex items-center justify-between pt-1 border-t border-white/[0.05]">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-black text-white">+{event.cp_value} <span className="text-white/30 font-normal text-xs">CP</span></span>
-                    {event.finalised
-                      ? <span className="text-[11px] font-bold text-emerald-400">Finalised</span>
-                      : <span className="text-[11px] text-white/35">Open</span>
-                    }
+                    <div className="flex flex-col gap-0.5">
+                      {event.finalised
+                        ? <span className="text-[11px] font-bold text-emerald-400">Finalised</span>
+                        : <span className="text-[11px] text-white/35">Open</span>
+                      }
+                      <button
+                        onClick={() => setParticipantsEvent(event)}
+                        className="flex items-center gap-1 text-[10px] font-semibold transition-colors hover:text-blue-300"
+                        style={{
+                          color: (rsvpCounts[event.id] ?? 0) > 0 ? '#60a5fa' : 'var(--ad-text-4)',
+                          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                          strokeWidth="2.5" strokeLinecap="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                          <circle cx="9" cy="7" r="4"/>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        {rsvpCounts[event.id] ?? 0} going
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <motion.button whileTap={{ scale: 0.97 }}
@@ -762,6 +935,14 @@ export default function EventManagement() {
           onConfirm={handleDeleteConfirm}
           onClose={() => setDeletingEvent(null)}
           busy={deleteBusy}
+        />
+      )}
+
+      {/* ── Participants modal ─────────────────────────────── */}
+      {participantsEvent && (
+        <ParticipantsModal
+          event={participantsEvent}
+          onClose={() => setParticipantsEvent(null)}
         />
       )}
     </div>

@@ -57,12 +57,20 @@ function Skeleton({ className }) {
   return <div className={`rounded-lg animate-pulse ${className}`} style={{ background: 'var(--fl-skeleton)' }} />
 }
 
-function EventCard({ event, myAttendance, accent, delay }) {
-  const cat      = CAT_META[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.1)', icon: null }
-  const eventDay = new Date(event.event_date + 'T00:00:00')
-  const today    = new Date(new Date().toDateString())
-  const isPast   = eventDay < today
-  const attended = myAttendance?.present && myAttendance?.finalised
+const Spinner = () => (
+  <svg className="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+  </svg>
+)
+
+function EventCard({ event, myAttendance, accent, delay, rsvpId, onParticipate, onCancel, busy }) {
+  const cat        = CAT_META[event.category] ?? { color: '#888', bg: 'rgba(136,136,136,0.1)', icon: null }
+  const eventDay   = new Date(event.event_date + 'T00:00:00')
+  const today      = new Date(new Date().toDateString())
+  const isPast     = eventDay < today
+  const attended   = myAttendance?.present && myAttendance?.finalised
+  const isUpcoming = !isPast && !event.finalised
 
   const month = eventDay.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
   const day   = eventDay.getDate()
@@ -72,77 +80,126 @@ function EventCard({ event, myAttendance, accent, delay }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.22 }}
-      className="flex items-center gap-4 p-4 rounded-2xl"
+      className="rounded-2xl overflow-hidden"
       style={{
-        background:       'rgba(255,255,255,0.03)',
-        backdropFilter:   'blur(10px)',
+        background:           'rgba(255,255,255,0.03)',
+        backdropFilter:       'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        border:           '1px solid rgba(255,255,255,0.07)',
-        boxShadow:        '0 4px 20px rgba(0,0,0,0.25)',
-        borderLeft:       `4px solid ${cat.color}`,
+        border:               '1px solid rgba(255,255,255,0.07)',
+        boxShadow:            '0 4px 20px rgba(0,0,0,0.25)',
+        borderLeft:           `4px solid ${cat.color}`,
       }}
     >
-      {/* Date block */}
-      <div className="shrink-0 w-10 text-center">
-        <p
-          className="text-[9px] font-bold leading-none tracking-widest"
-          style={{ color: 'var(--fl-text-3)' }}
-        >
-          {month}
-        </p>
-        <p className="text-2xl font-black leading-tight" style={{ color: 'var(--fl-text)' }}>
-          {day}
-        </p>
-      </div>
+      {/* ── Main row ─────────────────────────────────── */}
+      <div className="flex items-center gap-4 p-4">
 
-      <div className="w-px h-10 shrink-0" style={{ background: 'var(--fl-border)' }} />
+        {/* Date block */}
+        <div className="shrink-0 w-10 text-center">
+          <p className="text-[9px] font-bold leading-none tracking-widest" style={{ color: 'var(--fl-text-3)' }}>
+            {month}
+          </p>
+          <p className="text-2xl font-black leading-tight" style={{ color: 'var(--fl-text)' }}>
+            {day}
+          </p>
+        </div>
 
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold truncate leading-snug" style={{ color: 'var(--fl-text)' }}>
-          {event.title}
-        </p>
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span
-            className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={{ color: cat.color, background: cat.bg }}
-          >
-            {cat.icon && <span style={{ display: 'flex' }}>{cat.icon}</span>}
-            {event.category}
-          </span>
-          {event.room && (
-            <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.room}</span>
-          )}
-          {event.event_time && (
-            <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.event_time.slice(0, 5)}</span>
+        <div className="w-px h-10 shrink-0" style={{ background: 'var(--fl-border)' }} />
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate leading-snug" style={{ color: 'var(--fl-text)' }}>
+            {event.title}
+          </p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <span
+              className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{ color: cat.color, background: cat.bg }}
+            >
+              {cat.icon && <span style={{ display: 'flex' }}>{cat.icon}</span>}
+              {event.category}
+            </span>
+            {event.room && (
+              <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.room}</span>
+            )}
+            {event.event_time && (
+              <span className="text-[10px]" style={{ color: 'var(--fl-text-3)' }}>{event.event_time.slice(0, 5)}</span>
+            )}
+          </div>
+        </div>
+
+        {/* Status / CP */}
+        <div className="shrink-0 text-right">
+          {attended ? (
+            <div>
+              <p className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
+                <CheckCircle size={11} />
+                Attended
+              </p>
+              {myAttendance.cp_awarded > 0 && (
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(34,197,94,0.6)' }}>
+                  +{myAttendance.cp_awarded} CP
+                </p>
+              )}
+            </div>
+          ) : isPast && event.finalised ? (
+            <p className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>Missed</p>
+          ) : (
+            <div
+              className="px-2 py-1.5 rounded-lg text-center"
+              style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
+            >
+              <p className="text-[11px] font-black" style={{ color: accent }}>+{event.cp_value}</p>
+              <p className="text-[9px] leading-none mt-0.5" style={{ color: 'var(--fl-text-3)' }}>CP</p>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Status / CP badge */}
-      <div className="shrink-0 text-right">
-        {attended ? (
-          <div>
-            <p className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
-              <CheckCircle size={11} />
-              Attended
-            </p>
-            {myAttendance.cp_awarded > 0 && (
-              <p className="text-[10px] mt-0.5" style={{ color: 'rgba(34,197,94,0.6)' }}>+{myAttendance.cp_awarded} CP</p>
-            )}
-          </div>
-        ) : isPast && event.finalised ? (
-          <p className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>Missed</p>
-        ) : (
-          <div
-            className="px-2 py-1.5 rounded-lg text-center"
-            style={{ background: `${accent}18`, border: `1px solid ${accent}30` }}
-          >
-            <p className="text-[11px] font-black" style={{ color: accent }}>+{event.cp_value}</p>
-            <p className="text-[9px] leading-none mt-0.5" style={{ color: 'var(--fl-text-3)' }}>CP</p>
-          </div>
-        )}
-      </div>
+      {/* ── RSVP action row (upcoming only) ──────────── */}
+      {isUpcoming && (
+        <div
+          className="px-4 pb-3 pt-2.5"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          {rsvpId ? (
+            <button
+              onClick={() => onCancel(event.id, rsvpId)}
+              disabled={busy}
+              className="w-full py-2 rounded-xl text-[12px] font-bold transition-all
+                flex items-center justify-center gap-1.5 disabled:opacity-50 min-h-[36px]"
+              style={{
+                border:     '1px solid rgba(239,68,68,0.4)',
+                color:      '#f87171',
+                background: 'rgba(239,68,68,0.08)',
+              }}
+            >
+              {busy ? <Spinner /> : (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              )}
+              {busy ? 'Cancelling…' : 'Cancel participation'}
+            </button>
+          ) : (
+            <button
+              onClick={() => onParticipate(event.id)}
+              disabled={busy}
+              className="w-full py-2 rounded-xl text-[12px] font-bold transition-all
+                flex items-center justify-center gap-1.5 disabled:opacity-50 min-h-[36px]"
+              style={{
+                background: busy ? `${accent}80` : accent,
+                color:      '#fff',
+                boxShadow:  busy ? 'none' : `0 2px 10px ${accent}40`,
+              }}
+            >
+              {busy ? <Spinner /> : (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              )}
+              {busy ? 'Joining…' : 'Participate'}
+            </button>
+          )}
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -153,6 +210,8 @@ export default function EventsPage() {
 
   const [events,        setEvents]        = useState([])
   const [attendanceMap, setAttendanceMap] = useState({})
+  const [rsvpMap,       setRsvpMap]       = useState({}) // eventId → rsvpId
+  const [rsvpBusy,      setRsvpBusy]      = useState(new Set())
   const [loading,       setLoading]       = useState(true)
   const [tab,           setTab]           = useState('upcoming')
   const [category,      setCategory]      = useState('All')
@@ -164,14 +223,38 @@ export default function EventsPage() {
       supabase.from('attendance')
         .select('event_id, present, finalised, cp_awarded')
         .eq('student_id', studentRecord.id),
-    ]).then(([eventsRes, attendRes]) => {
+      supabase.from('event_rsvps')
+        .select('event_id, id')
+        .eq('student_id', studentRecord.id),
+    ]).then(([eventsRes, attendRes, rsvpRes]) => {
       setEvents(eventsRes.data ?? [])
-      const map = {}
-      for (const a of attendRes.data ?? []) map[a.event_id] = a
-      setAttendanceMap(map)
+      const aMap = {}
+      for (const a of attendRes.data ?? []) aMap[a.event_id] = a
+      setAttendanceMap(aMap)
+      const rMap = {}
+      for (const r of rsvpRes.data ?? []) rMap[r.event_id] = r.id
+      setRsvpMap(rMap)
       setLoading(false)
     })
   }, [studentRecord?.id])
+
+  async function handleParticipate(eventId) {
+    setRsvpBusy(prev => new Set(prev).add(eventId))
+    const { data, error } = await supabase
+      .from('event_rsvps')
+      .insert({ event_id: eventId, student_id: studentRecord.id })
+      .select('id')
+      .single()
+    setRsvpBusy(prev => { const s = new Set(prev); s.delete(eventId); return s })
+    if (!error && data) setRsvpMap(prev => ({ ...prev, [eventId]: data.id }))
+  }
+
+  async function handleCancel(eventId, rsvpId) {
+    setRsvpBusy(prev => new Set(prev).add(eventId))
+    const { error } = await supabase.from('event_rsvps').delete().eq('id', rsvpId)
+    setRsvpBusy(prev => { const s = new Set(prev); s.delete(eventId); return s })
+    if (!error) setRsvpMap(prev => { const m = { ...prev }; delete m[eventId]; return m })
+  }
 
   const today = new Date(new Date().toDateString())
 
@@ -210,15 +293,15 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {/* ── Upcoming / Past tabs (premium pill) ─────────── */}
-      <div className="px-5 md:px-8 mb-4">
+      {/* ── Upcoming / Past tabs ─────────────────────────── */}
+      <div className="px-5 md:px-8 mb-4 mt-4">
         <div
           className="flex rounded-2xl overflow-hidden p-1 gap-1"
           style={{
-            background: 'rgba(255,255,255,0.04)',
-            backdropFilter: 'blur(8px)',
+            background:           'rgba(255,255,255,0.04)',
+            backdropFilter:       'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border:               '1px solid rgba(255,255,255,0.08)',
           }}
         >
           {[['upcoming', 'Upcoming'], ['past', 'Past']].map(([key, label]) => (
@@ -227,11 +310,7 @@ export default function EventsPage() {
               onClick={() => setTab(key)}
               className="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all"
               style={tab === key
-                ? {
-                    background: accent,
-                    color: '#fff',
-                    boxShadow: `0 2px 12px ${accent}50`,
-                  }
+                ? { background: accent, color: '#fff', boxShadow: `0 2px 12px ${accent}50` }
                 : { color: 'var(--fl-text-3)', background: 'transparent' }}
             >
               {label}
@@ -251,22 +330,10 @@ export default function EventsPage() {
               onClick={() => setCategory(cat)}
               className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all"
               style={active
-                ? {
-                    background: meta?.color ?? accent,
-                    color: '#fff',
-                    boxShadow: `0 2px 10px ${meta?.color ?? accent}55`,
-                  }
-                : {
-                    background: 'rgba(255,255,255,0.05)',
-                    color: 'var(--fl-text-2)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}
+                ? { background: meta?.color ?? accent, color: '#fff', boxShadow: `0 2px 10px ${meta?.color ?? accent}55` }
+                : { background: 'rgba(255,255,255,0.05)', color: 'var(--fl-text-2)', border: '1px solid rgba(255,255,255,0.08)' }}
             >
-              {meta?.icon && (
-                <span style={{ color: active ? '#fff' : meta.color, display: 'flex' }}>
-                  {meta.icon}
-                </span>
-              )}
+              {meta?.icon && <span style={{ color: active ? '#fff' : meta.color, display: 'flex' }}>{meta.icon}</span>}
               {cat}
             </button>
           )
@@ -296,6 +363,10 @@ export default function EventsPage() {
                 myAttendance={attendanceMap[event.id]}
                 accent={accent}
                 delay={i * 0.035}
+                rsvpId={rsvpMap[event.id]}
+                onParticipate={handleParticipate}
+                onCancel={handleCancel}
+                busy={rsvpBusy.has(event.id)}
               />
             ))}
           </AnimatePresence>
