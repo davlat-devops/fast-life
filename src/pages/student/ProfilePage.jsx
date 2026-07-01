@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Star, Calendar, Award, Trophy, Crown, Lock, Users, FileText,
-  Heart, Shield, CheckCircle,
+  Heart, Shield, CheckCircle, Info,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -10,6 +10,7 @@ import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
 import SlideBackground, { CLAN_IMAGES } from '@/components/ui/SlideBackground'
 import { BADGES, BADGE_ICONS, LEVEL_THRESHOLDS } from '@/constants/badges'
+import BadgeGuideModal from '@/components/student/BadgeGuideModal'
 
 // ── CP history icon map ───────────────────────────────────────
 
@@ -132,7 +133,9 @@ export default function ProfilePage() {
 
   const [earnedBadges, setEarnedBadges] = useState([])
   const [history,      setHistory]      = useState([])
+  const [eventsCount,  setEventsCount]  = useState(0)
   const [loading,      setLoading]      = useState(true)
+  const [guideOpen,    setGuideOpen]    = useState(false)
 
   const [pwForm,   setPwForm]   = useState({ current: '', newPw: '', confirm: '' })
   const [pwErrors, setPwErrors] = useState({})
@@ -182,14 +185,18 @@ export default function ProfilePage() {
       supabase.from('badges').select('badge_key, earned_at').eq('student_id', studentRecord.id),
       supabase.from('cp_awards').select('*').eq('student_id', studentRecord.id)
         .order('created_at', { ascending: false }),
-    ]).then(([badgesRes, historyRes]) => {
+      supabase.from('attendance').select('*', { count: 'exact', head: true })
+        .eq('student_id', studentRecord.id).eq('present', true).eq('finalised', true),
+    ]).then(([badgesRes, historyRes, attendanceRes]) => {
       setEarnedBadges(badgesRes.data ?? [])
       setHistory(historyRes.data ?? [])
+      setEventsCount(attendanceRes.count ?? 0)
       setLoading(false)
     })
   }, [studentRecord?.id])
 
   const earnedKeys = useMemo(() => new Set(earnedBadges.map(b => b.badge_key)), [earnedBadges])
+  const monthlyCP  = useMemo(() => history.reduce((sum, h) => sum + (h.amount || 0), 0), [history])
 
   const { current: level, next: nextLevel, pct, toNext } = getLevelProgress(cp)
 
@@ -325,11 +332,21 @@ export default function ProfilePage() {
             boxShadow:  'var(--fl-shadow)',
           }}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 gap-2">
             <h2 className="text-sm font-bold" style={{ color: 'var(--fl-text)' }}>Badges</h2>
-            <span className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>
-              {loading ? '…' : `${earnedKeys.size} / ${allBadges.length}`}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px]" style={{ color: 'var(--fl-text-3)' }}>
+                {loading ? '…' : `${earnedKeys.size} / ${allBadges.length}`}
+              </span>
+              <button
+                onClick={() => setGuideOpen(true)}
+                className="flex items-center gap-1.5 text-[11px] font-semibold pl-2 pr-2.5 py-1 rounded-full transition-colors"
+                style={{ background: `${accent}18`, color: accent, border: `1px solid ${accent}30` }}
+              >
+                <Info size={12} />
+                Badge Guide
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -563,6 +580,15 @@ export default function ProfilePage() {
         </motion.button>
 
       </div>
+
+      <BadgeGuideModal
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        accent={accent}
+        earnedKeys={earnedKeys}
+        monthlyCP={monthlyCP}
+        eventsCount={eventsCount}
+      />
     </div>
   )
 }
