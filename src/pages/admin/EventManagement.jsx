@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase, supabaseAdminAuth } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/contexts/ToastContext'
 import { EVENT_CATEGORIES, DEFAULT_EVENT_CP, CP_FOR_CATEGORY } from '@/constants/cp'
@@ -701,7 +701,7 @@ export default function EventManagement() {
   const load = useCallback(async () => {
     setLoading(true)
     const [eventsRes, rsvpRes] = await Promise.all([
-      supabase.from('events').select('*').order('event_date', { ascending: false }),
+      supabaseAdminAuth.from('events').select('*').order('event_date', { ascending: false }),
       supabaseAdminAuth.from('event_rsvps').select('event_id'),
     ])
     if (eventsRes.error) toast({ message: 'Failed to load events', type: 'error' })
