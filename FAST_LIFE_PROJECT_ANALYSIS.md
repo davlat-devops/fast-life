@@ -2,7 +2,7 @@
 
 > Generated: 2026-06-30  
 > Production: <https://fast-life-tau.vercel.app>  
-> Supabase project: `nzynftabktxewhouinxc`  
+> Supabase project: `<redacted>`  
 > Git remote: `https://github.com/davlat-devops/fast-life.git`
 
 ---
@@ -579,7 +579,7 @@ GitHub (davlat-devops/fast-life)
   └─ Vercel (auto-deploy on push to main)
        └─ https://fast-life-tau.vercel.app
 
-Supabase (project: nzynftabktxewhouinxc)
+Supabase (project: <redacted>)
   ├─ PostgreSQL database
   ├─ Auth service
   └─ Edge Functions
@@ -612,7 +612,7 @@ Single catch-all rewrite for SPA routing — all paths fall through to `index.ht
 vercel --prod
 
 # Apply a DB migration to live Supabase
-supabase link --project-ref nzynftabktxewhouinxc
+supabase link --project-ref <redacted>
 supabase db query --linked -f supabase/migrations/<file>.sql
 
 # Deploy an Edge Function

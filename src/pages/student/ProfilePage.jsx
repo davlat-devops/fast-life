@@ -168,8 +168,6 @@ export default function ProfilePage() {
       const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.newPw })
       if (updateErr) throw updateErr
 
-      await supabase.from('students').update({ password_plain: pwForm.newPw }).eq('id', studentRecord.id)
-
       toast({ message: 'Password updated successfully', type: 'success' })
       setPwForm({ current: '', newPw: '', confirm: '' })
     } catch (err) {
