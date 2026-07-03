@@ -9,7 +9,7 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { AdminThemeProvider, useAdminTheme } from '@/contexts/AdminThemeContext'
 import { useToast } from '@/contexts/ToastContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/logo.webp'
 
 const IDLE_WARN_MS  = 25 * 60 * 1000  // 25 minutes
 const IDLE_LIMIT_MS = 30 * 60 * 1000  // 30 minutes
@@ -95,6 +95,9 @@ function Sidebar({ user, onSignOut, onClose }) {
         <img
           src={logo}
           alt="Fast Education"
+          width={49}
+          height={44}
+          decoding="async"
           style={{
             height: 44, width: 'auto', objectFit: 'contain',
             filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none',
@@ -278,6 +281,9 @@ function AdminLayoutInner() {
           <img
             src={logo}
             alt="Fast Education"
+            width={40}
+            height={36}
+            decoding="async"
             style={{
               height: 36, width: 'auto', objectFit: 'contain',
               filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none',

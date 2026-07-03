@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import FullPageLoader from '@/components/ui/FullPageLoader'
 import { CLANS } from '@/constants/clans'
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/logo.webp'
 
 // ── Sidebar nav items ─────────────────────────────────────────
 
@@ -126,6 +126,9 @@ function Sidebar({ studentRecord, accentColor, onClose }) {
         <img
           src={logo}
           alt="Fast Education"
+          width={45}
+          height={40}
+          decoding="async"
           style={{
             height: 40, width: 'auto', objectFit: 'contain',
             filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none',

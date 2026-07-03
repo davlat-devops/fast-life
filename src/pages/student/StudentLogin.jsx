@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/logo.webp'
 import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Background slideshow with overlays ───────────────────────
@@ -230,6 +230,10 @@ export default function StudentLogin() {
             <img
               src={logo}
               alt="Fast Education"
+              width={134}
+              height={120}
+              fetchPriority="high"
+              decoding="async"
               style={{
                 height: 120, width: 'auto', objectFit: 'contain', position: 'relative',
                 filter: 'brightness(0) invert(1) drop-shadow(0 2px 16px rgba(220,38,38,0.5))',

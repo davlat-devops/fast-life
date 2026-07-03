@@ -81,6 +81,7 @@ export default function ClanPage() {
           image={CLAN_IMAGES[studentRecord?.clan]}
           overlay="rgba(0,0,0,0.48)"
           bottomFade
+          placeholderColor={colorBg}
         />
 
         <div className="relative z-10 px-5 pt-6 pb-7">

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Star, Calendar, Award, Trophy, Crown, Lock, Users, FileText,
+  Star, Calendar, Award, Trophy, Crown, Lock, Users,
   Heart, Shield, CheckCircle, Info,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -218,6 +218,7 @@ export default function ProfilePage() {
           image={CLAN_IMAGES[studentRecord?.clan]}
           overlay="rgba(0,0,0,0.50)"
           bottomFade
+          placeholderColor={colorBg}
         />
 
         <div className="relative z-10 px-5 pt-6 pb-6">

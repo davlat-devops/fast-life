@@ -3,17 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabaseAdminAuth as supabase } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon } from '@/components/ui/ClanIcons'
-import imgWolfrin from '@/assets/clans/wolfrin.png'
-import imgAveron  from '@/assets/clans/averon.png'
-import imgCrodon  from '@/assets/clans/crodon.png'
-import imgViperon from '@/assets/clans/viperon.png'
-
-const CLAN_IMG_MAP = {
-  WOLFRIN: imgWolfrin,
-  AVERON:  imgAveron,
-  CRODON:  imgCrodon,
-  VIPERON: imgViperon,
-}
 import { MANUAL_CP_REASONS, DEDUCTION_REASONS } from '@/constants/cp'
 import { useToast } from '@/contexts/ToastContext'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -141,13 +130,7 @@ function StudentPicker({ allStudents, selected, onSelect }) {
                     <div className="min-w-0">
                       <p className="text-sm text-white font-medium truncate">{s.full_name}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        {CLAN_IMG_MAP[s.clan] && (
-                          <img
-                            src={CLAN_IMG_MAP[s.clan]}
-                            alt={s.clan}
-                            style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-                          />
-                        )}
+                        <ClanIcon clanId={s.clan} size={16} />
                         <span className="text-[10px] text-white/35">{info?.name}</span>
                         <span className="text-white/20">·</span>
                         <span className="text-[10px] text-white/35">{s.cp.toLocaleString()} CP</span>

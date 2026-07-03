@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { supabaseAdminAuth } from '@/lib/supabase'
-import logo from '@/assets/logo.png'
+import logo from '@/assets/logo.webp'
 import SlideBackground from '@/components/ui/SlideBackground'
 
 // ── Input field ───────────────────────────────────────────────
@@ -169,6 +169,10 @@ export default function AdminLogin() {
               <img
                 src={logo}
                 alt="Fast Education"
+                width={112}
+                height={100}
+                fetchPriority="high"
+                decoding="async"
                 style={{
                   height: 100, width: 'auto', objectFit: 'contain',
                   filter: 'brightness(0) invert(1)',

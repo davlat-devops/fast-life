@@ -95,7 +95,10 @@ function ClanRaceBar({ clan, maxCp, memberCount, rank, delay }) {
 
 function ClanSummaryCard({ clan, members, rank, delay }) {
   const info = CLANS[clan.id]
-  const top3 = [...members].sort((a, b) => b.cp - a.cp).slice(0, 3)
+  const top3 = useMemo(
+    () => [...members].sort((a, b) => b.cp - a.cp).slice(0, 3),
+    [members],
+  )
 
   return (
     <motion.div

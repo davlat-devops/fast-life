@@ -1,7 +1,7 @@
-import imgViperon from '@/assets/clans/viperon.png'
-import imgCrodon  from '@/assets/clans/crodon.png'
-import imgAveron  from '@/assets/clans/averon.png'
-import imgWolfrin from '@/assets/clans/wolfrin.png'
+import imgViperon from '@/assets/clans/viperon-icon.webp'
+import imgCrodon  from '@/assets/clans/crodon-icon.webp'
+import imgAveron  from '@/assets/clans/averon-icon.webp'
+import imgWolfrin from '@/assets/clans/wolfrin-icon.webp'
 
 const CLAN_IMAGES = {
   VIPERON: imgViperon,
@@ -11,13 +11,17 @@ const CLAN_IMAGES = {
 }
 
 // ── ClanIcon — circular clan image ────────────────────────────
-export function ClanIcon({ clanId, size = 32, className, style }) {
+export function ClanIcon({ clanId, size = 32, className, style, loading = 'lazy' }) {
   const src = CLAN_IMAGES[clanId]
   if (!src) return null
   return (
     <img
       src={src}
       alt={clanId}
+      width={size}
+      height={size}
+      loading={loading}
+      decoding="async"
       className={className}
       style={{
         width:        size,

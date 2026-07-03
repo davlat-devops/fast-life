@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Users, Calendar, Star, Trophy,
   CalendarPlus, RefreshCw, Crown,
-  Zap, Award, Heart, BookOpen, Globe,
+  Zap, Award, Heart,
 } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
