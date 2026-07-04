@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import imgWolfrin from '@/assets/clans/wolfrin-hero.webp'
 import imgAveron  from '@/assets/clans/averon-hero.webp'
 import imgCrodon  from '@/assets/clans/crodon-hero.webp'
@@ -71,25 +70,34 @@ export default function SlideBackground({
 
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      <AnimatePresence>
-        <motion.img
-          key={idx}
-          src={slides[idx]}
+      {/* All slides stay mounted and crossfade via a plain CSS opacity
+          transition — no framer-motion here. Two independent Chrome LCP
+          footguns to avoid re-introducing:
+          1. Unmounting/remounting the active slide (e.g. via AnimatePresence
+             + key={idx}) invalidates it as the LCP candidate the moment it's
+             removed, so the browser falls back to a much smaller element.
+          2. framer-motion's motion.img promotes the element to its own
+             compositor layer (transform/will-change), which this Chrome
+             version does not route through the paint-timing instrumentation
+             LCP relies on — the element silently never becomes an LCP
+             candidate at all, animated or not. */}
+      {slides.map((src, i) => (
+        <img
+          key={src}
+          src={src}
           alt=""
-          initial={{ opacity: 0, scale: 1.04 }}
-          animate={{ opacity: 1, scale: 1.08 }}
-          exit={{ opacity: 0 }}
-          transition={{
-            opacity: { duration: 1.2, ease: 'easeInOut' },
-            scale:   { duration: 4.5, ease: 'linear' },
-          }}
+          fetchPriority={i === 0 ? 'high' : undefined}
+          decoding={i === 0 ? 'async' : undefined}
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
             objectFit: 'cover', objectPosition: 'center',
+            opacity: idx === i ? 1 : 0,
+            transform: `scale(${idx === i ? 1.08 : 1.04})`,
+            transition: 'opacity 1.2s ease, transform 4.5s linear',
           }}
         />
-      </AnimatePresence>
+      ))}
 
       {/* Dark overlay */}
       <div style={{ position: 'absolute', inset: 0, background: overlay, pointerEvents: 'none' }} />

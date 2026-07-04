@@ -189,7 +189,7 @@ export default function StudentLogin() {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, overflow: 'hidden',
+      position: 'absolute', inset: 0, overflow: 'hidden',
       background: '#000',
       fontFamily: "'Inter', system-ui, sans-serif",
     }}>
