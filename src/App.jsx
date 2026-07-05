@@ -26,11 +26,12 @@ const AdminManagement    = lazy(() => import('@/pages/admin/AdminManagement'))
 const AuditLog           = lazy(() => import('@/pages/admin/AuditLog'))
 const BadgeManagement    = lazy(() => import('@/pages/admin/BadgeManagement'))
 
-const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard'))
-const ClanPage         = lazy(() => import('@/pages/student/ClanPage'))
-const EventsPage       = lazy(() => import('@/pages/student/EventsPage'))
-const LeaderboardPage  = lazy(() => import('@/pages/student/LeaderboardPage'))
-const ProfilePage      = lazy(() => import('@/pages/student/ProfilePage'))
+const StudentDashboard  = lazy(() => import('@/pages/student/StudentDashboard'))
+const ClanPage          = lazy(() => import('@/pages/student/ClanPage'))
+const EventsPage        = lazy(() => import('@/pages/student/EventsPage'))
+const LeaderboardPage   = lazy(() => import('@/pages/student/LeaderboardPage'))
+const ProfilePage       = lazy(() => import('@/pages/student/ProfilePage'))
+const PublicProfilePage = lazy(() => import('@/pages/student/PublicProfilePage'))
 
 
 export default function App() {
@@ -59,6 +60,7 @@ export default function App() {
                   <Route path="/events"      element={<EventsPage />} />
                   <Route path="/leaderboard" element={<LeaderboardPage />} />
                   <Route path="/profile"     element={<ProfilePage />} />
+                  <Route path="/students/:studentId" element={<PublicProfilePage />} />
                 </Route>
 
                 {/* ── Admin login ───────────────────────────────── */}
@@ -71,6 +73,7 @@ export default function App() {
                   <Route index element={<Navigate to="dashboard" replace />} />
                   <Route path="dashboard"           element={<AdminDashboard />} />
                   <Route path="students"            element={<StudentManagement />} />
+                  <Route path="students/:studentId" element={<PublicProfilePage />} />
                   <Route path="events"              element={<EventManagement />} />
                   <Route path="attendance/:eventId" element={<AttendanceRegister />} />
                   <Route path="cp"                  element={<CpAwards />} />

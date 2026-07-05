@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, AlertTriangle, Loader2 } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
@@ -307,13 +307,13 @@ function StudentRow({ student, onToggleActive, onResetPassword, onDelete, delay 
     >
       {/* Name + avatar */}
       <td className="px-4 py-3">
-        <div className="flex items-center gap-3">
+        <Link to={`/admin/students/${student.id}`} className="flex items-center gap-3 cursor-pointer no-underline">
           <Avatar name={student.full_name} clan={student.clan} />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white truncate">{student.full_name}</p>
             <p className="text-[11px] text-white/35 font-mono">{student.username}</p>
           </div>
-        </div>
+        </Link>
       </td>
 
       {/* Clan */}
@@ -768,7 +768,7 @@ export default function StudentManagement() {
                 style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
                 {/* Row 1: avatar + name + actions */}
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <Link to={`/admin/students/${s.id}`} className="flex items-center gap-3 min-w-0 cursor-pointer no-underline">
                     <div className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-sm font-bold text-white"
                       style={{ background: accent }}>
                       {initials}
@@ -777,7 +777,7 @@ export default function StudentManagement() {
                       <p className="text-sm font-semibold text-white truncate">{s.full_name}</p>
                       <p className="text-[11px] text-white/35 font-mono">{s.username}</p>
                     </div>
-                  </div>
+                  </Link>
                   <div className="flex items-center gap-2 shrink-0">
                     <Toggle checked={s.is_active}
                       onChange={async () => { await toggleActive(s) }}

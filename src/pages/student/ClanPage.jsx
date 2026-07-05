@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Crown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -38,6 +39,7 @@ function StatCard({ label, value, sub, accent }) {
 
 export default function ClanPage() {
   const { studentRecord } = useAuth()
+  const navigate = useNavigate()
   const clanInfo = CLANS[studentRecord?.clan]
   const accent   = clanInfo?.colorAccent ?? '#CC0000'
   const colorBg  = clanInfo?.colorBg ?? '#0a0a0a'
@@ -261,7 +263,8 @@ export default function ClanPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.025 }}
-                  className="flex items-center gap-3 px-5 py-3"
+                  onClick={() => navigate(`/students/${member.id}`)}
+                  className="flex items-center gap-3 px-5 py-3 cursor-pointer"
                   style={{
                     borderBottom: '1px solid var(--fl-border-2)',
                     background:   isMe ? `${accent}0d` : 'transparent',

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Flag, Trophy, Crown } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
@@ -162,7 +163,7 @@ function ClanSummaryCard({ clan, members, rank, delay }) {
 
 // ── Individual Student Row ─────────────────────────────────────
 
-function StudentRow({ student, rank, delay }) {
+function StudentRow({ student, rank, delay, onSelect }) {
   const clanInfo = CLANS[student.clan]
   const initials = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
@@ -171,7 +172,8 @@ function StudentRow({ student, rank, delay }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay, duration: 0.15 }}
-      className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group"
+      onClick={() => onSelect(student.id)}
+      className="border-b border-white/[0.04] hover:bg-white/[0.025] transition-colors group cursor-pointer"
     >
       {/* Rank */}
       <td className="px-4 py-3 w-14">
@@ -236,6 +238,7 @@ function StudentRow({ student, rank, delay }) {
 // ── Page ───────────────────────────────────────────────────────
 
 export default function Rankings() {
+  const navigate = useNavigate()
   const [clans,    setClans]    = useState([])
   const [students, setStudents] = useState([])
   const [loading,  setLoading]  = useState(true)
@@ -465,7 +468,13 @@ export default function Rankings() {
               ) : (
                 <AnimatePresence initial={false}>
                   {visible.map((s, i) => (
-                    <StudentRow key={s.id} student={s} rank={s.rank} delay={i * 0.018} />
+                    <StudentRow
+                      key={s.id}
+                      student={s}
+                      rank={s.rank}
+                      delay={i * 0.018}
+                      onSelect={id => navigate(`/admin/students/${id}`)}
+                    />
                   ))}
                 </AnimatePresence>
               )}
@@ -541,7 +550,8 @@ export default function Rankings() {
               const initials = s.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
               return (
                 <motion.div key={s.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.025 }}
-                  className="rounded-2xl p-3.5 flex items-center gap-3"
+                  onClick={() => navigate(`/admin/students/${s.id}`)}
+                  className="rounded-2xl p-3.5 flex items-center gap-3 cursor-pointer"
                   style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}>
                   <RankBadge rank={s.rank} size={22} />
                   <div className="w-9 h-9 rounded-full shrink-0 flex items-center justify-center text-[11px] font-bold text-white"

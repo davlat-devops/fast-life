@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Trophy } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -21,7 +22,7 @@ const RANK_STYLE = [
   { platH: 45,  bg: 'linear-gradient(180deg, #92613A 0%, #5C3A1E 100%)', badge: '#92613A', text: '#FDE8D0', num: '3' },
 ]
 
-function PodiumSlot({ student, rank, isMe, accent }) {
+function PodiumSlot({ student, rank, isMe, accent, onSelect }) {
   if (!student) return <div className="flex-1" />
 
   const rs         = RANK_STYLE[rank]
@@ -34,7 +35,8 @@ function PodiumSlot({ student, rank, isMe, accent }) {
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.08, type: 'spring', stiffness: 280, damping: 24 }}
-      className="flex-1 flex flex-col items-center"
+      onClick={() => onSelect(student.id)}
+      className="flex-1 flex flex-col items-center cursor-pointer"
     >
       {/* Rank badge */}
       <div
@@ -93,7 +95,7 @@ function PodiumSlot({ student, rank, isMe, accent }) {
 
 // ── Leaderboard row ───────────────────────────────────────────
 
-function LeaderRow({ student, rank, isMe, accent, delay }) {
+function LeaderRow({ student, rank, isMe, accent, delay, onSelect }) {
   const initials   = student.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
   const clanInfo   = CLANS[student.clan]
   const rankColors = { 1: '#C9A227', 2: '#9CA3AF', 3: '#92613A' }
@@ -103,7 +105,8 @@ function LeaderRow({ student, rank, isMe, accent, delay }) {
       initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay, duration: 0.2 }}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl"
+      onClick={() => onSelect(student.id)}
+      className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
       style={isMe
         ? {
             background: `${accent}12`,
@@ -166,6 +169,7 @@ function LeaderRow({ student, rank, isMe, accent, delay }) {
 
 export default function LeaderboardPage() {
   const { studentRecord } = useAuth()
+  const navigate = useNavigate()
   const accent = CLANS[studentRecord?.clan]?.colorAccent ?? '#CC0000'
 
   const [all,     setAll]     = useState([])
@@ -277,6 +281,7 @@ export default function LeaderboardPage() {
                     rank={idx}
                     isMe={top3[idx]?.id === studentRecord?.id}
                     accent={accent}
+                    onSelect={id => navigate(`/students/${id}`)}
                   />
                 ))}
               </div>
@@ -293,6 +298,7 @@ export default function LeaderboardPage() {
                 isMe={s.id === studentRecord?.id}
                 accent={accent}
                 delay={i * 0.02}
+                onSelect={id => navigate(`/students/${id}`)}
               />
             ))}
           </div>
