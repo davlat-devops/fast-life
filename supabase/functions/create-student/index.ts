@@ -67,9 +67,23 @@ Deno.serve(async (req: Request) => {
 
     const { username, password } = creds as { username: string; password: string }
 
-    // ── 5. Random clan assignment ───────────────────────────
+    // ── 5. Balanced clan assignment ─────────────────────────
     const CLANS = ['VIPERON', 'CRODON', 'AVERON', 'WOLFRIN']
-    const clan = CLANS[Math.floor(Math.random() * CLANS.length)]
+
+    const { data: activeStudents, error: clanCountErr } = await admin
+      .from('students')
+      .select('clan')
+      .eq('is_active', true)
+    if (clanCountErr) throw clanCountErr
+
+    const counts = Object.fromEntries(CLANS.map(c => [c, 0])) as Record<string, number>
+    for (const s of activeStudents ?? []) {
+      if (s.clan in counts) counts[s.clan]++
+    }
+
+    const minCount        = Math.min(...CLANS.map(c => counts[c]))
+    const leastPopulated  = CLANS.filter(c => counts[c] === minCount)
+    const clan            = leastPopulated[Math.floor(Math.random() * leastPopulated.length)]
 
     // ── 6. Create Auth user ─────────────────────────────────
     const { data: authData, error: authErr } = await admin.auth.admin.createUser({
