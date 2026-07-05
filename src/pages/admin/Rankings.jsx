@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Flag, Trophy, Crown } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdminAuth } from '@/lib/supabase'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon, RankBadge } from '@/components/ui/ClanIcons'
 
@@ -248,8 +248,8 @@ export default function Rankings() {
   useEffect(() => {
     async function load() {
       const [clansRes, studentsRes] = await Promise.all([
-        supabase.from('clans').select('*').order('total_cp', { ascending: false }),
-        supabase
+        supabaseAdminAuth.from('clans').select('*').order('total_cp', { ascending: false }),
+        supabaseAdminAuth
           .from('students')
           .select('id, full_name, username, cp, clan, level, class_group')
           .eq('is_active', true)
