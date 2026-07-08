@@ -9,7 +9,25 @@
     <link rel="preload" as="image" type="image/webp" href="/src/assets/logo.webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!--
+      Google Fonts CSS loaded async: a plain `<link rel=stylesheet>` here is
+      render-blocking, so the browser can't paint the inline hero placeholder
+      below until this external roundtrip finishes — directly delaying FCP
+      (and therefore LCP, since LCP can never happen before FCP). Loading it
+      as `media=print` makes Chrome fetch it at low priority without blocking
+      render, then the onload flips it to `all` once it's actually in hand.
+      `display=swap` (already in the URL) still governs the font-swap once
+      the CSS itself has loaded, so text never goes invisible waiting on it.
+    -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
+    </noscript>
   </head>
   <body>
     <div id="root"><div id="lcp-hero" style="position:absolute;inset:0;overflow:hidden;background:#0a0a0a">

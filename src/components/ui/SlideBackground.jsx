@@ -76,11 +76,13 @@ export default function SlideBackground({
           1. Unmounting/remounting the active slide (e.g. via AnimatePresence
              + key={idx}) invalidates it as the LCP candidate the moment it's
              removed, so the browser falls back to a much smaller element.
-          2. framer-motion's motion.img promotes the element to its own
-             compositor layer (transform/will-change), which this Chrome
-             version does not route through the paint-timing instrumentation
-             LCP relies on — the element silently never becomes an LCP
-             candidate at all, animated or not. */}
+          2. Any `transform` on the img (framer-motion's motion.img, or a
+             plain CSS scale/Ken-Burns zoom) promotes it to its own
+             compositor layer, which this Chrome version does not route
+             through the paint-timing instrumentation LCP relies on — the
+             element silently never becomes an LCP candidate at all. Keep
+             this crossfade opacity-only; put any zoom/scale on a wrapper,
+             never on the img itself. */}
       {slides.map((src, i) => (
         <img
           key={src}
@@ -93,8 +95,7 @@ export default function SlideBackground({
             width: '100%', height: '100%',
             objectFit: 'cover', objectPosition: 'center',
             opacity: idx === i ? 1 : 0,
-            transform: `scale(${idx === i ? 1.08 : 1.04})`,
-            transition: 'opacity 1.2s ease, transform 4.5s linear',
+            transition: 'opacity 1.2s ease',
           }}
         />
       ))}
