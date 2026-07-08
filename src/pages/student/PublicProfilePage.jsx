@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Trophy, Lock, Award, UserX } from 'lucide-react'
 import { supabase, supabaseAdminAuth } from '@/lib/supabase'
+import { useAdminTheme } from '@/contexts/AdminThemeContext'
 import { CLANS } from '@/constants/clans'
 import { BADGES, BADGE_ICONS } from '@/constants/badges'
 import { ClanIcon } from '@/components/ui/ClanIcons'
@@ -30,6 +31,16 @@ export default function PublicProfilePage() {
   const location       = useLocation()
   const isAdminPortal  = location.pathname.startsWith('/admin')
   const client         = isAdminPortal ? supabaseAdminAuth : supabase
+
+  // This page renders inside two different shells: StudentLayout (which
+  // already sets the real data-theme from ThemeContext on an ancestor —
+  // --fl-* vars inherit down to us for free) or AdminLayout (which only
+  // sets data-admin-theme, so --fl-* would be undefined here unless we
+  // supply data-theme ourselves). Only set it for the admin case, and pull
+  // it from the admin's own theme preference — never hardcode a value, and
+  // never touch the fetched student's data.
+  const { theme: adminTheme } = useAdminTheme()
+  const themeAttr = isAdminPortal ? adminTheme : undefined
 
   const [student,  setStudent]  = useState(null)
   const [badges,   setBadges]   = useState([])
@@ -93,7 +104,7 @@ export default function PublicProfilePage() {
 
   if (notFound) {
     return (
-      <div data-theme="dark" className="min-h-screen flex items-center justify-center px-5" style={{ background: 'var(--fl-bg)' }}>
+      <div data-theme={themeAttr} className="min-h-screen flex items-center justify-center px-5" style={{ background: 'var(--fl-bg)' }}>
         <div className="text-center space-y-4">
           <div className="flex justify-center">
             <UserX size={40} style={{ color: 'var(--fl-text-3)', opacity: 0.5 }} />
@@ -106,7 +117,7 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div data-theme="dark" className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
+    <div data-theme={themeAttr} className="min-h-screen" style={{ background: 'var(--fl-bg)' }}>
       <div className="px-5 md:px-8 pt-5">
         <BackButton />
       </div>
@@ -251,11 +262,11 @@ export default function PublicProfilePage() {
                     className="relative aspect-square rounded-xl flex flex-col items-center justify-center gap-0.5 cursor-default overflow-hidden"
                     style={earned
                       ? {
-                          background: 'rgba(255,255,255,0.05)',
+                          background: 'var(--fl-glass)',
                           backdropFilter: 'blur(8px)',
                           WebkitBackdropFilter: 'blur(8px)',
                           border: `1px solid ${accent}45`,
-                          boxShadow: `0 0 12px ${accent}30, inset 0 1px 0 rgba(255,255,255,0.1)`,
+                          boxShadow: `0 0 12px ${accent}30, inset 0 1px 0 var(--fl-glass-hl)`,
                         }
                       : { background: 'var(--fl-card-alt)', border: '1px solid var(--fl-border)' }}
                   >
