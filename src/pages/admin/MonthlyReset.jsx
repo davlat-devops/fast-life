@@ -290,15 +290,24 @@ function DangerZone({ studentCount, confirm, setConfirm, onExecute, disabled }) 
         </svg>
         <div>
           <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--ad-red)', marginBottom: 4 }}>
-            This action cannot be undone
+            {studentCount === 0 ? 'No active students found' : 'This action cannot be undone'}
           </p>
-          <p style={{ fontSize: 12, color: 'var(--ad-text-2)', lineHeight: 1.6 }}>
-            Executing the reset will immediately award all badges, archive{' '}
-            <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{MONTH_LABEL}</span> to the Hall of Fame,
-            reshuffle all{' '}
-            <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{studentCount} students</span>{' '}
-            into new clans, and set everyone's CP to zero.
-          </p>
+          {studentCount === 0 ? (
+            <p style={{ fontSize: 12, color: 'var(--ad-text-2)', lineHeight: 1.6 }}>
+              There are no active students to reset, so running this will make{' '}
+              <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>no changes</span>{' '}
+              — no badges, archives, or clan changes. Add or re-activate students first
+              if you expected a reset to happen.
+            </p>
+          ) : (
+            <p style={{ fontSize: 12, color: 'var(--ad-text-2)', lineHeight: 1.6 }}>
+              Executing the reset will immediately award all badges, archive{' '}
+              <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{MONTH_LABEL}</span> to the Hall of Fame,
+              reshuffle all{' '}
+              <span style={{ color: 'var(--ad-text)', fontWeight: 600 }}>{studentCount} students</span>{' '}
+              into new clans, and set everyone's CP to zero.
+            </p>
+          )}
         </div>
       </div>
 
