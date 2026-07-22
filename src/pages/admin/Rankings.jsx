@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Flag, Trophy, Crown } from 'lucide-react'
+import { Flag, Trophy, Crown, RefreshCw } from 'lucide-react'
 import { supabaseAdminAuth } from '@/lib/supabase'
+import { useToast } from '@/contexts/ToastContext'
 import { CLANS } from '@/constants/clans'
 import { ClanIcon, RankBadge } from '@/components/ui/ClanIcons'
 
@@ -239,31 +240,47 @@ function StudentRow({ student, rank, delay, onSelect }) {
 
 export default function Rankings() {
   const navigate = useNavigate()
+  const { toast } = useToast()
   const [clans,    setClans]    = useState([])
   const [students, setStudents] = useState([])
   const [loading,  setLoading]  = useState(true)
+  const [recalculating, setRecalculating] = useState(false)
 
   const [search,      setSearch]      = useState('')
   const [clanFilter,  setClanFilter]  = useState('')
   const [levelFilter, setLevelFilter] = useState('')
   const [page,        setPage]        = useState(0)
 
-  useEffect(() => {
-    async function load() {
-      const [clansRes, studentsRes] = await Promise.all([
-        supabaseAdminAuth.from('clans').select('*').order('total_cp', { ascending: false }),
-        supabaseAdminAuth
-          .from('students')
-          .select('id, full_name, username, cp, clan, level, class_group')
-          .eq('is_active', true)
-          .order('cp', { ascending: false }),
-      ])
-      setClans(clansRes.data ?? [])
-      setStudents(studentsRes.data ?? [])
-      setLoading(false)
-    }
-    load()
+  const load = useCallback(async () => {
+    const [clansRes, studentsRes] = await Promise.all([
+      supabaseAdminAuth.from('clans').select('*').order('total_cp', { ascending: false }),
+      supabaseAdminAuth
+        .from('students')
+        .select('id, full_name, username, cp, clan, level, class_group')
+        .eq('is_active', true)
+        .order('cp', { ascending: false }),
+    ])
+    setClans(clansRes.data ?? [])
+    setStudents(studentsRes.data ?? [])
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleRecalculate() {
+    if (recalculating) return
+    setRecalculating(true)
+    try {
+      const { error } = await supabaseAdminAuth.rpc('recalculate_clan_totals')
+      if (error) throw error
+      await load()
+      toast({ message: 'Clan totals recalculated from active members', type: 'success' })
+    } catch (err) {
+      toast({ message: err?.message ?? 'Recalculation failed — check the logs', type: 'error' })
+    } finally {
+      setRecalculating(false)
+    }
+  }
 
   const maxCp = useMemo(() => Math.max(...clans.map(c => c.total_cp), 1), [clans])
 
@@ -312,11 +329,26 @@ export default function Rankings() {
     <div className="p-4 sm:p-8 space-y-8 max-w-[1200px]">
 
       {/* ── Header ─────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Rankings</h1>
-        <p className="text-sm text-white/35 mt-1">
-          {loading ? '…' : `${students.length} active students across ${clans.length} clans`}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white tracking-tight">Rankings</h1>
+          <p className="text-sm text-white/35 mt-1">
+            {loading ? '…' : `${students.length} active students across ${clans.length} clans`}
+          </p>
+        </div>
+
+        <button
+          onClick={handleRecalculate}
+          disabled={loading || recalculating}
+          title="Recompute each clan's CP total from its active members"
+          className="shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold
+            text-white/70 bg-white/[0.04] border border-white/[0.07]
+            hover:text-white hover:bg-white/[0.07] hover:border-white/[0.12]
+            disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          <RefreshCw size={14} className={recalculating ? 'animate-spin' : ''} />
+          {recalculating ? 'Recalculating…' : 'Recalculate totals'}
+        </button>
       </div>
 
       {/* ── Clan Race ──────────────────────────────────────── */}
