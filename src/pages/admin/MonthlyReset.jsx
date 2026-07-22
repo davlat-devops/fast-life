@@ -60,6 +60,19 @@ function initials(name) {
   return (name ?? '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
+// Map a Supabase RPC error to a clear, user-facing message. monthly_reset()
+// raises its own failures as SQLSTATE P0001 with human-readable text and a
+// stable `hint`; anything else is unexpected and must not leak raw Postgres.
+function friendlyResetError(err) {
+  switch (err?.hint) {
+    case 'reset_failed':
+      return 'The reset failed and was rolled back. No changes were applied — check the logs and try again.'
+    default:
+      if (err?.code === 'P0001' && err?.message) return err.message
+      return 'Reset failed and was rolled back. No changes were applied — please try again or check the logs.'
+  }
+}
+
 function Skeleton({ className }) {
   return <div className={`rounded-lg bg-white/[0.07] animate-pulse ${className}`} />
 }
@@ -385,8 +398,57 @@ function SuccessScreen({ snapshot, result, onRunAgain }) {
   const rpcData       = result && typeof result === 'object' ? result : {}
   const badgesAwarded = rpcData.badges_awarded ?? null
   const newAssign     = rpcData.new_clan_assignments ?? {}
+  const isNoop        = rpcData.noop === true
 
   const winnerInfo = CLANS[winningClan]
+
+  // No active students — nothing was changed. Report that honestly instead of
+  // showing the celebratory "reset complete" summary.
+  if (isNoop) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="space-y-6"
+      >
+        <div
+          className="rounded-2xl p-8 text-center space-y-3"
+          style={{ background: 'var(--ad-surface)', border: '1px solid var(--ad-border)' }}
+        >
+          <div className="w-16 h-16 rounded-full bg-white/[0.06] border border-white/[0.08]
+            flex items-center justify-center mx-auto">
+            <Shuffle size={30} className="text-white/40" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-white">Nothing to Reset</h2>
+            <p className="text-sm text-white/50 mt-1">
+              No active students were found for{' '}
+              <span className="text-white/80 font-semibold">{month}</span>,
+              so no badges, archives, or clan changes were made.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button
+            onClick={onRunAgain}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white text-center transition-colors hover:opacity-90"
+            style={{ background: '#CC0000' }}
+          >
+            Back to Preview
+          </button>
+          <Link
+            to="/admin/dashboard"
+            className="flex-1 py-3 rounded-xl text-sm font-semibold text-white/60 text-center
+              border border-white/[0.08] hover:bg-white/[0.04] hover:text-white/80 transition-all"
+          >
+            Back to Dashboard
+          </Link>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
@@ -672,7 +734,7 @@ export default function MonthlyReset() {
       setPhase('done')
       logAudit('monthly_reset', { month: monthLabel, students: studentCount })
     } catch (err) {
-      toast({ message: err.message ?? 'Reset failed — check Supabase logs', type: 'error' })
+      toast({ message: friendlyResetError(err), type: 'error' })
       setPhase('preview')
     }
   }
